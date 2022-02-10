@@ -34,4 +34,3 @@ cp ./third_party/mw320_sdk/sdk_fixes/wlan_tests.c "$MW320_SDK_ROOT"/middleware/w
 
 echo "MW320 SDK and Flsahing tool was installed to $MW320_SDK_ROOT !"
 exit 0
-

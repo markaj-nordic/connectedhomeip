@@ -3,4 +3,3 @@ cp $MW320_LIGHTING/out/mw320/chip-mw320-light-example.mcufw.bin $MW320_SDK_ROOT/
 
 echo "Please flash $MW320_SDK_ROOT/mw320_matter_flash/Matter/chip-mw320-light-example.mcufw.bin to NXP MW320 platfom"
 exit 0
-

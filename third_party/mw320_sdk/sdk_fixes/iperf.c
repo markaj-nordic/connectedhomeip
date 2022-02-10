@@ -190,7 +190,7 @@ static void iperf_test_start(void *arg)
             else
 #endif
                 ctx->iperf_session =
-                    lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);     
+                    lwiperf_start_udp_server(&bind_address, LWIPERF_TCP_PORT_DEFAULT, lwiperf_report, 0);
         }
     }
     else
@@ -235,7 +235,7 @@ static void iperf_test_start(void *arg)
 #endif
                 ctx->iperf_session = lwiperf_start_udp_client(
                     &bind_address, LWIPERF_TCP_PORT_DEFAULT, &server_address, LWIPERF_TCP_PORT_DEFAULT,
-                    ctx->client_type, amount, IPERF_UDP_CLIENT_RATE, 
+                    ctx->client_type, amount, IPERF_UDP_CLIENT_RATE,
 #ifdef CONFIG_WMM
                     qos,
 #else
@@ -484,7 +484,7 @@ void cmd_iperf(int argc, char **argv)
 
 				if (IP_IS_V4(&bind_address))
                     info.bhost = 1;
-				
+
                 if (ip_addr_ismulticast(&bind_address))
                 {
                     multicast  = true;
