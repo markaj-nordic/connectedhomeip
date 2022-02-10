@@ -87,7 +87,7 @@ user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ gn gen ou
 user@ubuntu:~/Desktop/git/connectedhomeip/examples/lightin-app/mw320$ ninja -v -C out/mw320
 ```
 Please run ./third_party/mw320_sdk/sdk_fixes/mw320_matter_offset.sh for flashing NXP NXP MW320 platform.
-The resulting output file can be found in out/mw320/chip-mw320-light-example.mcufw.bin and $MW320_SDK_ROOT/mw320_matter_flash/Matter/chip-mw320-light-example.mcufw.bin.
+The resulting output file can be found in $MW320_SDK_ROOT/mw320_matter_flash/Matter/ folder.
 
 <a name="flashdebug"></a>
 
@@ -106,7 +106,7 @@ On MW320 side:
 Prepare one external AP and try to connect it by running follow command at MW320 console.
 > wifi connect "External_AP_SSID" "External_AP_WPA2_PASSWORD"
 
-![MW320 CONSOLE](../../platform/mw320/doc/images/mw320_console.jpg)
+![MW320 CONNECTION](../../platform/mw320/doc/images/mw320_connection.jpg)
 
 On Ubuntu20 chip tool side:
 Prepare Ubuntu 20 [Matter test_event_6 branch chip tool](https://github.com/project-chip/connectedhomeip/tree/test_event_6/examples/chip-tool) example.
