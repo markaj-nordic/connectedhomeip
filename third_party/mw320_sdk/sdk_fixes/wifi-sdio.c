@@ -1976,7 +1976,7 @@ mlan_status sd_wifi_init(enum wlan_type type,
     /*
      * Register a callback with power manager of MC200/MW300
      * This callback will be called on entry /exit
-     * of low power mode of MC200/MW300 based on first paramter
+     * of low power mode of MC200/MW300 based on first parameter
      * passed to the call.
      */
     //	pm_handle = pm_register_cb(ACTION_EXIT_PM3 | ACTION_ENTER_PM4,

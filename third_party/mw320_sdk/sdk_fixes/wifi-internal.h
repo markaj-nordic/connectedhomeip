@@ -73,7 +73,7 @@ typedef struct
      * Usage note:
      * There are a number of API's (for e.g. wifi_get_antenna()) which
      * return some data in the buffer passed by the caller. Most of the
-     * time this data needs to be retrived from the firmware. This
+     * time this data needs to be retrieved from the firmware. This
      * retrival happens in a different thread context. Hence, we need
      * to store the buffer pointer passed by the user at a shared
      * location. This pointer to used for this purpose.
@@ -241,7 +241,7 @@ int wifi_get_command_lock(void);
 int wifi_put_command_lock(void);
 
 /*
- * Process the command reponse received from the firmware.
+ * Process the command response received from the firmware.
  *
  * Change the type of param below to HostCmd_DS_COMMAND after mlan
  * integration complete and then move it to header file.
