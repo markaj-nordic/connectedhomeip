@@ -63,7 +63,7 @@ distribution (the demo-application was compiled on Ubuntu 20.04).
     SDK. Once the account is created, login and follow the steps for downloading
     SDK 2.9.4. The SDK Builder UI selection should be similar with
     the one from the image below.
-    ![MCUXpresso SDK Download](../../platform/k32w/doc/images/mcux-sdk-download.jpg)
+    ![MCUXpresso SDK Download](../../platform/mw320/doc/images/mcux-sdk-download.jpg)
 
 -   Please create MW320_FOLDER as follow command:
     -   mkdir ~/Desktop/MW320
@@ -85,18 +85,16 @@ user@ubuntu:~/Desktop/git/connectedhomeip$ ./third_party/mw320_sdk/sdk_fixes/set
 user@ubuntu:~/Desktop/git/connectedhomeip$ cd $MW320_LIGHTING
 user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ gn gen out/mw320 --args='chip_bypass_rendezvous=true is_debug=false treat_warnings_as_errors=false'
 user@ubuntu:~/Desktop/git/connectedhomeip/examples/lightin-app/mw320$ ninja -v -C out/mw320
-user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ $MW320_SDK_ROOT/tools/mw_img_conv/src/mw_img_conv mcufw $MW320_LIGHTING/out/mw320/chip-mw320-light-example.bin $MW320_LIGHTING/out/mw320/chip-mw320-light-example.mcufw.bin 0x1F000100
-user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ cp $MW320_LIGHTING/out/mw320/chip-mw320-light-example.mcufw.bin $MW320_SDK_ROOT/mw320_matter_flash/Matter/chip-mw320-light-example.mcufw.bin
 ```
-
-The resulting output file can be found in out/debug/chip-mw320-light-example.mcufw.bin and $MW320_SDK_ROOT/mw320_matter_flash/Matter/chip-mw320-light-example.mcufw.bin.
+Please run ./third_party/mw320_sdk/sdk_fixes/mw320_matter_offset.sh for flashing NXP NXP MW320 platform.
+The resulting output file can be found in out/mw320/chip-mw320-light-example.mcufw.bin and $MW320_SDK_ROOT/mw320_matter_flash/Matter/chip-mw320-light-example.mcufw.bin.
 
 <a name="flashdebug"></a>
 
 ## Flashing and debugging
 
 Connected to Universal Asynchronous Receiver/Transmitter port on MW320 platform to Ubuntu 20 USB port and open Linux text-based serial port communications program at second USB interface. ex. /dev/ttyUSB1.
-Please reference the mw320_flash.txt for flashing image to NXP MW320 platform.
+Please reference the mw320_flash.txt command to flash image to NXP MW320 platform.
 
 After reset NXP MW320 platform, it will show as follow.
 
