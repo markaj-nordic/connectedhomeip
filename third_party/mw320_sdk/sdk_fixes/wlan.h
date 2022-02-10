@@ -1933,7 +1933,7 @@ uint8_t wlan_get_current_channel();
  * \param[in] stats A pointer to structure where stats collected from Wi-Fi firmware
  *	      will be copied.
  *
- * \note Please explore the elements of the \ref wlan_pkt_stats_t strucutre for
+ * \note Please explore the elements of the \ref wlan_pkt_stats_t structure for
  * 	 more information on stats.
  *
  * \return WM_SUCCESS if operation is successful.

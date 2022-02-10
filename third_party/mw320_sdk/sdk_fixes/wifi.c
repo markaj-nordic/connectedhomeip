@@ -95,9 +95,9 @@ void wifi_wake_up_card(uint32_t *resp)
 }
 
 /* When Wi-Fi card is in IEEE PS and sleeping
- * CMD or Data cannot be transmited.
+ * CMD or Data cannot be transmitted.
  * The card must be woken up.
- * So data or command trasnfer is temporarily kept
+ * So data or command transfer is temporarily kept
  * in pending state. This function returns value
  * of pending flag true/false.
  */
@@ -1322,7 +1322,7 @@ static void wifi_core_deinit()
     wifi_core_init_done = 0;
 
     bus_deregister_event_queue();
-    bus_deregister_data_input_funtion();
+    bus_deregister_data_input_function();
 
     if (wm_wifi.io_events)
     {

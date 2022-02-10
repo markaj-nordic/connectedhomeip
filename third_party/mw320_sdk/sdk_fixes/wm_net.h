@@ -59,9 +59,9 @@
 
 
 /*
- * fixme: This dependancy of wm_net on wlc manager header should be
+ * fixme: This dependency of wm_net on wlc manager header should be
  * removed. This is the lowest level file used to access lwip
- * functionality and should not contain higher layer dependancies.
+ * functionality and should not contain higher layer dependencies.
  */
 #include <wlan.h>
 
@@ -95,7 +95,7 @@
  *
  * \note NULL is a valid value for hostname.
  *
- * \return WM_SUCESS
+ * \return WM_SUCCESS
  */
 int net_dhcp_hostname_set(char *hostname);
 
@@ -104,7 +104,7 @@ int net_dhcp_hostname_set(char *hostname);
  * \param[in] sock socket number to be set for blocking option.
  * \param[in] state set blocking on or off
  *
- * \return WM_SUCESS otherwise standard LWIP error codes.
+ * \return WM_SUCCESS otherwise standard LWIP error codes.
  */
 static inline int net_socket_blocking(int sock, int state)
 {
@@ -155,7 +155,7 @@ static inline uint32_t net_inet_aton(const char *cp)
  * \note This function is not thread safe. If thread safety is required
  * please use lwip_getaddrinfo() - lwip_freeaddrinfo() combination.
  *
- * \return WM_SUCESS if operation successful.
+ * \return WM_SUCCESS if operation successful.
  * \return -WM_FAIL if operation fails.
  */
 static inline int net_gethostbyname(const char *cp, struct hostent **hentry)

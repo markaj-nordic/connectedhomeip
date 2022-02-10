@@ -200,7 +200,7 @@
 #endif
 
 /**
- * MEMP_NUM_TCP_PCB: the number of simulatenously active TCP connections.
+ * MEMP_NUM_TCP_PCB: the number of simultaneously active TCP connections.
  * (requires the LWIP_TCP option)
  */
 #define MEMP_NUM_TCP_PCB MAX_SOCKETS_TCP
@@ -276,7 +276,7 @@
 
 /**
  * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. The default is
- * designed to accomodate single full size TCP frame in one pbuf, including
+ * designed to accommodate single full size TCP frame in one pbuf, including
  * TCP_MSS, IP header, and link header.
  */
 #define PBUF_POOL_BUFSIZE 1580

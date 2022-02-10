@@ -27,6 +27,8 @@ cp ./third_party/mw320_sdk/sdk_fixes/net.c "$MW320_SDK_ROOT"/middleware/wifi/por
 cp ./third_party/mw320_sdk/sdk_fixes/netif_decl.h "$MW320_SDK_ROOT"/middleware/wifi/port/lwip/
 cp ./third_party/mw320_sdk/sdk_fixes/wifi_netif.c "$MW320_SDK_ROOT"/middleware/wifi/port/lwip/
 cp ./third_party/mw320_sdk/sdk_fixes/wifi.c "$MW320_SDK_ROOT"/middleware/wifi/wifidriver/
+cp ./third_party/mw320_sdk/sdk_fixes/wifi-sdio.c "$MW320_SDK_ROOT"/middleware/wifi/wifidriver/
+cp ./third_party/mw320_sdk/sdk_fixes/wifi-internal.h "$MW320_SDK_ROOT"/middleware/wifi/wifidriver/
 cp ./third_party/mw320_sdk/sdk_fixes/wlan.c "$MW320_SDK_ROOT"/middleware/wifi/wlcmgr/
 cp ./third_party/mw320_sdk/sdk_fixes/wlan_tests.c "$MW320_SDK_ROOT"/middleware/wifi/wlcmgr/
 

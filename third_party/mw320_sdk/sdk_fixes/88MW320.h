@@ -1266,7 +1266,7 @@ typedef struct {
 #define ADC_ADC_REG_STATUS_ACT_MASK              (0x1U)
 #define ADC_ADC_REG_STATUS_ACT_SHIFT             (0U)
 /*! act - adc status
- *  0b0..ADC converstion inactive status
+ *  0b0..ADC conversion inactive status
  *  0b1..ADC conversion active status
  */
 #define ADC_ADC_REG_STATUS_ACT(x)                (((uint32_t)(((uint32_t)(x)) << ADC_ADC_REG_STATUS_ACT_SHIFT)) & ADC_ADC_REG_STATUS_ACT_MASK)
@@ -15558,8 +15558,8 @@ typedef struct {
 #define UART_IER_RAVIE_MASK                      (0x1U)
 #define UART_IER_RAVIE_SHIFT                     (0U)
 /*! RAVIE - Receiver Data Available Interrupt Enable (Source IIR[IID])
- *  0b0..Receiver data availble(trigger threshold reached) interrupt disabled
- *  0b1..Receiver data availble(trigger threshold reached) interrupt enabled
+ *  0b0..Receiver data available(trigger threshold reached) interrupt disabled
+ *  0b1..Receiver data available(trigger threshold reached) interrupt enabled
  */
 #define UART_IER_RAVIE(x)                        (((uint32_t)(((uint32_t)(x)) << UART_IER_RAVIE_SHIFT)) & UART_IER_RAVIE_MASK)
 #define UART_IER_TIE_MASK                        (0x2U)

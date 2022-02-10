@@ -139,7 +139,7 @@ void wifi_deregister_data_input_callback();
  *
  * @param[in] amsdu_data_intput_callback Function that needs to be called
  *
- * @return WM_SUCESS
+ * @return WM_SUCCESS
  *
  */
 int wifi_register_amsdu_data_input_callback(void (*amsdu_data_intput_callback)(uint8_t interface,
@@ -219,7 +219,7 @@ void wifi_sta_ampdu_rx_disable(void);
  *
  * @param[out] mac_addr Mac address
  *
- * @return WM_SUCESS
+ * @return WM_SUCCESS
  */
 int wifi_get_device_mac_addr(wifi_mac_addr_t *mac_addr);
 
@@ -776,7 +776,7 @@ typedef PACK_START struct
     t_u32 reserved;
     /** WEP ICV error count */
     t_u32 wep_icv_error[4];
-    /** Beacon recieve count */
+    /** Beacon receive count */
     t_u32 bcn_rcv_cnt;
     /** Beacon miss count */
     t_u32 bcn_miss_cnt;
