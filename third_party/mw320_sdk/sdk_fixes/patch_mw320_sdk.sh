@@ -1,20 +1,35 @@
 #!/bin/bash
 
-if [[ ! -d $MW320_FOLDER ]]; then
-    echo "MW320_FOLDER is not set"
+if [[ ! -d $MW320_SDK_ROOT ]]; then
+    echo "MW320_SDK_ROOT is not set"
     exit 1
 fi
 
-tar xzvf ./third_party/mw320_sdk/sdk_fixes/SDK_2_9_4_Matter_ipv6.tgz -C "$MW320_FOLDER"/
-tar xzvf ./third_party/mw320_sdk/sdk_fixes/mw320_matter_openocd.tgz -C "$MW320_FOLDER"/
-echo "export MW320_SDK_ROOT=\"$MW320_FOLDER/SDK_2_9_4_Matter_ipv6\"" > ./third_party/mw320_sdk/sdk_fixes/set_env.sh
+unzip ./third_party/mw320_sdk/sdk_fixes/mw320_matter_flash.zip -d "$MW320_SDK_ROOT"/
+echo "export MW320_SDK_ROOT=\"$MW320_SDK_ROOT\"" > ./third_party/mw320_sdk/sdk_fixes/set_env.sh
 chmod +x+w ./third_party/mw320_sdk/sdk_fixes/set_env.sh
-echo "MW320_SDK_ROOT=$MW320_FOLDER/SDK_2_9_4_Matter_ipv6" >> ./third_party/mw320_sdk/sdk_fixes/set_env.sh
-echo "echo \"MW320 SDK is at \$MW320_SDK_ROOT\"" >> ./third_party/mw320_sdk/sdk_fixes/set_env.sh
-echo "MATTER_SDK=\$(pwd)" >> ./third_party/mw320_sdk/sdk_fixes/set_env.sh
-echo "export MW320_LIGHTING=\$MATTER_SDK/examples/lighting-app/mw320" >> ./third_party/mw320_sdk/sdk_fixes/set_env.sh
-echo "echo \"MW320 LIGHTING is at \$MW320_LIGHTING\"" >> ./third_party/mw320_sdk/sdk_fixes/set_env.sh
 
-echo "MW320 SDK and Flsahing tool  was install to $MW320_FOLDER !"
+cp ./third_party/mw320_sdk/sdk_fixes/mw_img_conv "$MW320_SDK_ROOT"/tools/mw_img_conv/src/
+cp ./third_party/mw320_sdk/sdk_fixes/lwipopts.h "$MW320_SDK_ROOT"/boards/rdmw320_r0/wifi_examples/mw_wifi_cli/
+cp ./third_party/mw320_sdk/sdk_fixes/pin_mux.c "$MW320_SDK_ROOT"/boards/rdmw320_r0/wifi_examples/mw_wifi_cli/
+cp ./third_party/mw320_sdk/sdk_fixes/pin_mux.h "$MW320_SDK_ROOT"/boards/rdmw320_r0/wifi_examples/mw_wifi_cli/
+cp ./third_party/mw320_sdk/sdk_fixes/wifi_config.h "$MW320_SDK_ROOT"/boards/rdmw320_r0/wifi_examples/mw_wifi_cli/
+cp ./third_party/mw320_sdk/sdk_fixes/88MW320.h "$MW320_SDK_ROOT"/devices/88MW320/
+cp ./third_party/mw320_sdk/sdk_fixes/lwiperf.c "$MW320_SDK_ROOT"/middleware/lwip/src/apps/lwiperf/
+cp ./third_party/mw320_sdk/sdk_fixes/errno.h "$MW320_SDK_ROOT"/middleware/lwip/src/include/lwip/
+cp ./third_party/mw320_sdk/sdk_fixes/ip_addr.h "$MW320_SDK_ROOT"/middleware/lwip/src/include/lwip/
+cp ./third_party/mw320_sdk/sdk_fixes/wm_net.h "$MW320_SDK_ROOT"/middleware/wifi/incl/port/lwip/
+cp ./third_party/mw320_sdk/sdk_fixes/wifi.h "$MW320_SDK_ROOT"/middleware/wifi/incl/wifidriver/
+cp ./third_party/mw320_sdk/sdk_fixes/wifi_events.h "$MW320_SDK_ROOT"/middleware/wifi/incl/wifidriver/
+cp ./third_party/mw320_sdk/sdk_fixes/wlan.h "$MW320_SDK_ROOT"/middleware/wifi/incl/wlcmgr/
+cp ./third_party/mw320_sdk/sdk_fixes/iperf.c "$MW320_SDK_ROOT"/middleware/wifi/nw_utils/
+cp ./third_party/mw320_sdk/sdk_fixes/net.c "$MW320_SDK_ROOT"/middleware/wifi/port/lwip/
+cp ./third_party/mw320_sdk/sdk_fixes/netif_decl.h "$MW320_SDK_ROOT"/middleware/wifi/port/lwip/
+cp ./third_party/mw320_sdk/sdk_fixes/wifi_netif.c "$MW320_SDK_ROOT"/middleware/wifi/port/lwip/
+cp ./third_party/mw320_sdk/sdk_fixes/wifi.c "$MW320_SDK_ROOT"/middleware/wifi/wifidriver/
+cp ./third_party/mw320_sdk/sdk_fixes/wlan.c "$MW320_SDK_ROOT"/middleware/wifi/wlcmgr/
+cp ./third_party/mw320_sdk/sdk_fixes/wlan_tests.c "$MW320_SDK_ROOT"/middleware/wifi/wlcmgr/
+
+echo "MW320 SDK and Flsahing tool was installed to $MW320_SDK_ROOT !"
 exit 0
 

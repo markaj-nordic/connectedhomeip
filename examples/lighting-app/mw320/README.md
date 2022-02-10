@@ -58,11 +58,16 @@ devices.
 
 In order to build the Matter example, we recommend using a Linux
 distribution (the demo-application was compiled on Ubuntu 20.04). 
-We have prepared MW320 SDK package at SDK_2_9_4_Matter_ipv6.tgz, modified from [RD-MW320-R0 SDK 2.9.4 for Matter](https://mcuxpresso.nxp.com/) for Project CHIP. 
+-   Download [RD-MW320-R0 SDK 2.9.4 for Matter for Matter](https://mcuxpresso.nxp.com/).
+    Creating an nxp.com account is required before being able to download the
+    SDK. Once the account is created, login and follow the steps for downloading
+    SDK 2.9.4. The SDK Builder UI selection should be similar with
+    the one from the image below.
+    ![MCUXpresso SDK Download](../../platform/k32w/doc/images/mcux-sdk-download.jpg)
 
--   Before uncompressed SDK_2_9_4_Matter_ipv6.tgz, please create MW320_FOLDER as follow command:
+-   Please create MW320_FOLDER as follow command:
     -   mkdir ~/Desktop/MW320
-    -   MW320_FOLDER=~/Desktop/MW320
+    -   MW320_SDK_ROOT=~/Desktop/MW320
 
 -   Begin running two script to install and configure MW320 SDK
     -   ./third_party/mw320_sdk/sdk_fixes/patch_mw320_sdk.sh
@@ -81,29 +86,19 @@ user@ubuntu:~/Desktop/git/connectedhomeip$ cd $MW320_LIGHTING
 user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ gn gen out/mw320 --args='chip_bypass_rendezvous=true is_debug=false treat_warnings_as_errors=false'
 user@ubuntu:~/Desktop/git/connectedhomeip/examples/lightin-app/mw320$ ninja -v -C out/mw320
 user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ $MW320_SDK_ROOT/tools/mw_img_conv/src/mw_img_conv mcufw $MW320_LIGHTING/out/mw320/chip-mw320-light-example.bin $MW320_LIGHTING/out/mw320/chip-mw320-light-example.mcufw.bin 0x1F000100
-user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ cp $MW320_LIGHTING/out/mw320/chip-mw320-light-example.mcufw.bin $MW320_FOLDER/mw320_matter_openocd/Matter/chip-mw320-light-example.mcufw.bin
+user@ubuntu:~/Desktop/git/connectedhomeip/examples/lighting-app/mw320$ cp $MW320_LIGHTING/out/mw320/chip-mw320-light-example.mcufw.bin $MW320_SDK_ROOT/mw320_matter_flash/Matter/chip-mw320-light-example.mcufw.bin
 ```
 
-The resulting output file can be found in out/debug/chip-mw320-light-example.mcufw.bin and $MW320_FOLDER/mw320_matter_openocd/Matter/chip-mw320-light-example.mcufw.bin.
+The resulting output file can be found in out/debug/chip-mw320-light-example.mcufw.bin and $MW320_SDK_ROOT/mw320_matter_flash/Matter/chip-mw320-light-example.mcufw.bin.
 
 <a name="flashdebug"></a>
 
 ## Flashing and debugging
 
 Connected to Universal Asynchronous Receiver/Transmitter port on MW320 platform to Ubuntu 20 USB port and open Linux text-based serial port communications program at second USB interface. ex. /dev/ttyUSB1.
+Please reference the mw320_flash.txt for flashing image to NXP MW320 platform.
 
-Program the firmware using the official Open On-Chip Debugger and we have prepared MW320 OpenOCD package at mw320_matter_openocd.tgz.
-It will be uncompressed at $MW320_FOLDER/mw320_matter_openocd. If don't have OpenOCD installed at Ubuntu, please install it as follow command.
-
-$ sudo apt-get install openocd
-
-After OpenOCD installed, flash layout.txt, boot2.bin, mw32x_uapsta_W14.88.36.p172.bin and chip-mw320-light-example.mcufw.bin to MW320 platform.
-
-```
-user@ubuntu:~/Desktop/MW320/mw320_matter_openocd$ sudo $MW320_FOLDER/mw320_matter_openocd/flashprog.py -l $MW320_FOLDER/mw320_matter_openocd/Matter/layout.txt --boot2 $MW320_FOLDER/mw320_matter_openocd/Matter/boot2.bin
-user@ubuntu:~/Desktop/MW320/mw320_matter_openocd$ sudo $MW320_FOLDER/mw320_matter_openocd/flashprog.py --wififw $MW320_FOLDER/mw320_matter_openocd/Matter/mw32x_uapsta_W14.88.36.p172.bin
-user@ubuntu:~/Desktop/MW320/mw320_matter_openocd$ sudo $MW320_FOLDER/mw320_matter_openocd/flashprog.py --mcufw $MW320_FOLDER/mw320_matter_openocd/Matter/chip-mw320-light-example.mcufw.bin -r
-```
+After reset NXP MW320 platform, it will show as follow.
 
 ![MW320 CONSOLE](../../platform/mw320/doc/images/mw320_console.jpg)
 
@@ -119,7 +114,7 @@ On Ubuntu20 chip tool side:
 Prepare Ubuntu 20 [Matter test_event_6 branch chip tool](https://github.com/project-chip/connectedhomeip/tree/test_event_6/examples/chip-tool) example.
 Using the follow chip tool command:
 -   Bypass pairing
-./chip-tool pairing bypass "IP6 address" 5540
+./chip-tool pairing bypass "IP address" 5540
 -   Read MW320 led status
 ./chip-tool onoff read on-off 1
 -   Turn on MW320 led
