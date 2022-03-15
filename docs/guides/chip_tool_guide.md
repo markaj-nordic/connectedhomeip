@@ -7,9 +7,8 @@ into the network and to communicate with it using the Zigbee Cluster Library
 <hr>
 
 -   [Source files](#source)
--   [Building Android CHIPTool](#building)
--   [Running the tool](#running)
--   [Using Python CHIP Controller for Matter accessory testing](#using)
+-   [Building chip-tool](#building)
+-   [Using chip-tool for Matter accessory testing](#using)
 -   [List of commands](#commands)
 
 <hr>
@@ -25,7 +24,7 @@ You can find source files of the CHIP Tool in the
 
 <a name="building"></a>
 
-## Building and installing
+## Building
 
 Before you can use the `chip-tool`, you must compile it from the source on
 Linux (amd64 / aarch64) or macOS.
@@ -315,7 +314,9 @@ where:
 *<node_id>* is the user-defined ID of the node which is going to be forgot by the `chip-tool`
 
 #### Note
-`chip-tool` currently only supports commissioning and remembering one device at a time. The configuration state is cached in `/tmp/chip_tool_config.ini`; deleting this and other .ini files in `/tmp` can sometimes resolve issues related to stale configuration.
+`chip-tool` currently only supports commissioning and remembering one device at a time.
+The configuration state is cached in `/tmp/chip_tool_config.ini`; deleting this and other .ini files
+in `/tmp` can sometimes resolve issues related to stale configuration.
 
 ### Step 6: Control application ZCL clusters.
 
