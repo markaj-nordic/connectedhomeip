@@ -24,8 +24,8 @@
 
 /* this file behaves like a config.h, comes first */
 #include <crypto/CHIPCryptoPAL.h>
-#include <platform/internal/CHIPDeviceLayerInternal.h>
 #include <platform/CommissionableDataProvider.h>
+#include <platform/internal/CHIPDeviceLayerInternal.h>
 #include <setup_payload/AdditionalDataPayloadGenerator.h>
 
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
