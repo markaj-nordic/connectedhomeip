@@ -101,23 +101,6 @@ To build and run the `chip-tool`:
     Execution of above line will print an error and hint the proper
     list of parameters which must be provided to run ZCL operation.
 
-### Using message tracing
-
-Message tracing allows to capture `chip-tool` secure messages which can be used for test
-automation.
-
-There are additional flags which control where the traces should go:
-
--   `--trace_file` outputs trace data to the specified file <filename>
-
-For example:
-
-```
-./BUILD_PATH/chip-tool pairing <pairing_options> --trace_file <filename>
-```
-
--   `--trace_log <0/1>` outputs trace data with automation logs to the console (when set to 1)
-
 <hr>
 
 <a name="using"></a>
@@ -369,3 +352,66 @@ Use the following command to list all available commands for Basic cluster:
 ```
 
 <hr>
+
+<a name="commands"></a>
+
+## List of commands and options
+
+### Print all supported clusters
+
+```
+./BUILD_PATH/chip-tool basic
+```
+Example output snippet:
+
+```bash
+
+[1647346057.900626][394605:394605] CHIP:TOO: Missing cluster name
+Usage:
+  ./chip-tool cluster_name command_name [param1 param2 ...]
+
+  +-------------------------------------------------------------------------------------+
+  | Clusters:                                                                           |
+  +-------------------------------------------------------------------------------------+
+  | * accesscontrol                                                                     |
+  | * accountlogin                                                                      |
+  | * administratorcommissioning                                                        |
+  | * alarms                                                                            |
+  | * any                                                                               |
+  | * appliancecontrol                                                                  |
+  | * applianceeventsandalert                                                           |
+  | * applianceidentification                                                           |
+  | * appliancestatistics                                                               |
+  | * applicationbasic                                                                  |
+
+```
+
+### Choose the Bluetooth adapter
+`--ble-adapter <id>`
+where:
+*<id>* is the id of hci device
+Example:
+```
+./BUILD_PATH/chip-tool pairing ble-thread 1 hex:0e080000000000010000000300001335060004001fffe002084fe76e9a8b5edaf50708fde46f999f0698e20510d47f5027a414ffeebaefa92285cc84fa030f4f70656e5468726561642d653439630102e49c0410b92f8c7fbb4f9f3e08492ee3915fbd2f0c0402a0fff8 20202021 3840 --ble-adapter 0
+```
+
+### Using message tracing
+
+Message tracing allows to capture `chip-tool` secure messages which can be used for test
+automation.
+
+There are additional flags which control where the traces should go:
+
+`--trace_file` <filename>
+where:
+<filename> - is the file where trace data is stored in
+
+For example:
+
+```
+./BUILD_PATH/chip-tool pairing <pairing_options> --trace_file <filename>
+```
+
+`--trace_log` <onoff>
+where:
+<onoff> is [0/1] flag (when set to 1 the trace data with automation logs will be printed to the console)
