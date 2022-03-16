@@ -9,7 +9,7 @@ into the network and to communicate with it using the Zigbee Cluster Library
 -   [Source files](#source)
 -   [Building chip-tool](#building)
 -   [Using chip-tool for Matter accessory testing](#using)
--   [List of commands](#commands)
+-   [Supported commands and options](#commands)
 
 <hr>
 
@@ -478,7 +478,9 @@ Usage:
 #### Selected command options
 
 ##### Choosing the Bluetooth adapter
-`--ble-adapter <id>`
+```
+--ble-adapter <id>
+```
 where:
 -   *<id>* is the id of hci device
 
@@ -494,7 +496,9 @@ automation.
 
 There are additional flags which control where the traces should go:
 
-`--trace_file` <filename>
+```
+--trace_file <filename>
+```
 where:
 -   *<filename>* - is the file where trace data is stored in
 
@@ -504,7 +508,9 @@ For example:
 ./BUILD_PATH/chip-tool pairing <pairing_options> --trace_file <filename>
 ```
 
-`--trace_log` <onoff>
+```
+--trace_log <onoff>
+```
 where:
 -   *<onoff>* is [0/1] flag (when set to 1 the trace data with automation logs will be printed to the console)
 
@@ -558,3 +564,6 @@ Additional data payload can be parsed with the following command:
 ```
 where:
 -   *<payload>* is the payload with additional data to be parsed
+
+
+// TODO: pairing, discover, acl, general claster commuinication (read, write, subscribe), binding
