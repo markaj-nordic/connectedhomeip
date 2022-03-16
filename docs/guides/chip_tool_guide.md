@@ -218,9 +218,9 @@ where:
 
 ```
 where:
-*<node_id>* is the user-defined ID of the node being commissioned,
-*<ssid>* and *<password>* are credentials determined in step 3,
-*<pin_code>* and *<disciminator>* are device specific keys determined in step 4
+-   *<node_id>* is the user-defined ID of the node being commissioned,
+-   *<ssid>* and *<password>* are credentials determined in step 3,
+-   *<pin_code>* and *<disciminator>* are device specific keys determined in step 4
 
 If the hexadecimal format is preffered the `hex:` prefix shall be used, i.e:
 
@@ -262,8 +262,8 @@ it discovers using the provided **setup PIN code**.
 
 ```
 where:
-*<node_id>* is the user-defined ID of the node being commissioned,
-*<pin_code>* is device specific **setup PIN code** determined in step 4
+-   *<node_id>* is the user-defined ID of the node being commissioned,
+-   *<pin_code>* is device specific **setup PIN code** determined in step 4
 
 The command below will discover devices with long discriminator and try
 to pair with the first one it discovers using the provided setup code.
@@ -273,19 +273,19 @@ to pair with the first one it discovers using the provided setup code.
 
 ```
 where:
-*<node_id>* is the user-defined ID of the node being commissioned,
-*<pin_code>* and <disciminator> are device specific keys determined in step 4
+-   *<node_id>* is the user-defined ID of the node being commissioned,
+-   *<pin_code>* and <disciminator> are device specific keys determined in step 4
 
-The command below will discover devices based on the given QR code
+The command below will discover devices based on the given QR code payload
 (which devices log when they start up) and try to pair with the first one it discovers.
 
 ```
-./BUILD_PATH/chip-tool qrcode <node_id> MT:<qrcode>
+./BUILD_PATH/chip-tool qrcode <node_id> <qrcode_payload>
 
 ```
 where:
-*<node_id>* is the user-defined ID of the node being commissioned,
-*<qrcode>* is the QR code
+-   *<node_id>* is the user-defined ID of the node being commissioned,
+-   *<qrcode_payload>* is the QR code payload
 
 #### Forget the currently-commissioned device
 
@@ -294,7 +294,7 @@ where:
 
 ```
 where:
-*<node_id>* is the user-defined ID of the node which is going to be forgot by the `chip-tool`
+-   *<node_id>* is the user-defined ID of the node which is going to be forgot by the `chip-tool`
 
 #### Note
 `chip-tool` currently only supports commissioning and remembering one device at a time.
@@ -310,8 +310,8 @@ state:
 ./BUILD_PATH/chip-tool onoff toggle <node_id> <endpoint_id>
 ```
 where:
-*<node_id>* is the user-defined ID of the commissioned node
-*<endpoint_id>* is the ID of the endpoint with OnOff cluster implemented
+-   *<node_id>* is the user-defined ID of the commissioned node
+-   *<endpoint_id>* is the ID of the endpoint with OnOff cluster implemented
 
 To change the brightness of the LED, use the following command,
 with the *<level>* equal to value between 0 and 255.
@@ -320,12 +320,12 @@ with the *<level>* equal to value between 0 and 255.
 ./BUILD_PATH/chip-tool levelcontrol move-to-level <level> <transiton_time> <option_mask> <option_override> <node_id> <endpoint_id>
 ```
 where:
-*<level>* is the brightness level encoded between 0 and 255
-*<transiton_time>* is the transition time
-*<option_mask>* is the option mask
-*<option_override>* is the option override
-*<node_id>* is the user-defined ID of the commissioned node
-*<endpoint_id>* is the ID of the endpoint with LevelControl cluster implemented
+-   *<level>* is the brightness level encoded between 0 and 255
+-   *<transiton_time>* is the transition time
+-   *<option_mask>* is the option mask
+-   *<option_override>* is the option override
+-   *<node_id>* is the user-defined ID of the commissioned node
+-   *<endpoint_id>* is the ID of the endpoint with LevelControl cluster implemented
 
 In case of doubts regarding any of the options, please refer to the Matter specification.
 
@@ -342,8 +342,8 @@ cluster to read those values from the device:
 ./BUILD_PATH/chip-tool basic read software-version <node_id> <endpoint_id>
 ```
 where:
-*<node_id>* is the user-defined ID of the commissioned node
-*<endpoint_id>* is the ID of the endpoint with Basic cluster implemented
+-   *<node_id>* is the user-defined ID of the commissioned node
+-   *<endpoint_id>* is the ID of the endpoint with Basic cluster implemented
 
 Use the following command to list all available commands for Basic cluster:
 
@@ -355,12 +355,12 @@ Use the following command to list all available commands for Basic cluster:
 
 <a name="commands"></a>
 
-## List of commands and options
+## Supported commands and options
 
 ### Print all supported clusters
 
 ```
-./BUILD_PATH/chip-tool basic
+./BUILD_PATH/chip-tool
 ```
 Example output snippet:
 
@@ -386,16 +386,107 @@ Usage:
 
 ```
 
-### Choose the Bluetooth adapter
+### Get the list of commands supported for a specific cluster
+
+```
+./BUILD_PATH/chip-tool <cluster_name>
+```
+where:
+-   *<cluster_name>* is one of the avaialble clusters (listed in previous section)
+
+Example:
+```
+./BUILD_PATH/chip-tool onoff
+```
+Output:
+```bash
+[1647417645.182824][404411:404411] CHIP:TOO: Missing command name
+Usage:
+  ./chip-tool onoff command_name [param1 param2 ...]
+
+  +-------------------------------------------------------------------------------------+
+  | Commands:                                                                           |
+  +-------------------------------------------------------------------------------------+
+  | * command-by-id                                                                     |
+  | * off                                                                               |
+  | * on                                                                                |
+  | * toggle                                                                            |
+  | * off-with-effect                                                                   |
+  | * on-with-recall-global-scene                                                       |
+  | * on-with-timed-off                                                                 |
+  | * read-by-id                                                                        |
+  | * read                                                                              |
+  | * write-by-id                                                                       |
+  | * write                                                                             |
+  | * subscribe-by-id                                                                   |
+  | * subscribe                                                                         |
+  | * read-event-by-id                                                                  |
+  | * subscribe-event-by-id                                                             |
+  +-------------------------------------------------------------------------------------+
+[1647417645.183836][404411:404411] CHIP:TOO: Run command failure: ../../examples/chip-tool/commands/common/Commands.cpp:84: Error 0x0000002F
+
+```
+### Get the list of attributes supported for a specific cluster
+```
+./BUILD_PATH/chip-tool <cluster_name> read
+```
+where:
+-   *<cluster_name>* is one of the avaialble clusters (listed in previous section)
+
+Example:
+```
+./BUILD_PATH/chip-tool onoff read
+```
+Output:
+```bash
+[1647417857.913942][404444:404444] CHIP:TOO: Missing attribute name
+Usage:
+  ./chip-tool onoff read attribute-name [param1 param2 ...]
+
+  +-------------------------------------------------------------------------------------+
+  | Attributes:                                                                         |
+  +-------------------------------------------------------------------------------------+
+  | * on-off                                                                            |
+  | * global-scene-control                                                              |
+  | * on-time                                                                           |
+  | * off-wait-time                                                                     |
+  | * start-up-on-off                                                                   |
+  | * server-generated-command-list                                                     |
+  | * client-generated-command-list                                                     |
+  | * attribute-list                                                                    |
+  | * feature-map                                                                       |
+  | * cluster-revision                                                                  |
+  +-------------------------------------------------------------------------------------+
+[1647417857.914110][404444:404444] CHIP:TOO: Run command failure: ../../examples/chip-tool/commands/common/Commands.cpp:120: Error 0x0000002F
+```
+### Get the list of command options
+
+To get the list of parameters for a specific command, run the `chip-tool` executable with the target cluster name and the target command name
+
+Example:
+```
+./BUILD_PATH/chip-tool onoff on
+```
+Output:
+```bash
+[1647417976.556313][404456:404456] CHIP:TOO: InitArgs: Wrong arguments number: 0 instead of 2
+Usage:
+  ./chip-tool onoff on node-id/group-id endpoint-id-ignored-for-group-commands [--paa-trust-store-path] [--commissioner-name] [--trace_file] [--trace_log] [--ble-adapter] [--timedInteractionTimeoutMs] [--suppressResponse]
+[1647417976.556362][404456:404456] CHIP:TOO: Run command failure: ../../examples/chip-tool/commands/common/Commands.cpp:135: Error 0x0000002F
+
+```
+#### Selected command options
+
+##### Choosing the Bluetooth adapter
 `--ble-adapter <id>`
 where:
-*<id>* is the id of hci device
+-   *<id>* is the id of hci device
 Example:
 ```
 ./BUILD_PATH/chip-tool pairing ble-thread 1 hex:0e080000000000010000000300001335060004001fffe002084fe76e9a8b5edaf50708fde46f999f0698e20510d47f5027a414ffeebaefa92285cc84fa030f4f70656e5468726561642d653439630102e49c0410b92f8c7fbb4f9f3e08492ee3915fbd2f0c0402a0fff8 20202021 3840 --ble-adapter 0
 ```
 
-### Using message tracing
+##### Using message tracing
 
 Message tracing allows to capture `chip-tool` secure messages which can be used for test
 automation.
@@ -404,7 +495,7 @@ There are additional flags which control where the traces should go:
 
 `--trace_file` <filename>
 where:
-<filename> - is the file where trace data is stored in
+-   *<filename>* - is the file where trace data is stored in
 
 For example:
 
@@ -414,4 +505,55 @@ For example:
 
 `--trace_log` <onoff>
 where:
-<onoff> is [0/1] flag (when set to 1 the trace data with automation logs will be printed to the console)
+-   *<onoff>* is [0/1] flag (when set to 1 the trace data with automation logs will be printed to the console)
+
+### Running a test suite against a paired peer device
+`chip-tool` allows to run a set of tests, already compiled in the tool, against a paired Matter device.
+To get the list of available tests run:
+
+```
+./BUILD_PATH/chip-tool tests
+```
+
+To execute particular test against the paired device run:
+
+```
+./BUILD_PATH/chip-tool tests <test_name>
+```
+where:
+-   *<test_name>* is the name of a partiular test
+
+### Parsing the setup payload
+`chip-tool` offers a utility for parsing the Matter onboarding setup payload to the human readable form.
+The payload may be printed e.g. on the device console during bootup.
+
+To parse a setup code use the `payload` command with `parse-setup-payload` sub-command:
+
+```
+./BUILD_PATH/chip-tool payload parse-setup-payload <payload>
+```
+where:
+-   *<payload>* is the payload to be parsed
+
+Concrete examples:
+
+-   Setup QR code payload:
+
+```
+./BUILD_PATH/chip-tool payload parse-setup-payload MT:6FCJ142C00KA0648G00
+```
+
+-   Manual pairing code:
+
+```
+./BUILD_PATH/chip-tool payload parse-setup-payload 34970112332
+```
+### Parsing additional data payload
+
+Additional data payload can be parsed with the following command:
+
+```
+./BUILD_PATH/chip-tool parse-additional-data-payload <payload>
+```
+where:
+-   *<payload>* is the payload with additional data to be parsed
