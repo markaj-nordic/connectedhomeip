@@ -84,7 +84,7 @@ To build and run the `chip-tool`:
     ```
     As a result, a list of available clusters will show up.
     Each cluster can be used as a root of the new command
-    corresonding to ZCL data model interaction, for instance:
+    corresponding to ZCL data model interaction, for instance:
 
     ```
     ./BUILD_PATH/chip-tool pairing
@@ -203,13 +203,13 @@ and the **setup PIN code** is equal to 20202021 accordingly.
 To commission the device to the existing Thread network run the following command:
 
 ```
-./BUILD_PATH/chip-tool pairing ble-thread <node_id> hex:<operational_dataset> <pin_code> <disciminator>
+./BUILD_PATH/chip-tool pairing ble-thread <node_id> hex:<operational_dataset> <pin_code> <discriminator>
 ```
 
 where:
 *<node_id>* is the user-defined ID of the node being commissioned,
 *<operational_dataset>* is the Operational Dataset determined in step 3,
-*<pin_code>* and *<disciminator>* are device specific keys determined in step 4
+*<pin_code>* and *<discriminator>* are device specific keys determined in step 4
 
 #### Commissioning into Wi-Fi network over Bluetooth LE
 
@@ -222,7 +222,7 @@ where:
 -   *<ssid>* and *<password>* are credentials determined in step 3,
 -   *<pin_code>* and *<disciminator>* are device specific keys determined in step 4
 
-If the hexadecimal format is preffered the `hex:` prefix shall be used, i.e:
+If the hexadecimal format is preferred the `hex:` prefix shall be used, i.e:
 
 ```
 ./BUILD_PATH/chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <disciminator>
@@ -317,11 +317,11 @@ To change the brightness of the LED, use the following command,
 with the *<level>* equal to value between 0 and 255.
 
 ```
-./BUILD_PATH/chip-tool levelcontrol move-to-level <level> <transiton_time> <option_mask> <option_override> <node_id> <endpoint_id>
+./BUILD_PATH/chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask> <option_override> <node_id> <endpoint_id>
 ```
 where:
 -   *<level>* is the brightness level encoded between 0 and 255
--   *<transiton_time>* is the transition time
+-   *<transition_time>* is the transition time
 -   *<option_mask>* is the option mask
 -   *<option_override>* is the option override
 -   *<node_id>* is the user-defined ID of the commissioned node
@@ -392,7 +392,7 @@ Usage:
 ./BUILD_PATH/chip-tool <cluster_name>
 ```
 where:
--   *<cluster_name>* is one of the avaialble clusters (listed in previous section)
+-   *<cluster_name>* is one of the available clusters (listed in previous section)
 
 Example:
 ```
@@ -481,6 +481,7 @@ Usage:
 `--ble-adapter <id>`
 where:
 -   *<id>* is the id of hci device
+
 Example:
 ```
 ./BUILD_PATH/chip-tool pairing ble-thread 1 hex:0e080000000000010000000300001335060004001fffe002084fe76e9a8b5edaf50708fde46f999f0698e20510d47f5027a414ffeebaefa92285cc84fa030f4f70656e5468726561642d653439630102e49c0410b92f8c7fbb4f9f3e08492ee3915fbd2f0c0402a0fff8 20202021 3840 --ble-adapter 0
@@ -521,11 +522,11 @@ To execute particular test against the paired device run:
 ./BUILD_PATH/chip-tool tests <test_name>
 ```
 where:
--   *<test_name>* is the name of a partiular test
+-   *<test_name>* is the name of a particular test
 
 ### Parsing the setup payload
 `chip-tool` offers a utility for parsing the Matter onboarding setup payload to the human readable form.
-The payload may be printed e.g. on the device console during bootup.
+The payload may be printed e.g. on the device console during boot-up.
 
 To parse a setup code use the `payload` command with `parse-setup-payload` sub-command:
 
