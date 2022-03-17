@@ -214,18 +214,18 @@ where:
 #### Commissioning into Wi-Fi network over Bluetooth LE
 
 ```
-./BUILD_PATH/chip-tool pairing ble-wifi <node_id> <ssid> <password> <pin_code> <disciminator>
+./BUILD_PATH/chip-tool pairing ble-wifi <node_id> <ssid> <password> <pin_code> <discriminator>
 
 ```
 where:
 -   *<node_id\>* is the user-defined ID of the node being commissioned,
 -   *<ssid\>* and *<password\>* are credentials determined in step 3,
--   *<pin_code\>* and *<disciminator\>* are device specific keys determined in step 4
+-   *<pin_code\>* and *<discriminator\>* are device specific keys determined in step 4
 
 If the hexadecimal format is preferred the `hex:` prefix shall be used, i.e:
 
 ```
-./BUILD_PATH/chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <disciminator>
+./BUILD_PATH/chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <discriminator>
 
 ```
 The *<node_id>* can be simply provided as a hexadecimal value with `0x` prefix.
@@ -269,12 +269,12 @@ The command below will discover devices with long discriminator and try
 to pair with the first one it discovers using the provided setup code.
 
 ```
-./BUILD_PATH/chip-tool pairing onnetwork-long <node_id> <pin_code> <disciminator>
+./BUILD_PATH/chip-tool pairing onnetwork-long <node_id> <pin_code> <discriminator>
 
 ```
 where:
 -   *<node_id\>* is the user-defined ID of the node being commissioned,
--   *<pin_code\>* and *<disciminator\>* are device specific keys determined in step 4
+-   *<pin_code\>* and *<discriminator\>* are device specific keys determined in step 4
 
 The command below will discover devices based on the given QR code payload
 (which devices log when they start up) and try to pair with the first one it discovers.
@@ -431,7 +431,7 @@ Usage:
 ./BUILD_PATH/chip-tool <cluster_name> read
 ```
 where:
--   *<cluster_name\>* is one of the avaialble clusters (listed in previous section)
+-   *<cluster_name\>* is one of the available clusters (listed in previous section)
 
 Example:
 ```
@@ -482,7 +482,7 @@ Usage:
 --ble-adapter <id>
 ```
 where:
--   *<id\>* is the id of hci device
+-   *<id\>* is the id of HCI device
 
 Example:
 ```
@@ -561,5 +561,100 @@ Additional data payload can be parsed with the following command:
 where:
 -   *<payload\>* is the payload with additional data to be parsed
 
+### Discover actions
+The command `discover` can be used to resolve node ID and discover
+available Matter devices. The following command will print available
+sub-commands of `discover`:
 
-// TODO: pairing, discover, acl, general claster commuinication (read, write, subscribe), binding
+```
+./BUILD_PATH/chip-tool discover
+```
+
+#### Resolving node name
+To resolve DNS-SD name corresponding with the given Node ID and update
+address of the node in the device controller use the following command:
+```
+./BUILD_PATH/chip-tool discover resolve <node_id> <fabric_id>
+```
+where:
+-   *<node_id\>* is the ID of node to be resolved
+-   *<fabric_id\>* is the ID of the fabric where the node belongs to
+
+#### Discovering available Matter accesory devices
+To discover all Matter commissionables available in the operation area use the following command:
+```
+./BUILD_PATH/chip-tool discover commissionables
+```
+
+#### Discovering available Matter commisionners
+To discover all Matter commisionners available in the operation area use the following command:
+```
+./BUILD_PATH/chip-tool discover commisionners
+```
+
+### Pairing
+The `pairing` option supports different means regarding
+Matter device commissioning procedure.
+
+Thread and Wi-Fi commissioning usecases were described in
+[Using chip-tool for Matter accessory testing](#using) paragraph.
+
+To list all `pairing` sub-commands use the following command:
+```
+./BUILD_PATH/chip-tool pairing
+```
+
+### Interacting with ZCL clusters
+As mentioned in [Using chip-tool for Matter accessory testing](#using) paragraph,
+executing `chip-tool` with particular cluster name shall
+list all perations supported for this cluster:
+```
+./BUILD_PATH/chip-tool <cluster_name>
+```
+Example:
+```
+./BUILD_PATH/chip-tool binding
+```
+Output:
+```bash
+[1647502596.396184][411686:411686] CHIP:TOO: Missing command name
+Usage:
+  ./chip-tool binding command_name [param1 param2 ...]
+
+  +-------------------------------------------------------------------------------------+
+  | Commands:                                                                           |
+  +-------------------------------------------------------------------------------------+
+  | * command-by-id                                                                     |
+  | * read-by-id                                                                        |
+  | * read                                                                              |
+  | * write-by-id                                                                       |
+  | * write                                                                             |
+  | * subscribe-by-id                                                                   |
+  | * subscribe                                                                         |
+  | * read-event-by-id                                                                  |
+  | * subscribe-event-by-id                                                             |
+  +-------------------------------------------------------------------------------------+
+[1647502596.396299][411686:411686] CHIP:TOO: Run command failure: ../../examples/chip-tool/commands/common/Commands.cpp:84: Error 0x0000002F
+```
+According to above list, the `binding` cluster supports operations such as e.g. read or write.
+Attributes from that cluster can also be subscribed by the controller,
+which means that the `chip-tool` will receive notifications, for instance:
+in case the attribute value is changed or a particular event happens.
+
+#### Examples:
+-   Writing exemplary ACL (Access Control List) to the `accesscontrol` cluster:
+```
+./BUILD_PATH/chip-tool accesscontrol write acl '[{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [112233], "targets": null}, {"fabricIndex": 1, "privilege": 3, "authMode": 2, "subjects": [<node1_id>], "targets": [{"cluster": 6, "endpoint": 1, "deviceType": null}, {"cluster": 8, "endpoint": 1, "deviceType": null}]}]' <node_id> 0
+```
+where:
+-   *<node1_id\>* is the ID of the node which requests a permission to send commands to <node2_id\>*
+-   *<node2_id\>* is the ID of the node which is supposed to receive commands from <node1_id\>*
+
+-   Adding a binding table to the `binding` cluster:
+```
+./BUILD_PATH/chip-tool binding write binding '[{"fabricIndex": 1, "node": <node1_id>, "endpoint": 1, "cluster": 6}, {"fabricIndex": 1, "node": <node_id>, "endpoint": 1, "cluster": 8}]' <node2_id> 1
+```
+where:
+where:
+-   *<node1_id\>* is the ID of the first node
+-   *<node2_id\>* is the ID of the second node
