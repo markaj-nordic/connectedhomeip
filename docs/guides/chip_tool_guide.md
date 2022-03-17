@@ -580,23 +580,23 @@ where:
 -   *<node_id\>* is the ID of node to be resolved
 -   *<fabric_id\>* is the ID of the fabric where the node belongs to
 
-#### Discovering available Matter accesory devices
+#### Discovering available Matter accessory devices
 To discover all Matter commissionables available in the operation area use the following command:
 ```
 ./BUILD_PATH/chip-tool discover commissionables
 ```
 
-#### Discovering available Matter commisionners
-To discover all Matter commisionners available in the operation area use the following command:
+#### Discovering available Matter commissioners
+To discover all Matter commissioners available in the operation area use the following command:
 ```
-./BUILD_PATH/chip-tool discover commisionners
+./BUILD_PATH/chip-tool discover commissioners
 ```
 
 ### Pairing
 The `pairing` option supports different means regarding
 Matter device commissioning procedure.
 
-Thread and Wi-Fi commissioning usecases were described in
+Thread and Wi-Fi commissioning use-cases were described in
 [Using chip-tool for Matter accessory testing](#using) paragraph.
 
 To list all `pairing` sub-commands use the following command:
@@ -607,7 +607,7 @@ To list all `pairing` sub-commands use the following command:
 ### Interacting with ZCL clusters
 As mentioned in [Using chip-tool for Matter accessory testing](#using) paragraph,
 executing `chip-tool` with particular cluster name shall
-list all perations supported for this cluster:
+list all operations supported for this cluster:
 ```
 ./BUILD_PATH/chip-tool <cluster_name>
 ```
@@ -654,7 +654,6 @@ where:
 ```
 ./BUILD_PATH/chip-tool binding write binding '[{"fabricIndex": 1, "node": <node1_id>, "endpoint": 1, "cluster": 6}, {"fabricIndex": 1, "node": <node_id>, "endpoint": 1, "cluster": 8}]' <node2_id> 1
 ```
-where:
 where:
 -   *<node1_id\>* is the ID of the first node
 -   *<node2_id\>* is the ID of the second node
