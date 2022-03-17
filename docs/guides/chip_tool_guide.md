@@ -739,23 +739,31 @@ instance: in case the attribute value is changed or a particular event happens.
 ```
 
 where:
+
 -   _<acl_data\>_ is the ACL data formatted as JSON array
 -   _<node_id\>_ is the ID of the node which is going to receive ACL
 -   _<endpoint_id\>_ is the ID of the enpoint on which the `accesscontrol`
-cluster is implemented
+    cluster is implemented
 
-More infomation regarding ACL can be found in the [Access Control Guide](https://github.com/ArekBalysNordic/connectedhomeip/blob/master/docs/guides/access-control-guide.md)
+More infomation regarding ACL can be found in the
+[Access Control Guide](https://github.com/ArekBalysNordic/connectedhomeip/blob/master/docs/guides/access-control-guide.md)
 
 ##### Adding a binding table to the `binding` cluster:
 
-Binding describes a relationship between the device that contains binding cluster and end device. To allow the end device to receive commands form bonded device a proper ACL must be added. After binding process a bonded device contains information about connected device such as IPv6 address and a route to endpoint in a Matter network. This allows to send command directly from bonded accessory to the end device device without using border router as a proxy.
+Binding describes a relationship between the device that contains binding
+cluster and end device. To allow the end device to receive commands form bonded
+device a proper ACL must be added. After binding process a bonded device
+contains information about connected device such as IPv6 address and a route to
+endpoint in a Matter network. This allows to send command directly from bonded
+accessory to the end device device without using border router as a proxy.
 
 ```
 ./BUILD_PATH/chip-tool binding write binding  <binding_data> <node_id> <endpoint_id>
 ```
 
 where:
+
 -   _<binding_data\>_ is the binding data formatted as JSON array
 -   _<node_id\>_ is the ID of the node which is going to receive binding
--   _<endpoint_id\>_ is the ID of the enpoint on which the `binding`
-cluster is implemented
+-   _<endpoint_id\>_ is the ID of the enpoint on which the `binding` cluster is
+    implemented
