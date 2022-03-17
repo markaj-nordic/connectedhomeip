@@ -174,10 +174,10 @@ For Wi-Fi, the steps required to determine the SSID and password may vary
 depending on the setup. For instance, you might need to contact your local
 Wi-Fi network administrator.
 
-### Step 4: Determine Matter accessory device's **discriminator** and **setup PIN code**
+### Step 4: Determine Matter accessory device's *discriminator* and *setup PIN code*
 
-The controller uses a 12-bit value called **discriminator** to discern between
-multiple commissionable device advertisements, as well as a 27-bit **setup PIN code**
+The controller uses a 12-bit value called *discriminator* to discern between
+multiple commissionable device advertisements, as well as a 27-bit *setup PIN code*
 to authenticate the device. You can find these values in the logging
 terminal of the device (for instance, UART). For example:
 
@@ -193,8 +193,8 @@ I: 278 [DL] Manufacturing Date: (not set)
 I: 281 [DL] Device Type: 65535 (0xFFFF)
 ```
 
-In above printout, the **discriminator** is 3840 (0xF00)
-and the **setup PIN code** is equal to 20202021 accordingly.
+In above printout, the *discriminator* is 3840 (0xF00)
+and the *setup PIN code* is equal to 20202021 accordingly.
 
 ### Step 5: Commission Matter accessory device into existing network
 
@@ -207,9 +207,9 @@ To commission the device to the existing Thread network run the following comman
 ```
 
 where:
-*<node_id>* is the user-defined ID of the node being commissioned,
-*<operational_dataset>* is the Operational Dataset determined in step 3,
-*<pin_code>* and *<discriminator>* are device specific keys determined in step 4
+-   *<node_id\>* is the user-defined ID of the node being commissioned,
+-   *<operational_dataset\>* is the Operational Dataset determined in step 3,
+-   *<pin_code\>* and *<discriminator\>* are device specific keys determined in step 4
 
 #### Commissioning into Wi-Fi network over Bluetooth LE
 
@@ -218,9 +218,9 @@ where:
 
 ```
 where:
--   *<node_id>* is the user-defined ID of the node being commissioned,
--   *<ssid>* and *<password>* are credentials determined in step 3,
--   *<pin_code>* and *<disciminator>* are device specific keys determined in step 4
+-   *<node_id\>* is the user-defined ID of the node being commissioned,
+-   *<ssid\>* and *<password\>* are credentials determined in step 3,
+-   *<pin_code\>* and *<disciminator\>* are device specific keys determined in step 4
 
 If the hexadecimal format is preferred the `hex:` prefix shall be used, i.e:
 
@@ -255,15 +255,15 @@ the following stages:
 #### Commissioning over IP
 
 The command below will discover devices and try to pair with the first one
-it discovers using the provided **setup PIN code**.
+it discovers using the provided *setup PIN code*.
 
 ```
 ./BUILD_PATH/chip-tool pairing onnetwork <node_id> <pin_code>
 
 ```
 where:
--   *<node_id>* is the user-defined ID of the node being commissioned,
--   *<pin_code>* is device specific **setup PIN code** determined in step 4
+-   *<node_id\>* is the user-defined ID of the node being commissioned,
+-   *<pin_code\>* is device specific *setup PIN code* determined in step 4
 
 The command below will discover devices with long discriminator and try
 to pair with the first one it discovers using the provided setup code.
@@ -273,8 +273,8 @@ to pair with the first one it discovers using the provided setup code.
 
 ```
 where:
--   *<node_id>* is the user-defined ID of the node being commissioned,
--   *<pin_code>* and <disciminator> are device specific keys determined in step 4
+-   *<node_id\>* is the user-defined ID of the node being commissioned,
+-   *<pin_code\>* and *<disciminator\>* are device specific keys determined in step 4
 
 The command below will discover devices based on the given QR code payload
 (which devices log when they start up) and try to pair with the first one it discovers.
@@ -284,8 +284,8 @@ The command below will discover devices based on the given QR code payload
 
 ```
 where:
--   *<node_id>* is the user-defined ID of the node being commissioned,
--   *<qrcode_payload>* is the QR code payload
+-   *<node_id\>* is the user-defined ID of the node being commissioned,
+-   *<qrcode_payload\>* is the QR code payload
 
 #### Forget the currently-commissioned device
 
@@ -294,7 +294,7 @@ where:
 
 ```
 where:
--   *<node_id>* is the user-defined ID of the node which is going to be forgot by the `chip-tool`
+-   *<node_id\>* is the user-defined ID of the node which is going to be forgot by the `chip-tool`
 
 #### Note
 `chip-tool` currently only supports commissioning and remembering one device at a time.
@@ -310,22 +310,22 @@ state:
 ./BUILD_PATH/chip-tool onoff toggle <node_id> <endpoint_id>
 ```
 where:
--   *<node_id>* is the user-defined ID of the commissioned node
--   *<endpoint_id>* is the ID of the endpoint with OnOff cluster implemented
+-   *<node_id\>* is the user-defined ID of the commissioned node
+-   *<endpoint_id\>* is the ID of the endpoint with OnOff cluster implemented
 
 To change the brightness of the LED, use the following command,
-with the *<level>* equal to value between 0 and 255.
+with the *<level\>* equal to value between 0 and 255.
 
 ```
 ./BUILD_PATH/chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask> <option_override> <node_id> <endpoint_id>
 ```
 where:
--   *<level>* is the brightness level encoded between 0 and 255
--   *<transition_time>* is the transition time
--   *<option_mask>* is the option mask
--   *<option_override>* is the option override
--   *<node_id>* is the user-defined ID of the commissioned node
--   *<endpoint_id>* is the ID of the endpoint with LevelControl cluster implemented
+-   *<level\>* is the brightness level encoded between 0 and 255
+-   *<transition_time\>* is the transition time
+-   *<option_mask\>* is the option mask
+-   *<option_override\>* is the option override
+-   *<node_id\>* is the user-defined ID of the commissioned node
+-   *<endpoint_id\>* is the ID of the endpoint with LevelControl cluster implemented
 
 In case of doubts regarding any of the options, please refer to the Matter specification.
 
@@ -342,8 +342,8 @@ cluster to read those values from the device:
 ./BUILD_PATH/chip-tool basic read software-version <node_id> <endpoint_id>
 ```
 where:
--   *<node_id>* is the user-defined ID of the commissioned node
--   *<endpoint_id>* is the ID of the endpoint with Basic cluster implemented
+-   *<node_id\>* is the user-defined ID of the commissioned node
+-   *<endpoint_id\>* is the ID of the endpoint with Basic cluster implemented
 
 Use the following command to list all available commands for Basic cluster:
 
@@ -392,7 +392,7 @@ Usage:
 ./BUILD_PATH/chip-tool <cluster_name>
 ```
 where:
--   *<cluster_name>* is one of the available clusters (listed in previous section)
+-   *<cluster_name\>* is one of the available clusters (listed in previous section)
 
 Example:
 ```
@@ -431,7 +431,7 @@ Usage:
 ./BUILD_PATH/chip-tool <cluster_name> read
 ```
 where:
--   *<cluster_name>* is one of the avaialble clusters (listed in previous section)
+-   *<cluster_name\>* is one of the avaialble clusters (listed in previous section)
 
 Example:
 ```
@@ -482,7 +482,7 @@ Usage:
 --ble-adapter <id>
 ```
 where:
--   *<id>* is the id of hci device
+-   *<id\>* is the id of hci device
 
 Example:
 ```
@@ -496,11 +496,9 @@ automation.
 
 There are additional flags which control where the traces should go:
 
-```
---trace_file <filename>
-```
+`--trace_file <filename>`
 where:
--   *<filename>* - is the file where trace data is stored in
+-   *<filename\>* - is the file where trace data is stored in
 
 For example:
 
@@ -508,11 +506,9 @@ For example:
 ./BUILD_PATH/chip-tool pairing <pairing_options> --trace_file <filename>
 ```
 
-```
---trace_log <onoff>
-```
+`--trace_log <onoff>`
 where:
--   *<onoff>* is [0/1] flag (when set to 1 the trace data with automation logs will be printed to the console)
+-   *<onoff\>* is [0/1] flag (when set to 1 the trace data with automation logs will be printed to the console)
 
 ### Running a test suite against a paired peer device
 `chip-tool` allows to run a set of tests, already compiled in the tool, against a paired Matter device.
@@ -528,7 +524,7 @@ To execute particular test against the paired device run:
 ./BUILD_PATH/chip-tool tests <test_name>
 ```
 where:
--   *<test_name>* is the name of a particular test
+-   *<test_name\>* is the name of a particular test
 
 ### Parsing the setup payload
 `chip-tool` offers a utility for parsing the Matter onboarding setup payload to the human readable form.
@@ -540,7 +536,7 @@ To parse a setup code use the `payload` command with `parse-setup-payload` sub-c
 ./BUILD_PATH/chip-tool payload parse-setup-payload <payload>
 ```
 where:
--   *<payload>* is the payload to be parsed
+-   *<payload\>* is the payload to be parsed
 
 Concrete examples:
 
@@ -563,7 +559,7 @@ Additional data payload can be parsed with the following command:
 ./BUILD_PATH/chip-tool parse-additional-data-payload <payload>
 ```
 where:
--   *<payload>* is the payload with additional data to be parsed
+-   *<payload\>* is the payload with additional data to be parsed
 
 
 // TODO: pairing, discover, acl, general claster commuinication (read, write, subscribe), binding
