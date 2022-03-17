@@ -113,8 +113,8 @@ on the device side and may be different for your accessory.
 
 ### Step 1: Prepare the Matter accessory.
 
-This tutorial is using the (Matter lighting-app example)
-[https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app]
+This tutorial is using the [Matter lighting-app example]
+(https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
 with the Bluetooth LE commissioning. However, you can adapt this
 procedure to other available Matter examples.
 
