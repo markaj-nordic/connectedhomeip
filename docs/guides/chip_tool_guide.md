@@ -732,26 +732,30 @@ instance: in case the attribute value is changed or a particular event happens.
 
 #### Examples:
 
--   Writing exemplary ACL (Access Control List) to the `accesscontrol` cluster:
+##### Writing ACL (Access Control List) to the `accesscontrol` cluster:
 
 ```
-./BUILD_PATH/chip-tool accesscontrol write acl '[{"fabricIndex": 1, "privilege": 5, "authMode": 2, "subjects": [112233], "targets": null}, {"fabricIndex": 1, "privilege": 3, "authMode": 2, "subjects": [<node1_id>], "targets": [{"cluster": 6, "endpoint": 1, "deviceType": null}, {"cluster": 8, "endpoint": 1, "deviceType": null}]}]' <node_id> 0
-```
-
-where:
-
--   _<node1_id\>_ is the ID of the node which requests a permission to send
-    commands to <node2_id\>\*
--   _<node2_id\>_ is the ID of the node which is supposed to receive commands
-    from <node1_id\>\*
-
--   Adding a binding table to the `binding` cluster:
-
-```
-./BUILD_PATH/chip-tool binding write binding '[{"fabricIndex": 1, "node": <node1_id>, "endpoint": 1, "cluster": 6}, {"fabricIndex": 1, "node": <node_id>, "endpoint": 1, "cluster": 8}]' <node2_id> 1
+./BUILD_PATH/chip-tool accesscontrol write acl <acl_data> <node_id> <endpoint_id>
 ```
 
 where:
+-   _<acl_data\>_ is the ACL data formatted as JSON array
+-   _<node_id\>_ is the ID of the node which is going to receive ACL
+-   _<endpoint_id\>_ is the ID of the enpoint on which the `accesscontrol`
+cluster is implemented
 
--   _<node1_id\>_ is the ID of the first node
--   _<node2_id\>_ is the ID of the second node
+More infomation regarding ACL can be found in the [Access Control Guide](https://github.com/ArekBalysNordic/connectedhomeip/blob/master/docs/guides/access-control-guide.md)
+
+##### Adding a binding table to the `binding` cluster:
+
+Binding describes a relationship between the device that contains binding cluster and end device. To allow the end device to receive commands form bonded device a proper ACL must be added. After binding process a bonded device contains information about connected device such as IPv6 address and a route to endpoint in a Matter network. This allows to send command directly from bonded accessory to the end device device without using border router as a proxy.
+
+```
+./BUILD_PATH/chip-tool binding write binding  <binding_data> <node_id> <endpoint_id>
+```
+
+where:
+-   _<binding_data\>_ is the binding data formatted as JSON array
+-   _<node_id\>_ is the ID of the node which is going to receive binding
+-   _<endpoint_id\>_ is the ID of the enpoint on which the `binding`
+cluster is implemented
