@@ -1,15 +1,24 @@
 # Working with CHIP Tool
 
-The CHIP Tool (`chip-tool`) is a tool that allows to commission a Matter device
-into the network and to communicate with it using the Zigbee Cluster Library
-(ZCL) messages.
+The CHIP Tool (`chip-tool`) is a Matter controller implementation
+that allows to commission a Matter device into the network and to
+communicate with it using Matter messages which may encode Data Model
+actions, such as cluster commands.
+It also provides other Matter specific utilities.
 
 <hr>
 
 -   [Source files](#source)
 -   [Building chip-tool](#building)
--   [Using chip-tool for Matter accessory testing](#using)
+-   [Using chip-tool for Matter device testing](#using)
 -   [Supported commands and options](#commands)
+
+## Note
+
+`chip-tool` currently only supports commissioning and remembering one device at
+a time. The configuration state is cached in `/tmp/chip_tool_config.ini`;
+deleting this and other .ini files in `/tmp` can sometimes resolve issues
+related to stale configuration.
 
 <hr>
 
@@ -26,10 +35,10 @@ directory.
 
 ## Building
 
-Before you can use the `chip-tool`, you must compile it from the source on Linux
-(amd64 / aarch64) or macOS.
+Before you can use the `chip-tool`, you must compile it from source on Linux
+(amd64/aarch64) or macOS. If you want to build on Raspberry Pi, it must run Ubuntu 20.04.
 
-> To ensure compatibility, build the `chip-tool` and the Matter device from the
+> To ensure compatibility, always build the `chip-tool` and the Matter device from the
 > same revision of the connectedhomeip repository.
 
 To build and run the `chip-tool`:
@@ -44,8 +53,8 @@ To build and run the `chip-tool`:
     sudo apt-get install git gcc g++ python pkg-config libssl-dev libdbus-1-dev libglib2.0-dev libavahi-client-dev ninja-build python3-venv python3-dev python3-pip unzip libgirepository1.0-dev libcairo2-dev bluez
     ```
 
-    If the `chip-tool` is built on a Raspberry Pi, install additional packages
-    and reboot the device:
+    If the `chip-tool` is built on a Raspberry Pi, you may need to install
+    additional packages and reboot the device:
 
     ```
     sudo apt-get install pi-bluetooth
@@ -78,72 +87,59 @@ To build and run the `chip-tool`:
 
     `BUILD_PATH` specifies where the target binaries shall to be placed.
 
-6. To run the tool execute the following command:
+6. To check if the `chip-tool` works execute the following command from the `BUILD_PATH`
 
     ```
-    ./BUILD_PATH/chip-tool
+    $ chip-tool
     ```
 
-    As a result, a list of available clusters will show up. Each cluster can be
-    used as a root of the new command corresponding to ZCL data model
-    interaction, for instance:
-
-    ```
-    ./BUILD_PATH/chip-tool pairing
-    ```
-
-    will print the list of sub-operations available for `pairing` cluster.
-
-    The following is one of the possible final commands which requires
-    particular command line arguments:
-
-    ```
-    ./BUILD_PATH/chip-tool pairing ble-thread
-    ```
-
-    Execution of above line will print an error and hint the proper list of
-    parameters which must be provided to run ZCL operation.
+    As a result, the `chip-tool` shall print all available commands and denote them as _Clusters_.
+    However please note, that actually not all listed commands correspond to the _clusters_
+    in the Data Model context (e.g. pairing, discover). Each listed command can however
+    become a root of the new _complex_ command by appending it with further sub-commands.
+    Examples of specific commands and their use cases are described in next steps.
 
 <hr>
 
 <a name="using"></a>
 
-## Using `chip-tool` for Matter accessory testing
+## Using `chip-tool` for Matter device testing
 
-This section describes how to use `chip-tool` to test the Matter accessory.
+This section describes how to use `chip-tool` to test the Matter device.
 Below steps depend on the application clusters that you implemented on the
-device side and may be different for your accessory.
+device side and may be different for your device.
 
-### Step 1: Prepare the Matter accessory.
+### Step 1: Prepare the Matter device
 
 This tutorial is using the
 [Matter lighting-app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
 with the Bluetooth LE commissioning. However, you can adapt this procedure to
 other available Matter examples.
 
-Build and program the device with the Matter accessory firmware by following the
+Build and program the device with the Matter device firmware by following the
 example's documentation.
 
-### Step 2: Enable Bluetooth LE advertising on Matter accessory device.
+### Step 2: Enable Bluetooth LE advertising on Matter device
 
 Some examples are configured to advertise automatically on boot. Other examples
 require physical trigger, for example pushing a button. Follow the documentation
-of the Matter accessory example to learn how Bluetooth LE advertising is enabled
+of the Matter device example to learn how Bluetooth LE advertising is enabled
 for the given example.
 
 ### Step 3: Determine network pairing credentials
 
-You must provide the controller with network credentials that will be further
+You must provide the `chip-tool` with network credentials that will be further
 used in the device commissioning procedure to configure the device with a
 network interface, such as Thread or Wi-Fi.
 
 #### Thread network credentials
 
 Fetch and store the current Active Operational Dataset from the Thread Border
-Router. Depending on if the Thread Border Router is running on Docker or
-natively on Raspberry Pi, execute the following commands:
+Router. This step may vary depending on the Thread Border Router implementation.
+If using the Open Thread Border Router (OTBR) this data can be retrieved
+in the following manner:
 
--   For Docker:
+-   For OTBR running in Docker:
 
     ```
     sudo docker exec -it otbr sh -c "sudo ot-ctl dataset active -x"
@@ -151,7 +147,7 @@ natively on Raspberry Pi, execute the following commands:
     Done
     ```
 
--   For native installation:
+-   For OTBR native installation:
 
     ```
     sudo ot-ctl dataset active -x
@@ -162,13 +158,13 @@ natively on Raspberry Pi, execute the following commands:
 #### Wi-Fi network credentials
 
 The following Wi-Fi network credentials must be determined to commission the
-Matter accessory device to the Wi-Fi network in next steps:
+Matter device to the Wi-Fi network in next steps:
 
 -   Wi-Fi SSID
 -   Wi-Fi password
 
 Matter specification does not define how the Thread or Wi-Fi credentials are
-obtained by Controller.
+obtained by controller.
 
 For example, for Thread, instead of fetching datasets directly from the Thread
 Border Router, you might also use a different out-of-band method.
@@ -177,9 +173,9 @@ For Wi-Fi, the steps required to determine the SSID and password may vary
 depending on the setup. For instance, you might need to contact your local Wi-Fi
 network administrator.
 
-### Step 4: Determine Matter accessory device's _discriminator_ and _setup PIN code_
+### Step 4: Determine Matter device's _discriminator_ and _setup PIN code_
 
-The controller uses a 12-bit value called _discriminator_ to discern between
+Matter uses a 12-bit value called _discriminator_ to discern between
 multiple commissionable device advertisements, as well as a 27-bit _setup PIN
 code_ to authenticate the device. You can find these values in the logging
 terminal of the device (for instance, UART). For example:
@@ -199,7 +195,10 @@ I: 281 [DL] Device Type: 65535 (0xFFFF)
 In above printout, the _discriminator_ is 3840 (0xF00) and the _setup PIN code_
 is equal to 20202021 accordingly.
 
-### Step 5: Commission Matter accessory device into existing network
+### Step 5: Commission Matter device into existing network
+
+Before the communication with Matter device is possible it must be first commissioned
+(joined) to the existing Thread or Wi-Fi network.
 
 #### Commissioning into Thread network over Bluetooth LE
 
@@ -207,7 +206,7 @@ To commission the device to the existing Thread network run the following
 command:
 
 ```
-./BUILD_PATH/chip-tool pairing ble-thread <node_id> hex:<operational_dataset> <pin_code> <discriminator>
+$ chip-tool pairing ble-thread <node_id> hex:<operational_dataset> <pin_code> <discriminator>
 ```
 
 where:
@@ -219,8 +218,11 @@ where:
 
 #### Commissioning into Wi-Fi network over Bluetooth LE
 
+To commission the device to the existing Wi-Fi network run the following
+command:
+
 ```
-./BUILD_PATH/chip-tool pairing ble-wifi <node_id> <ssid> <password> <pin_code> <discriminator>
+$ chip-tool pairing ble-wifi <node_id> <ssid> <password> <pin_code> <discriminator>
 
 ```
 
@@ -234,42 +236,31 @@ where:
 If the hexadecimal format is preferred the `hex:` prefix shall be used, i.e:
 
 ```
-./BUILD_PATH/chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <discriminator>
+$ chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <discriminator>
 
 ```
 
 The _<node_id>_ can be simply provided as a hexadecimal value with `0x` prefix.
 
-After connecting the device over Bluetooth LE, the controller will go through
-the following stages:
-
--   Establishing a secure connection that completes the PASE
-    (Password-Authenticated Session Establishment) session using SPAKE2+
-    protocol and results in printing the following log:
-
-        ```
-        Secure Session to Device Established
-        ```
-
--   Providing the device with a network interface using ZCL Network
-    Commissioning cluster commands, and the network pairing credentials from
-    step 3
--   Discovering the IPv6 address of the Matter accessory using the SRP (Service
-    Registration Protocol) for Thread devices, or the mDNS (Multicast Domain
-    Name System) protocol for Wi-Fi or Ethernet devices. It results in printing
-    log that indicates that the node address has been updated. The IPv6 address
-    of the device is cached in the controller for later usage.
--   Closing the Bluetooth LE connection, as the commissioning process is
-    finished and the `chip-tool` is now using only the IPv6 traffic to reach the
-    device.
+After connecting the device over Bluetooth LE, the controller will print the following log:
+```
+Secure Session to Device Established
+```
+which means that the PASE (Password-Authenticated Session Establishment) session using SPAKE2+
+protocol is established.
 
 #### Commissioning over IP
+
+This option is possible when the Matter device is already present in IP network
+but it has not been commissioned to Matter network yet.
+
+##### Commissioning with setup PIN code
 
 The command below will discover devices and try to pair with the first one it
 discovers using the provided _setup PIN code_.
 
 ```
-./BUILD_PATH/chip-tool pairing onnetwork <node_id> <pin_code>
+$ chip-tool pairing onnetwork <node_id> <pin_code>
 
 ```
 
@@ -278,11 +269,13 @@ where:
 -   _<node_id\>_ is the user-defined ID of the node being commissioned,
 -   _<pin_code\>_ is device specific _setup PIN code_ determined in step 4
 
+##### Commissioning with long discriminator
+
 The command below will discover devices with long discriminator and try to pair
 with the first one it discovers using the provided setup code.
 
 ```
-./BUILD_PATH/chip-tool pairing onnetwork-long <node_id> <pin_code> <discriminator>
+$ chip-tool pairing onnetwork-long <node_id> <pin_code> <discriminator>
 
 ```
 
@@ -292,12 +285,14 @@ where:
 -   _<pin_code\>_ and _<discriminator\>_ are device specific keys determined in
     step 4
 
+##### Commissioning with QR code payload
+
 The command below will discover devices based on the given QR code payload
 (which devices log when they start up) and try to pair with the first one it
 discovers.
 
 ```
-./BUILD_PATH/chip-tool qrcode <node_id> <qrcode_payload>
+$ chip-tool qrcode <node_id> <qrcode_payload>
 
 ```
 
@@ -308,8 +303,11 @@ where:
 
 #### Forget the currently-commissioned device
 
+The following command removes the device of given node ID from the list
+of commissioned Matter devices.
+
 ```
-./BUILD_PATH/chip-tool pairing unpair <node_id>
+$ chip-tool pairing unpair <node_id>
 
 ```
 
@@ -318,20 +316,13 @@ where:
 -   _<node_id\>_ is the user-defined ID of the node which is going to be forgot
     by the `chip-tool`
 
-#### Note
-
-`chip-tool` currently only supports commissioning and remembering one device at
-a time. The configuration state is cached in `/tmp/chip_tool_config.ini`;
-deleting this and other .ini files in `/tmp` can sometimes resolve issues
-related to stale configuration.
-
-### Step 6: Control application ZCL clusters.
+### Step 6: Control application Data Model clusters
 
 For the lighting-app example, execute the following command to toggle the LED
 state:
 
 ```
-./BUILD_PATH/chip-tool onoff toggle <node_id> <endpoint_id>
+$ chip-tool onoff toggle <node_id> <endpoint_id>
 ```
 
 where:
@@ -343,7 +334,7 @@ To change the brightness of the LED, use the following command, with the
 _<level\>_ equal to value between 0 and 255.
 
 ```
-./BUILD_PATH/chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask> <option_override> <node_id> <endpoint_id>
+$ chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask> <option_override> <node_id> <endpoint_id>
 ```
 
 where:
@@ -356,20 +347,17 @@ where:
 -   _<endpoint_id\>_ is the ID of the endpoint with LevelControl cluster
     implemented
 
-In case of doubts regarding any of the options, please refer to the Matter
-specification.
+### Step 7: Read basic information out of the Matter device
 
-### Step 7: Read basic information out of the accessory.
-
-Every Matter accessory device supports a Basic Cluster, which maintains
+Every Matter device supports a Basic Cluster, which maintains
 collection of attributes that a controller can obtain from a device, such as the
 vendor name, the product name, or software version. Use `read` command on
 `basic` cluster to read those values from the device:
 
 ```
-./BUILD_PATH/chip-tool basic read vendor-name <node_id> <endpoint_id>
-./BUILD_PATH/chip-tool basic read product-name <node_id> <endpoint_id>
-./BUILD_PATH/chip-tool basic read software-version <node_id> <endpoint_id>
+$ chip-tool basic read vendor-name <node_id> <endpoint_id>
+$ chip-tool basic read product-name <node_id> <endpoint_id>
+$ chip-tool basic read software-version <node_id> <endpoint_id>
 ```
 
 where:
@@ -380,7 +368,7 @@ where:
 Use the following command to list all available commands for Basic cluster:
 
 ```
-./BUILD_PATH/chip-tool basic
+$ chip-tool basic
 ```
 
 <hr>
@@ -389,10 +377,15 @@ Use the following command to list all available commands for Basic cluster:
 
 ## Supported commands and options
 
+This section contains a general list if various `chip-tool` commands and options
+not limited to commissioning procedure and cluster interaction.
+
 ### Print all supported clusters
 
+To print all clusters supported by the `chip-tool` run the following command:
+
 ```
-./BUILD_PATH/chip-tool
+$ chip-tool
 ```
 
 Example output snippet:
@@ -421,8 +414,10 @@ Usage:
 
 ### Get the list of commands supported for a specific cluster
 
+To print the list of commands supported by a specific cluster run:
+
 ```
-./BUILD_PATH/chip-tool <cluster_name>
+$ chip-tool <cluster_name>
 ```
 
 where:
@@ -433,7 +428,7 @@ where:
 Example:
 
 ```
-./BUILD_PATH/chip-tool onoff
+$ chip-tool onoff
 ```
 
 Output:
@@ -468,8 +463,10 @@ Usage:
 
 ### Get the list of attributes supported for a specific cluster
 
+To get the list of attributes for a specific cluster run the following command:
+
 ```
-./BUILD_PATH/chip-tool <cluster_name> read
+$ chip-tool <cluster_name> read
 ```
 
 where:
@@ -480,7 +477,7 @@ where:
 Example:
 
 ```
-./BUILD_PATH/chip-tool onoff read
+$ chip-tool onoff read
 ```
 
 Output:
@@ -515,7 +512,7 @@ executable with the target cluster name and the target command name
 Example:
 
 ```
-./BUILD_PATH/chip-tool onoff on
+$ chip-tool onoff on
 ```
 
 Output:
@@ -530,7 +527,11 @@ Usage:
 
 #### Selected command options
 
+This section lists selected options which can be used to configure the input command.
+
 ##### Choosing the Bluetooth adapter
+
+The following command allows the user to choose the Bluetooth adapter used by the `chip-tool`.
 
 ```
 --ble-adapter <id>
@@ -543,7 +544,7 @@ where:
 Example:
 
 ```
-./BUILD_PATH/chip-tool pairing ble-thread 1 hex:0e080000000000010000000300001335060004001fffe002084fe76e9a8b5edaf50708fde46f999f0698e20510d47f5027a414ffeebaefa92285cc84fa030f4f70656e5468726561642d653439630102e49c0410b92f8c7fbb4f9f3e08492ee3915fbd2f0c0402a0fff8 20202021 3840 --ble-adapter 0
+$ chip-tool pairing ble-thread 1 hex:0e080000000000010000000300001335060004001fffe002084fe76e9a8b5edaf50708fde46f999f0698e20510d47f5027a414ffeebaefa92285cc84fa030f4f70656e5468726561642d653439630102e49c0410b92f8c7fbb4f9f3e08492ee3915fbd2f0c0402a0fff8 20202021 3840 --ble-adapter 0
 ```
 
 ##### Using message tracing
@@ -560,7 +561,7 @@ There are additional flags which control where the traces should go:
 For example:
 
 ```
-./BUILD_PATH/chip-tool pairing <pairing_options> --trace_file <filename>
+$ chip-tool pairing <pairing_options> --trace_file <filename>
 ```
 
 `--trace_log <onoff>` where:
@@ -574,13 +575,13 @@ For example:
 a paired Matter device. To get the list of available tests run:
 
 ```
-./BUILD_PATH/chip-tool tests
+$ chip-tool tests
 ```
 
 To execute particular test against the paired device run:
 
 ```
-./BUILD_PATH/chip-tool tests <test_name>
+$ chip-tool tests <test_name>
 ```
 
 where:
@@ -597,7 +598,7 @@ To parse a setup code use the `payload` command with `parse-setup-payload`
 sub-command:
 
 ```
-./BUILD_PATH/chip-tool payload parse-setup-payload <payload>
+$ chip-tool payload parse-setup-payload <payload>
 ```
 
 where:
@@ -609,13 +610,13 @@ Concrete examples:
 -   Setup QR code payload:
 
 ```
-./BUILD_PATH/chip-tool payload parse-setup-payload MT:6FCJ142C00KA0648G00
+$ chip-tool payload parse-setup-payload MT:6FCJ142C00KA0648G00
 ```
 
 -   Manual pairing code:
 
 ```
-./BUILD_PATH/chip-tool payload parse-setup-payload 34970112332
+$ chip-tool payload parse-setup-payload 34970112332
 ```
 
 ### Parsing additional data payload
@@ -623,7 +624,7 @@ Concrete examples:
 Additional data payload can be parsed with the following command:
 
 ```
-./BUILD_PATH/chip-tool parse-additional-data-payload <payload>
+$ chip-tool parse-additional-data-payload <payload>
 ```
 
 where:
@@ -637,7 +638,7 @@ Matter devices. The following command will print available sub-commands of
 `discover`:
 
 ```
-./BUILD_PATH/chip-tool discover
+$ chip-tool discover
 ```
 
 #### Resolving node name
@@ -646,7 +647,7 @@ To resolve DNS-SD name corresponding with the given Node ID and update address
 of the node in the device controller use the following command:
 
 ```
-./BUILD_PATH/chip-tool discover resolve <node_id> <fabric_id>
+$ chip-tool discover resolve <node_id> <fabric_id>
 ```
 
 where:
@@ -654,13 +655,13 @@ where:
 -   _<node_id\>_ is the ID of node to be resolved
 -   _<fabric_id\>_ is the ID of the fabric where the node belongs to
 
-#### Discovering available Matter accessory devices
+#### Discovering available Matter devices
 
 To discover all Matter commissionables available in the operation area use the
 following command:
 
 ```
-./BUILD_PATH/chip-tool discover commissionables
+$ chip-tool discover commissionables
 ```
 
 #### Discovering available Matter commissioners
@@ -669,7 +670,7 @@ To discover all Matter commissioners available in the operation area use the
 following command:
 
 ```
-./BUILD_PATH/chip-tool discover commissioners
+$ chip-tool discover commissioners
 ```
 
 ### Pairing
@@ -678,28 +679,28 @@ The `pairing` option supports different means regarding Matter device
 commissioning procedure.
 
 Thread and Wi-Fi commissioning use-cases were described in
-[Using chip-tool for Matter accessory testing](#using) paragraph.
+[Using chip-tool for Matter device testing](#using) paragraph.
 
 To list all `pairing` sub-commands use the following command:
 
 ```
-./BUILD_PATH/chip-tool pairing
+$ chip-tool pairing
 ```
 
-### Interacting with ZCL clusters
+### Interacting with Data Model clusters
 
-As mentioned in [Using chip-tool for Matter accessory testing](#using)
+As mentioned in [Using chip-tool for Matter device testing](#using)
 paragraph, executing `chip-tool` with particular cluster name shall list all
 operations supported for this cluster:
 
 ```
-./BUILD_PATH/chip-tool <cluster_name>
+$ chip-tool <cluster_name>
 ```
 
 Example:
 
 ```
-./BUILD_PATH/chip-tool binding
+$ chip-tool binding
 ```
 
 Output:
@@ -730,40 +731,40 @@ read or write. Attributes from that cluster can also be subscribed by the
 controller, which means that the `chip-tool` will receive notifications, for
 instance: in case the attribute value is changed or a particular event happens.
 
-#### Examples:
+#### Examples
 
-##### Writing ACL (Access Control List) to the `accesscontrol` cluster:
+This is a list of `chip-tool` exemplary commands dedicated to particular use cases.
+
+##### Writing ACL (Access Control List) to the `accesscontrol` cluster
+
+More information regarding ACL can be found in the [Access Control Guide](https://github.com/project-chip/connectedhomeip/blob/master/docs/guides/access-control-guide.md).
 
 ```
-./BUILD_PATH/chip-tool accesscontrol write acl <acl_data> <node_id> <endpoint_id>
+$ chip-tool accesscontrol write acl <acl_data> <node_id> <endpoint_id>
 ```
 
 where:
 
 -   _<acl_data\>_ is the ACL data formatted as JSON array
 -   _<node_id\>_ is the ID of the node which is going to receive ACL
--   _<endpoint_id\>_ is the ID of the enpoint on which the `accesscontrol`
-    cluster is implemented
+-   _<endpoint_id\>_ is the ID of the endpoint on which the `accesscontrol`
+cluster is implemented
 
-More infomation regarding ACL can be found in the
-[Access Control Guide](https://github.com/ArekBalysNordic/connectedhomeip/blob/master/docs/guides/access-control-guide.md)
+##### Adding a binding table to the `binding` cluster
 
-##### Adding a binding table to the `binding` cluster:
-
-Binding describes a relationship between the device that contains binding
-cluster and end device. To allow the end device to receive commands form bonded
-device a proper ACL must be added. After binding process a bonded device
-contains information about connected device such as IPv6 address and a route to
-endpoint in a Matter network. This allows to send command directly from bonded
-accessory to the end device device without using border router as a proxy.
+Binding describes a relationship between the device that contains binding cluster and end device.
+To allow the end device to receive commands form bonded device a proper ACL must be added.
+After binding process a bonded device contains information about connected device such as
+IPv6 address and a route to endpoint in a Matter network. This allows to send command directly
+from bonded device to the end device without using border router as a proxy.
 
 ```
-./BUILD_PATH/chip-tool binding write binding  <binding_data> <node_id> <endpoint_id>
+$ chip-tool binding write binding  <binding_data> <node_id> <endpoint_id>
 ```
 
 where:
 
 -   _<binding_data\>_ is the binding data formatted as JSON array
 -   _<node_id\>_ is the ID of the node which is going to receive binding
--   _<endpoint_id\>_ is the ID of the enpoint on which the `binding` cluster is
-    implemented
+-   _<endpoint_id\>_ is the ID of the endpoint on which the `binding`
+cluster is implemented
