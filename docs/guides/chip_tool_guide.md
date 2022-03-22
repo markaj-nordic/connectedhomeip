@@ -43,43 +43,12 @@ Before you can use the `chip-tool`, you must compile it from source on Linux
 
 To build and run the `chip-tool`:
 
-1. Install all necessary packages and prepare the build system. For more
-   details, see the [Building Matter](BUILDING.md) documentation:
+1. Install all necessary packages, prepare the source code and the build system.
+To achieve that, please follow the [Building Matter](BUILDING.md) instructions.
 
-    ```
-    sudo apt-get update
-    sudo apt-get upgrade
+2. Make sure you are in the `connectedhomeip` directory.
 
-    sudo apt-get install git gcc g++ python pkg-config libssl-dev libdbus-1-dev libglib2.0-dev libavahi-client-dev ninja-build python3-venv python3-dev python3-pip unzip libgirepository1.0-dev libcairo2-dev bluez
-    ```
-
-    If the `chip-tool` is built on a Raspberry Pi, you may need to install
-    additional packages and reboot the device:
-
-    ```
-    sudo apt-get install pi-bluetooth
-    sudo reboot
-    ```
-
-2. Clone the Project CHIP repository:
-
-    ```
-    git clone https://github.com/project-chip/connectedhomeip.git
-    ```
-
-3. Enter the `connectedhomeip` directory:
-
-    ```
-    cd connectedhomeip
-    ```
-
-4. Initialize the git submodules:
-
-    ```
-    git submodule update --init
-    ```
-
-5. Run the following command:
+3. Run the following command:
 
     ```
     ./scripts/examples/gn_build_example.sh examples/chip-tool BUILD_PATH
@@ -87,7 +56,7 @@ To build and run the `chip-tool`:
 
     `BUILD_PATH` specifies where the target binaries shall to be placed.
 
-6. To check if the `chip-tool` works execute the following command from the `BUILD_PATH`
+4. To check if the `chip-tool` works execute the following command from the `BUILD_PATH`
 
     ```
     $ chip-tool
@@ -111,10 +80,11 @@ device side and may be different for your device.
 
 ### Step 1: Prepare the Matter device
 
-This tutorial is using the
+This tutorial is taking advantage of the
 [Matter lighting-app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
-with the Bluetooth LE commissioning. However, you can adapt this procedure to
-other available Matter examples.
+with the Bluetooth LE commissioning. You can use different Matter example and still
+follow this procedure. Please note however, that the [Step 7](#step-7-control-application-data-model-clusters) may vary
+depending on the clusters implemented in your application.
 
 Build and program the device with the Matter device firmware by following the
 example's documentation.
@@ -126,7 +96,12 @@ require physical trigger, for example pushing a button. Follow the documentation
 of the Matter device example to learn how Bluetooth LE advertising is enabled
 for the given example.
 
-### Step 3: Determine network pairing credentials
+### Step 3: Make sure the network is set up
+
+To follow next steps the Thread or Wi-Fi network must be up and running.
+For instance, the Thread network can be established using [OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0).
+
+### Step 4: Determine network pairing credentials
 
 You must provide the `chip-tool` with network credentials that will be further
 used in the device commissioning procedure to configure the device with a
@@ -136,8 +111,8 @@ network interface, such as Thread or Wi-Fi.
 
 Fetch and store the current Active Operational Dataset from the Thread Border
 Router. This step may vary depending on the Thread Border Router implementation.
-If using the Open Thread Border Router (OTBR) this data can be retrieved
-in the following manner:
+If using [OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0)
+(OTBR) this data can be retrieved in the following manner:
 
 -   For OTBR running in Docker:
 
@@ -173,7 +148,7 @@ For Wi-Fi, the steps required to determine the SSID and password may vary
 depending on the setup. For instance, you might need to contact your local Wi-Fi
 network administrator.
 
-### Step 4: Determine Matter device's _discriminator_ and _setup PIN code_
+### Step 5: Determine Matter device's _discriminator_ and _setup PIN code_
 
 Matter uses a 12-bit value called _discriminator_ to discern between
 multiple commissionable device advertisements, as well as a 27-bit _setup PIN
@@ -195,7 +170,7 @@ I: 281 [DL] Device Type: 65535 (0xFFFF)
 In above printout, the _discriminator_ is 3840 (0xF00) and the _setup PIN code_
 is equal to 20202021 accordingly.
 
-### Step 5: Commission Matter device into existing network
+### Step 6: Commission Matter device into existing network
 
 Before the communication with Matter device is possible it must be first commissioned
 (joined) to the existing Thread or Wi-Fi network.
@@ -316,10 +291,17 @@ where:
 -   _<node_id\>_ is the user-defined ID of the node which is going to be forgot
     by the `chip-tool`
 
-### Step 6: Control application Data Model clusters
+### Step 7: Control application Data Model clusters
 
-For the lighting-app example, execute the following command to toggle the LED
-state:
+Having completed all previous steps, you have the Matter device successfully
+commissioned to the network, so it can be tested by interacting with
+Data Model clusters.
+
+For instance, when the application has `onoff` and `levelcontrol` clusters implemented
+you can both toggle the bulb (by `onoff`) or manipulate its brightness (by `levelcontrol`).
+
+Following that, for the lighting-app example execute the following command
+to toggle the LED state:
 
 ```
 $ chip-tool onoff toggle <node_id> <endpoint_id>
@@ -330,8 +312,7 @@ where:
 -   _<node_id\>_ is the user-defined ID of the commissioned node
 -   _<endpoint_id\>_ is the ID of the endpoint with OnOff cluster implemented
 
-To change the brightness of the LED, use the following command, with the
-_<level\>_ equal to value between 0 and 255.
+or use the following line to change the brightness of the LED:
 
 ```
 $ chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask> <option_override> <node_id> <endpoint_id>
@@ -347,7 +328,7 @@ where:
 -   _<endpoint_id\>_ is the ID of the endpoint with LevelControl cluster
     implemented
 
-### Step 7: Read basic information out of the Matter device
+### Step 8: Read basic information out of the Matter device
 
 Every Matter device supports a Basic Cluster, which maintains
 collection of attributes that a controller can obtain from a device, such as the
