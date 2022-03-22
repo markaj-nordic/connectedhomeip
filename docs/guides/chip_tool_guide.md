@@ -718,6 +718,7 @@ This is a list of `chip-tool` exemplary commands dedicated to particular use cas
 
 ##### Writing ACL (Access Control List) to the `accesscontrol` cluster
 
+The ACL concept allows to govern all Data Model interactions (like e.g. read attribute, write attribute, invoke command).
 More information regarding ACL can be found in the [Access Control Guide](https://github.com/project-chip/connectedhomeip/blob/master/docs/guides/access-control-guide.md).
 
 ```
