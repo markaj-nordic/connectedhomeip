@@ -1,9 +1,8 @@
 # Working with CHIP Tool
 
-The CHIP Tool (`chip-tool`) is a Matter controller implementation
-that allows to commission a Matter device into the network and to
-communicate with it using Matter messages which may encode Data Model
-actions, such as cluster commands.
+The CHIP Tool (`chip-tool`) is a Matter controller implementation that allows to
+commission a Matter device into the network and to communicate with it using
+Matter messages which may encode Data Model actions, such as cluster commands.
 It also provides other Matter specific utilities.
 
 <hr>
@@ -36,15 +35,17 @@ directory.
 ## Building
 
 Before you can use the `chip-tool`, you must compile it from source on Linux
-(amd64/aarch64) or macOS. If you want to build on Raspberry Pi, it must run Ubuntu 20.04.
+(amd64/aarch64) or macOS. If you want to build on Raspberry Pi, it must run
+Ubuntu 20.04.
 
-> To ensure compatibility, always build the `chip-tool` and the Matter device from the
-> same revision of the connectedhomeip repository.
+> To ensure compatibility, always build the `chip-tool` and the Matter device
+> from the same revision of the connectedhomeip repository.
 
 To build and run the `chip-tool`:
 
 1. Install all necessary packages, prepare the source code and the build system.
-To achieve that, please follow the [Building Matter](BUILDING.md) instructions.
+   To achieve that, please follow the [Building Matter](BUILDING.md)
+   instructions.
 
 2. Make sure you are in the `connectedhomeip` directory.
 
@@ -56,17 +57,19 @@ To achieve that, please follow the [Building Matter](BUILDING.md) instructions.
 
     `BUILD_PATH` specifies where the target binaries shall to be placed.
 
-4. To check if the `chip-tool` works execute the following command from the `BUILD_PATH`
+4. To check if the `chip-tool` works execute the following command from the
+   `BUILD_PATH`
 
     ```
     $ chip-tool
     ```
 
-    As a result, the `chip-tool` shall print all available commands and denote them as _Clusters_.
-    However please note, that actually not all listed commands correspond to the _clusters_
-    in the Data Model context (e.g. pairing, discover). Each listed command can however
-    become a root of the new _complex_ command by appending it with further sub-commands.
-    Examples of specific commands and their use cases are described in next steps.
+    As a result, the `chip-tool` shall print all available commands and denote
+    them as _Clusters_. However please note, that actually not all listed
+    commands correspond to the _clusters_ in the Data Model context (e.g.
+    pairing, discover). Each listed command can however become a root of the new
+    _complex_ command by appending it with further sub-commands. Examples of
+    specific commands and their use cases are described in next steps.
 
 <hr>
 
@@ -74,17 +77,18 @@ To achieve that, please follow the [Building Matter](BUILDING.md) instructions.
 
 ## Using `chip-tool` for Matter device testing
 
-This section describes how to use `chip-tool` to test the Matter device.
-Below steps depend on the application clusters that you implemented on the
-device side and may be different for your device.
+This section describes how to use `chip-tool` to test the Matter device. Below
+steps depend on the application clusters that you implemented on the device side
+and may be different for your device.
 
 ### Step 1: Prepare the Matter device
 
 This tutorial is taking advantage of the
 [Matter lighting-app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
-with the Bluetooth LE commissioning. You can use different Matter example and still
-follow this procedure. Please note however, that the [Step 7](#step-7-control-application-data-model-clusters) may vary
-depending on the clusters implemented in your application.
+with the Bluetooth LE commissioning. You can use different Matter example and
+still follow this procedure. Please note however, that the
+[Step 7](#step-7-control-application-data-model-clusters) may vary depending on
+the clusters implemented in your application.
 
 Build and program the device with the Matter device firmware by following the
 example's documentation.
@@ -98,8 +102,9 @@ for the given example.
 
 ### Step 3: Make sure the network is set up
 
-To follow next steps the Thread or Wi-Fi network must be up and running.
-For instance, the Thread network can be established using [OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0).
+To follow next steps the Thread or Wi-Fi network must be up and running. For
+instance, the Thread network can be established using
+[OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0).
 
 ### Step 4: Determine network pairing credentials
 
@@ -111,7 +116,8 @@ network interface, such as Thread or Wi-Fi.
 
 Fetch and store the current Active Operational Dataset from the Thread Border
 Router. This step may vary depending on the Thread Border Router implementation.
-If using [OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0)
+If using
+[OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0)
 (OTBR) this data can be retrieved in the following manner:
 
 -   For OTBR running in Docker:
@@ -150,10 +156,10 @@ network administrator.
 
 ### Step 5: Determine Matter device's _discriminator_ and _setup PIN code_
 
-Matter uses a 12-bit value called _discriminator_ to discern between
-multiple commissionable device advertisements, as well as a 27-bit _setup PIN
-code_ to authenticate the device. You can find these values in the logging
-terminal of the device (for instance, UART). For example:
+Matter uses a 12-bit value called _discriminator_ to discern between multiple
+commissionable device advertisements, as well as a 27-bit _setup PIN code_ to
+authenticate the device. You can find these values in the logging terminal of
+the device (for instance, UART). For example:
 
 ```
 I: 254 [DL]Device Configuration:
@@ -172,8 +178,8 @@ is equal to 20202021 accordingly.
 
 ### Step 6: Commission Matter device into existing network
 
-Before the communication with Matter device is possible it must be first commissioned
-(joined) to the existing Thread or Wi-Fi network.
+Before the communication with Matter device is possible it must be first
+commissioned (joined) to the existing Thread or Wi-Fi network.
 
 #### Commissioning into Thread network over Bluetooth LE
 
@@ -217,12 +223,15 @@ $ chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <dis
 
 The _<node_id>_ can be simply provided as a hexadecimal value with `0x` prefix.
 
-After connecting the device over Bluetooth LE, the controller will print the following log:
+After connecting the device over Bluetooth LE, the controller will print the
+following log:
+
 ```
 Secure Session to Device Established
 ```
-which means that the PASE (Password-Authenticated Session Establishment) session using SPAKE2+
-protocol is established.
+
+which means that the PASE (Password-Authenticated Session Establishment) session
+using SPAKE2+ protocol is established.
 
 #### Commissioning over IP
 
@@ -278,8 +287,8 @@ where:
 
 #### Forget the currently-commissioned device
 
-The following command removes the device of given node ID from the list
-of commissioned Matter devices.
+The following command removes the device of given node ID from the list of
+commissioned Matter devices.
 
 ```
 $ chip-tool pairing unpair <node_id>
@@ -294,14 +303,15 @@ where:
 ### Step 7: Control application Data Model clusters
 
 Having completed all previous steps, you have the Matter device successfully
-commissioned to the network, so it can be tested by interacting with
-Data Model clusters.
+commissioned to the network, so it can be tested by interacting with Data Model
+clusters.
 
-For instance, when the application has `onoff` and `levelcontrol` clusters implemented
-you can both toggle the bulb (by `onoff`) or manipulate its brightness (by `levelcontrol`).
+For instance, when the application has `onoff` and `levelcontrol` clusters
+implemented you can both toggle the bulb (by `onoff`) or manipulate its
+brightness (by `levelcontrol`).
 
-Following that, for the lighting-app example execute the following command
-to toggle the LED state:
+Following that, for the lighting-app example execute the following command to
+toggle the LED state:
 
 ```
 $ chip-tool onoff toggle <node_id> <endpoint_id>
@@ -330,10 +340,10 @@ where:
 
 ### Step 8: Read basic information out of the Matter device
 
-Every Matter device supports a Basic Cluster, which maintains
-collection of attributes that a controller can obtain from a device, such as the
-vendor name, the product name, or software version. Use `read` command on
-`basic` cluster to read those values from the device:
+Every Matter device supports a Basic Cluster, which maintains collection of
+attributes that a controller can obtain from a device, such as the vendor name,
+the product name, or software version. Use `read` command on `basic` cluster to
+read those values from the device:
 
 ```
 $ chip-tool basic read vendor-name <node_id> <endpoint_id>
@@ -508,11 +518,13 @@ Usage:
 
 #### Selected command options
 
-This section lists selected options which can be used to configure the input command.
+This section lists selected options which can be used to configure the input
+command.
 
 ##### Choosing the Bluetooth adapter
 
-The following command allows the user to choose the Bluetooth adapter used by the `chip-tool`.
+The following command allows the user to choose the Bluetooth adapter used by
+the `chip-tool`.
 
 ```
 --ble-adapter <id>
@@ -670,9 +682,9 @@ $ chip-tool pairing
 
 ### Interacting with Data Model clusters
 
-As mentioned in [Using chip-tool for Matter device testing](#using)
-paragraph, executing `chip-tool` with particular cluster name shall list all
-operations supported for this cluster:
+As mentioned in [Using chip-tool for Matter device testing](#using) paragraph,
+executing `chip-tool` with particular cluster name shall list all operations
+supported for this cluster:
 
 ```
 $ chip-tool <cluster_name>
@@ -714,12 +726,15 @@ instance: in case the attribute value is changed or a particular event happens.
 
 #### Examples
 
-This is a list of `chip-tool` exemplary commands dedicated to particular use cases.
+This is a list of `chip-tool` exemplary commands dedicated to particular use
+cases.
 
 ##### Writing ACL (Access Control List) to the `accesscontrol` cluster
 
-The ACL concept allows to govern all Data Model interactions (like e.g. read attribute, write attribute, invoke command).
-More information regarding ACL can be found in the [Access Control Guide](https://github.com/project-chip/connectedhomeip/blob/master/docs/guides/access-control-guide.md).
+The ACL concept allows to govern all Data Model interactions (like e.g. read
+attribute, write attribute, invoke command). More information regarding ACL can
+be found in the
+[Access Control Guide](https://github.com/project-chip/connectedhomeip/blob/master/docs/guides/access-control-guide.md).
 
 ```
 $ chip-tool accesscontrol write acl <acl_data> <node_id> <endpoint_id>
@@ -730,15 +745,16 @@ where:
 -   _<acl_data\>_ is the ACL data formatted as JSON array
 -   _<node_id\>_ is the ID of the node which is going to receive ACL
 -   _<endpoint_id\>_ is the ID of the endpoint on which the `accesscontrol`
-cluster is implemented
+    cluster is implemented
 
 ##### Adding a binding table to the `binding` cluster
 
-Binding describes a relationship between the device that contains binding cluster and end device.
-To allow the end device to receive commands form bonded device a proper ACL must be added.
-After binding process a bonded device contains information about connected device such as
-IPv6 address and a route to endpoint in a Matter network. This allows to send command directly
-from bonded device to the end device without using border router as a proxy.
+Binding describes a relationship between the device that contains binding
+cluster and end device. To allow the end device to receive commands form bonded
+device a proper ACL must be added. After binding process a bonded device
+contains information about connected device such as IPv6 address and a route to
+endpoint in a Matter network. This allows to send command directly from bonded
+device to the end device without using border router as a proxy.
 
 ```
 $ chip-tool binding write binding  <binding_data> <node_id> <endpoint_id>
@@ -748,5 +764,5 @@ where:
 
 -   _<binding_data\>_ is the binding data formatted as JSON array
 -   _<node_id\>_ is the ID of the node which is going to receive binding
--   _<endpoint_id\>_ is the ID of the endpoint on which the `binding`
-cluster is implemented
+-   _<endpoint_id\>_ is the ID of the endpoint on which the `binding` cluster is
+    implemented
