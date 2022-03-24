@@ -1,4 +1,4 @@
-# Working with the eCHIP Tool
+# Working with the CHIP Tool
 
 The CHIP Tool (`chip-tool`) is a Matter controller implementation that allows to
 commission a Matter device into the network and to communicate with it using
@@ -618,7 +618,7 @@ In this command:
 ### Parsing the setup payload
 
 The CHIP Tool offers a utility for parsing the Matter onboarding setup payload
-and prnting it in a readable form. For example, the payload can be printed on
+and printing it in a readable form. For example, the payload can be printed on
 the device console during boot.
 
 To parse the setup code, use the `payload` command with the
