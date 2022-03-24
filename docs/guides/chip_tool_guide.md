@@ -22,8 +22,7 @@ the setup payload or performing discovery actions.
 You can find source files of the CHIP Tool in the `examples/chip-tool`
 directory.
 
-> **Note:** The CHIP Tool currently only supports commissioning and remembering
-> one device at a time. The configuration state is cached in the
+> **Note:** The CHIP Tool caches the configuration state in the
 > `/tmp/chip_tool_config.ini` file. Deleting this and other `.ini` files in the
 > `/tmp` directory can sometimes resolve issues related to stale configuration.
 
@@ -34,8 +33,8 @@ directory.
 ## Building and running the CHIP Tool
 
 Before you can use the CHIP Tool, you must compile it from source on Linux
-(amd64/aarch64) or macOS. If you want to build on Raspberry Pi, it must run
-Ubuntu 20.04.
+(amd64/aarch64) or macOS. If you want to run it on Raspberry Pi, it must use
+a 64-bit OS.
 
 > **Note:** To ensure compatibility, always build the CHIP Tool and the Matter
 > device from the same revision of the `connectedhomeip` repository.
@@ -62,7 +61,7 @@ To check if the CHIP Tool runs correctly, execute the following command from the
 `BUILD_PATH` directory:
 
 ```
-$ chip-tool
+$ ./chip-tool
 ```
 
 As a result, the CHIP Tool prints all available commands. These are called
@@ -84,7 +83,7 @@ device.
 
 This tutorial is using the
 [Matter lighting app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
-with the Bluetooth LE commissioning. You can use other Matter examples and still
+with the Bluetooth LE commissioning method support. You can use other Matter examples and still
 follow this procedure. If you use a different example, the
 [Step 7](#step-7-control-application-data-model-clusters) may vary depending on
 the clusters implemented in your application.
@@ -102,9 +101,9 @@ require physical trigger, for example pushing a button. Follow the documentation
 of the Matter device example to learn how Bluetooth LE advertising is enabled
 for the given example.
 
-### Step 3: Make sure the network is set up
+### Step 3: Make sure the IP network is set up
 
-To follow the next steps, the Thread or Wi-Fi network must be up and running.
+To follow the next steps, the IP network must be up and running.
 For instance, the Thread network can be established using
 [OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0).
 
@@ -114,7 +113,7 @@ You must provide the CHIP Tool with network credentials that will be used in the
 device commissioning procedure to configure the device with a network interface,
 such as Thread or Wi-Fi.
 
-The Matter specification does not define how the Thread or Wi-Fi credentials are
+The Matter specification does not define how the network credentials are
 to be obtained by controller.
 
 #### Thread network credentials
@@ -179,15 +178,18 @@ I: 281 [DL] Device Type: 65535 (0xFFFF)
 In above printout, the _discriminator_ is `3840 (0xF00)` and the _setup PIN
 code_ is equal to `20202021`.
 
-### Step 6: Commission Matter device into existing network
+### Step 6: Commission Matter device into existing IP network
 
 Before communicating with the Matter device, first have it join the existing
-Thread or Wi-Fi network. Depending on your network setup, this can be done over
-Bluetooth LE or IP.
+IP network. Matter devices may use different commissioning channel.
+Typically, devices which are not yet connected to the target IP network
+use Bluetooth LE as the commissioning channel. On the other hand, if the device
+is already joined to the IP network it is enough to only
+commission it to the Matter network over IP protocol.
 
 #### Commissioning over Bluetooth LE
 
-This section describes how your device can join the existing Thread or Wi-Fi
+This section describes how your device can join the existing IP
 network over Bluetooth LE and then be commissioned into a Matter network.
 
 After connecting the device over Bluetooth LE, the controller will print the
@@ -206,7 +208,7 @@ To commission the device to the existing Thread network, use the following
 command pattern:
 
 ```
-$ chip-tool pairing ble-thread <node_id> hex:<operational_dataset> <pin_code> <discriminator>
+$ ./chip-tool pairing ble-thread <node_id> hex:<operational_dataset> <pin_code> <discriminator>
 ```
 
 In this command:
@@ -223,7 +225,7 @@ To commission the device to the existing Wi-Fi network, use the following
 command pattern:
 
 ```
-$ chip-tool pairing ble-wifi <node_id> <ssid> <password> <pin_code> <discriminator>
+$ ./chip-tool pairing ble-wifi <node_id> <ssid> <password> <pin_code> <discriminator>
 ```
 
 In this command:
@@ -236,8 +238,7 @@ In this command:
 If you prefer the hexadecimal format, use the `hex:` prefix. For example:
 
 ```
-$ chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <discriminator>
-
+$ ./chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <discriminator>
 ```
 
 > **Note:** The _<node_id>_ can be provided as a hexadecimal value with the `0x`
@@ -246,8 +247,7 @@ $ chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <dis
 #### Commissioning into a network over IP
 
 This option is available when the Matter device is already present in an IP
-network (Thread or Wi-Fi enabled), but it has not been commissioned to a Matter
-network yet.
+network, but it has not been commissioned to a Matter network yet.
 
 ##### Commissioning with setup PIN code
 
@@ -255,7 +255,7 @@ Use the following command pattern to discover devices and try to pair with the
 first discovered one using the provided setup code:
 
 ```
-$ chip-tool pairing onnetwork <node_id> <pin_code>
+$ ./chip-tool pairing onnetwork <node_id> <pin_code>
 ```
 
 In this command:
@@ -270,7 +270,7 @@ Use the following command pattern to discover devices with a long discriminator
 and try to pair with the first discovered one using the provided setup code.
 
 ```
-$ chip-tool pairing onnetwork-long <node_id> <pin_code> <discriminator>
+$ ./chip-tool pairing onnetwork-long <node_id> <pin_code> <discriminator>
 ```
 
 In this command:
@@ -287,7 +287,7 @@ Use the following command pattern to discover devices based on the given QR code
 payload and try to pair with the first discovered one:
 
 ```
-$ chip-tool qrcode <node_id> <qrcode_payload>
+$ ./chip-tool qrcode <node_id> <qrcode_payload>
 ```
 
 In this command:
@@ -296,13 +296,13 @@ In this command:
 -   _<qrcode_payload\>_ is the QR code payload ID, for example
     `MT:Y.K9042C00KA0648G00`.
 
-#### Forgetting the currently-commissioned device
+#### Forgetting the already-commissioned device
 
 The following command removes the device with the given node ID from the list of
 commissioned Matter devices:
 
 ```
-$ chip-tool pairing unpair <node_id>
+$ ./chip-tool pairing unpair <node_id>
 ```
 
 In this command, _<node_id\>_ is the user-defined ID of the node which is going
@@ -322,7 +322,7 @@ toggling the bulb (using `onoff`) or manipulating its brightness (using
 Use the following command pattern to toggle the LED state:
 
 ```
-$ chip-tool onoff toggle <node_id> <endpoint_id>
+$ ./chip-tool onoff toggle <node_id> <endpoint_id>
 ```
 
 In this command:
@@ -334,12 +334,13 @@ Alternatively, use the following command pattern to change the brightness of the
 LED:
 
 ```
-$ chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask> <option_override> <node_id> <endpoint_id>
+$ ./chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask> <option_override> <node_id> <endpoint_id>
 ```
 
 In this command:
 
--   _<level\>_ is the brightness level encoded between `0` and `255`.
+-   _<level\>_ is the brightness level encoded between `0` and `254`, unless a custom
+range is configured in the cluster.
 -   _<transition_time\>_ is the transition time.
 -   _<option_mask\>_ is the option mask.
 -   _<option_override\>_ is the option override.
@@ -357,9 +358,9 @@ Use the CHIP Tool's `read` command on the `basic` cluster to read those values
 from the device:
 
 ```
-$ chip-tool basic read vendor-name <node_id> <endpoint_id>
-$ chip-tool basic read product-name <node_id> <endpoint_id>
-$ chip-tool basic read software-version <node_id> <endpoint_id>
+$ ./chip-tool basic read vendor-name <node_id> <endpoint_id>
+$ ./chip-tool basic read product-name <node_id> <endpoint_id>
+$ ./chip-tool basic read software-version <node_id> <endpoint_id>
 ```
 
 In these commands:
@@ -371,7 +372,7 @@ You can also use the following command to list all available commands for Basic
 cluster:
 
 ```
-$ chip-tool basic
+$ ./chip-tool basic
 ```
 
 <hr>
@@ -388,7 +389,7 @@ not limited to commissioning procedure and cluster interaction.
 To print all clusters supported by the CHIP Tool, run the following command:
 
 ```
-$ chip-tool
+$ ./chip-tool
 ```
 
 **Example of output:**
@@ -421,7 +422,7 @@ To print the list of commands supported by a specific cluster, use the following
 command pattern:
 
 ```
-$ chip-tool <cluster_name>
+$ ./chip-tool <cluster_name>
 ```
 
 In this command:
@@ -432,7 +433,7 @@ In this command:
 **Example of command:**
 
 ```
-$ chip-tool onoff
+$ ./chip-tool onoff
 ```
 
 **Example of output:**
@@ -471,7 +472,7 @@ To get the list of attributes for a specific cluster, use the following command
 pattern:
 
 ```
-$ chip-tool <cluster_name> read
+$ ./chip-tool <cluster_name> read
 ```
 
 In this command:
@@ -482,7 +483,7 @@ In this command:
 **Example of command:**
 
 ```
-$ chip-tool onoff read
+$ ./chip-tool onoff read
 ```
 
 **Example of output:**
@@ -515,7 +516,7 @@ To get the list of parameters for a specific command, use the following command
 pattern:
 
 ```
-$ chip-tool <cluster_name> <target_command>
+$ ./chip-tool <cluster_name> <target_command>
 ```
 
 In this command:
@@ -527,7 +528,7 @@ In this command:
 **Example of command:**
 
 ```
-$ chip-tool onoff on
+$ ./chip-tool onoff on
 ```
 
 **Example of output:**
@@ -561,7 +562,7 @@ In this command:
 **Example of usage:**
 
 ```
-$ chip-tool pairing ble-thread 1 hex:0e080000000000010000000300001335060004001fffe002084fe76e9a8b5edaf50708fde46f999f0698e20510d47f5027a414ffeebaefa92285cc84fa030f4f70656e5468726561642d653439630102e49c0410b92f8c7fbb4f9f3e08492ee3915fbd2f0c0402a0fff8 20202021 3840 --ble-adapter 0
+$ ./chip-tool pairing ble-thread 1 hex:0e080000000000010000000300001335060004001fffe002084fe76e9a8b5edaf50708fde46f999f0698e20510d47f5027a414ffeebaefa92285cc84fa030f4f70656e5468726561642d653439630102e49c0410b92f8c7fbb4f9f3e08492ee3915fbd2f0c0402a0fff8 20202021 3840 --ble-adapter 0
 ```
 
 ##### Using message tracing
@@ -581,7 +582,7 @@ The following flags that control where the traces should go are available:
     It can be appended to a command in the following way:
 
     ```
-    $ chip-tool pairing <pairing_options> --trace_file <filename>
+    $ ./chip-tool pairing <pairing_options> --trace_file <filename>
     ```
 
 -   Trace log flag:
@@ -601,14 +602,14 @@ against a paired Matter device.
 To get the list of available tests, run the following command:
 
 ```
-$ chip-tool tests
+$ ./chip-tool tests
 ```
 
 To execute a particular test against the paired device, use the following
 command pattern:
 
 ```
-$ chip-tool tests <test_name>
+$ ./chip-tool tests <test_name>
 ```
 
 In this command:
@@ -625,7 +626,7 @@ To parse the setup code, use the `payload` command with the
 `parse-setup-payload` sub-command, as in the following command pattern:
 
 ```
-$ chip-tool payload parse-setup-payload <payload>
+$ ./chip-tool payload parse-setup-payload <payload>
 ```
 
 Here, _<payload\>_ is the ID of the payload to be parsed.
@@ -635,13 +636,13 @@ Here, _<payload\>_ is the ID of the payload to be parsed.
 -   Setup QR code payload:
 
         ```
-        $ chip-tool payload parse-setup-payload MT:6FCJ142C00KA0648G00
+        $ ./chip-tool payload parse-setup-payload MT:6FCJ142C00KA0648G00
         ```
 
 -   Manual pairing code:
 
         ```
-        $ chip-tool payload parse-setup-payload 34970112332
+        $ ./chip-tool payload parse-setup-payload 34970112332
         ```
 
 ### Parsing additional data payload
@@ -649,7 +650,7 @@ Here, _<payload\>_ is the ID of the payload to be parsed.
 To parse additional data payload, use the following command pattern:
 
 ```
-$ chip-tool parse-additional-data-payload <payload>
+$ ./chip-tool parse-additional-data-payload <payload>
 ```
 
 In this command:
@@ -665,7 +666,7 @@ Use the following command to print the available sub-commands of the `discover`
 command:
 
 ```
-$ chip-tool discover
+$ ./chip-tool discover
 ```
 
 #### Resolving node name
@@ -674,7 +675,7 @@ To resolve the DNS-SD name corresponding with the given Node ID and update the
 address of the node in the device controller, use the following command pattern:
 
 ```
-$ chip-tool discover resolve <node_id> <fabric_id>
+$ ./chip-tool discover resolve <node_id> <fabric_id>
 ```
 
 In this command:
@@ -688,7 +689,7 @@ To discover all Matter commissionables available in the operation area, run the
 following command:
 
 ```
-$ chip-tool discover commissionables
+$ ./chip-tool discover commissionables
 ```
 
 #### Discovering available Matter commissioners
@@ -697,7 +698,7 @@ To discover all Matter commissioners available in the operation area, run the
 following command:
 
 ```
-$ chip-tool discover commissioners
+$ ./chip-tool discover commissioners
 ```
 
 ### Pairing
@@ -711,7 +712,7 @@ Thread and Wi-Fi commissioning use cases are described in the
 To list all `pairing` sub-commands, run the following command:
 
 ```
-$ chip-tool pairing
+$ ./chip-tool pairing
 ```
 
 ### Interacting with Data Model clusters
@@ -721,13 +722,13 @@ section, executing the `chip-tool` command with a particular cluster name lists
 all operations supported for this cluster, as in the following command pattern:
 
 ```
-$ chip-tool <cluster_name>
+$ ./chip-tool <cluster_name>
 ```
 
 **Example of command:**
 
 ```
-$ chip-tool binding
+$ ./chip-tool binding
 ```
 
 **Example of output:**
@@ -773,7 +774,7 @@ information about ACL, see
 To write ACL to the `accesscontrol` cluster, use the following command pattern:
 
 ```
-$ chip-tool accesscontrol write acl <acl_data> <node_id> <endpoint_id>
+$ ./chip-tool accesscontrol write acl <acl_data> <node_id> <endpoint_id>
 ```
 
 In this command:
@@ -789,15 +790,13 @@ Binding describes a relationship between the device that contains the binding
 cluster and the end device. The proper ACL must be added to allow the end device
 to receive commands from the bonded device. After the binding process, the
 bonded device contains information about connected device, such as IPv6 address
-and the route to the endpoint in the Matter network. This allows to send command
-directly from the bonded device to the end device without using the border
-router as a proxy.
+and the route to the endpoint in the Matter network.
 
 To add a binding table to the `binding` cluster, use the following command
 pattern:
 
 ```
-$ chip-tool binding write binding  <binding_data> <node_id> <endpoint_id>
+$ ./chip-tool binding write binding  <binding_data> <node_id> <endpoint_id>
 ```
 
 In this command:
