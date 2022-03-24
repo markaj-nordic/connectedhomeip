@@ -33,8 +33,8 @@ directory.
 ## Building and running the CHIP Tool
 
 Before you can use the CHIP Tool, you must compile it from source on Linux
-(amd64/aarch64) or macOS. If you want to run it on Raspberry Pi, it must use
-a 64-bit OS.
+(amd64/aarch64) or macOS. If you want to run it on Raspberry Pi, it must use a
+64-bit OS.
 
 > **Note:** To ensure compatibility, always build the CHIP Tool and the Matter
 > device from the same revision of the `connectedhomeip` repository.
@@ -83,8 +83,8 @@ device.
 
 This tutorial is using the
 [Matter lighting app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
-with the Bluetooth LE commissioning method support. You can use other Matter examples and still
-follow this procedure. If you use a different example, the
+with the Bluetooth LE commissioning method support. You can use other Matter
+examples and still follow this procedure. If you use a different example, the
 [Step 7](#step-7-control-application-data-model-clusters) may vary depending on
 the clusters implemented in your application.
 
@@ -103,8 +103,8 @@ for the given example.
 
 ### Step 3: Make sure the IP network is set up
 
-To follow the next steps, the IP network must be up and running.
-For instance, the Thread network can be established using
+To follow the next steps, the IP network must be up and running. For instance,
+the Thread network can be established using
 [OpenThread Border Router](https://openthread.io/codelabs/openthread-border-router#0).
 
 ### Step 4: Determine network pairing credentials
@@ -113,8 +113,8 @@ You must provide the CHIP Tool with network credentials that will be used in the
 device commissioning procedure to configure the device with a network interface,
 such as Thread or Wi-Fi.
 
-The Matter specification does not define how the network credentials are
-to be obtained by controller.
+The Matter specification does not define how the network credentials are to be
+obtained by controller.
 
 #### Thread network credentials
 
@@ -180,17 +180,17 @@ code_ is equal to `20202021`.
 
 ### Step 6: Commission Matter device into existing IP network
 
-Before communicating with the Matter device, first have it join the existing
-IP network. Matter devices may use different commissioning channel.
-Typically, devices which are not yet connected to the target IP network
-use Bluetooth LE as the commissioning channel. On the other hand, if the device
-is already joined to the IP network it is enough to only
-commission it to the Matter network over IP protocol.
+Before communicating with the Matter device, first have it join the existing IP
+network. Matter devices may use different commissioning channel. Typically,
+devices which are not yet connected to the target IP network use Bluetooth LE as
+the commissioning channel. On the other hand, if the device is already joined to
+the IP network it is enough to only commission it to the Matter network over IP
+protocol.
 
 #### Commissioning over Bluetooth LE
 
-This section describes how your device can join the existing IP
-network over Bluetooth LE and then be commissioned into a Matter network.
+This section describes how your device can join the existing IP network over
+Bluetooth LE and then be commissioned into a Matter network.
 
 After connecting the device over Bluetooth LE, the controller will print the
 following log:
@@ -339,8 +339,8 @@ $ ./chip-tool levelcontrol move-to-level <level> <transition_time> <option_mask>
 
 In this command:
 
--   _<level\>_ is the brightness level encoded between `0` and `254`, unless a custom
-range is configured in the cluster.
+-   _<level\>_ is the brightness level encoded between `0` and `254`, unless a
+    custom range is configured in the cluster.
 -   _<transition_time\>_ is the transition time.
 -   _<option_mask\>_ is the option mask.
 -   _<option_override\>_ is the option override.
