@@ -156,7 +156,7 @@ The steps required to determine the SSID and password may vary depending on the
 setup. For instance, you might need to contact your local Wi-Fi network
 administrator.
 
-### Step 5: Determine Matter device's _discriminator_ and _setup PIN code_
+### Step 5: Determine Matter device's discriminator and setup PIN code
 
 Matter uses a 12-bit value called _discriminator_ to discern between multiple
 commissionable device advertisements and a 27-bit _setup PIN code_ to
