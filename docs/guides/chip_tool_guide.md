@@ -314,10 +314,10 @@ Having completed all previous steps, you have the Matter device successfully
 commissioned to the network. You can now test the device by interacting with
 Data Model clusters.
 
-For instance, in case of the lighting app example, the application has `onoff`
-and `levelcontrol` clusters implemented. This means that you can test by
-toggling the bulb (using `onoff`) or manipulating its brightness (using
-`levelcontrol`).
+For instance, in case of the lighting application, the application has the On/Off
+and Level Control clusters implemented. This means that you can test it by
+toggling the bulb (using the ``onoff`` cluster commands) or manipulating its brightness (using
+the ``levelcontrol`` cluster commands).
 
 Use the following command pattern to toggle the LED state:
 
