@@ -350,7 +350,7 @@ In this command:
 
 ### Step 8: Read basic information from the Matter device
 
-Every Matter device supports a Basic Cluster, which maintains the collection of
+Every Matter device supports the Basic cluster, which maintains the collection of
 attributes that a controller can obtain from a device. These attributes can
 include the vendor name, the product name, or the software version.
 
