@@ -113,8 +113,8 @@ You must provide the CHIP Tool with network credentials that will be used in the
 device commissioning procedure to configure the device with a network interface,
 such as Thread or Wi-Fi.
 
-The Matter specification does not define how the network credentials are to be
-obtained by controller.
+The Matter specification does not define the preferred way of how the network credentials are to be
+obtained by controller. In this guide, we are going to obtain Thread network credentials.
 
 #### Thread network credentials
 
