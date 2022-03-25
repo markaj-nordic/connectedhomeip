@@ -113,8 +113,9 @@ You must provide the CHIP Tool with network credentials that will be used in the
 device commissioning procedure to configure the device with a network interface,
 such as Thread or Wi-Fi.
 
-The Matter specification does not define the preferred way of how the network credentials are to be
-obtained by controller. In this guide, we are going to obtain Thread network credentials.
+The Matter specification does not define the preferred way of how the network
+credentials are to be obtained by controller. In this guide, we are going to
+obtain Thread network credentials.
 
 #### Thread network credentials
 
@@ -183,10 +184,10 @@ code_ is equal to `20202021`.
 Before communicating with the Matter device, first it must join an existing IP
 network.
 
-Matter devices may use different commissioning channel. Typically,
-devices which are not yet connected to the target IP network use Bluetooth LE as
-the commissioning channel. However, if the device has already joined an
-IP network, the only thing needed is to commission it to the Matter network over the IP
+Matter devices may use different commissioning channel. Typically, devices which
+are not yet connected to the target IP network use Bluetooth LE as the
+commissioning channel. However, if the device has already joined an IP network,
+the only thing needed is to commission it to the Matter network over the IP
 protocol.
 
 #### Commissioning over Bluetooth LE
@@ -251,7 +252,9 @@ $ ./chip-tool pairing ble-wifi <node_id> hex:<ssid> hex:<password> <pin_code> <d
 This option is available when the Matter device is already present in an IP
 network, but it has not been commissioned to a Matter network yet.
 
-To commission the device, you can use either the setup PIN code or the setup PIN code and the discriminator, both of which you obtained in the step 5. Alternatively, you can also use a QR code payload.
+To commission the device, you can use either the setup PIN code or the setup PIN
+code and the discriminator, both of which you obtained in the step 5.
+Alternatively, you can also use a QR code payload.
 
 ##### Commissioning with setup PIN code
 
@@ -318,10 +321,10 @@ Having completed all previous steps, you have the Matter device successfully
 commissioned to the network. You can now test the device by interacting with
 Data Model clusters.
 
-For instance, in case of the lighting application, the application has the On/Off
-and Level Control clusters implemented. This means that you can test it by
-toggling the bulb (using the ``onoff`` cluster commands) or manipulating its brightness (using
-the ``levelcontrol`` cluster commands).
+For instance, in case of the lighting application, the application has the
+On/Off and Level Control clusters implemented. This means that you can test it
+by toggling the bulb (using the `onoff` cluster commands) or manipulating its
+brightness (using the `levelcontrol` cluster commands).
 
 Use the following command pattern to toggle the LED state:
 
@@ -354,8 +357,8 @@ In this command:
 
 ### Step 8: Read basic information from the Matter device
 
-Every Matter device supports the Basic cluster, which maintains the collection of
-attributes that a controller can obtain from a device. These attributes can
+Every Matter device supports the Basic cluster, which maintains the collection
+of attributes that a controller can obtain from a device. These attributes can
 include the vendor name, the product name, or the software version.
 
 Use the CHIP Tool's `read` command on the `basic` cluster to read those values
