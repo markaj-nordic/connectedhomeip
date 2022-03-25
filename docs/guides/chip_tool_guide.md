@@ -82,7 +82,7 @@ following steps depend on the application clusters that you implemented on the
 device.
 
 This tutorial is using the
-[Matter lighting app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
+[Matter Lighting Application Example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
 with the Bluetooth LE commissioning method support. You can use other Matter
 examples and still follow this procedure. If you use a different example, the
 [Step 7](#step-7-control-application-data-model-clusters) may vary depending on
