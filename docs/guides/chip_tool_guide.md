@@ -180,11 +180,13 @@ code_ is equal to `20202021`.
 
 ### Step 6: Commission Matter device into existing IP network
 
-Before communicating with the Matter device, first have it join the existing IP
-network. Matter devices may use different commissioning channel. Typically,
+Before communicating with the Matter device, first it must join an existing IP
+network.
+
+Matter devices may use different commissioning channel. Typically,
 devices which are not yet connected to the target IP network use Bluetooth LE as
-the commissioning channel. On the other hand, if the device is already joined to
-the IP network it is enough to only commission it to the Matter network over IP
+the commissioning channel. However, if the device has already joined an
+IP network, the only thing needs is to commission it to the Matter network over the IP
 protocol.
 
 #### Commissioning over Bluetooth LE
