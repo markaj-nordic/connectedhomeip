@@ -161,8 +161,8 @@ administrator.
 
 Matter uses a 12-bit value called _discriminator_ to discern between multiple
 commissionable device advertisements and a 27-bit _setup PIN code_ to
-authenticate the device. You can find these values in the logging terminal of
-the device (for instance, UART). For example:
+authenticate the device. You can find these values in the logging terminal
+of the device (for instance, UART) when the device boots up. For example:
 
 ```
 I: 254 [DL]Device Configuration:
