@@ -91,7 +91,7 @@ the clusters implemented in your application.
 ### Step 1: Prepare the Matter device
 
 Build and program the device with the Matter device firmware by following the
-[Matter lighting-app example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
+[Matter Lighting Application Example](https://github.com/project-chip/connectedhomeip/tree/master/examples/lighting-app)
 documentation.
 
 ### Step 2: Enable Bluetooth LE advertising on Matter device
