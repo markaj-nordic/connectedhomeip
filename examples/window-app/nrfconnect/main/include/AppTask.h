@@ -47,19 +47,16 @@ private:
     // statics needed to interact with zephyr C API
     static void CancelTimer(void);
     static void StartTimer(uint32_t aTimeoutInMs);
-    static void FactoryResetTimerEventHandler(AppEvent * aEvent);
-    // static void FactoryResetEventHandler(AppEvent * aEvent);
+    static void FunctionTimerEventHandler(AppEvent * aEvent);
+    static void FunctionHandler(AppEvent * aEvent);
     static void ButtonEventHandler(uint32_t aButtonsState, uint32_t aHasChanged);
     static void TimerEventHandler(k_timer * aTimer);
     static void PostEvent(AppEvent * aEvent);
-    // static void UpdateStatusLED();
-    // static void LEDStateUpdateHandler(LEDWidget & aLedWidget);
-    // static void UpdateLedStateEventHandler(AppEvent * aEvent);
+    static void UpdateStatusLED();
+    static void LEDStateUpdateHandler(LEDWidget & aLedWidget);
+    static void UpdateLedStateEventHandler(AppEvent * aEvent);
     static void StartBLEAdvertisementHandler(AppEvent * aEvent);
     static void ChipEventHandler(const chip::DeviceLayer::ChipDeviceEvent * aEvent, intptr_t aArg);
-#ifdef CONFIG_MCUMGR_SMP_BT
-    static void RequestSMPAdvertisingStart(void);
-#endif
 
     OperatingMode mMode{ OperatingMode::Normal };
     bool mFunctionTimerActive{ false };

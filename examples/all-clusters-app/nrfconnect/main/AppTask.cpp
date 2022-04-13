@@ -18,7 +18,7 @@
 #include "AppTask.h"
 #include "AppConfig.h"
 #include "AppEvent.h"
-#include "Utils.h"
+#include "LEDUtil.h"
 
 #include <app/server/OnboardingCodesUtil.h>
 #include <app/server/Server.h>

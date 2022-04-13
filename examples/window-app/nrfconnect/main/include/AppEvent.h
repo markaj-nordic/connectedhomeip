@@ -46,10 +46,10 @@ struct AppEvent
         {
             void * Context;
         } TimerEvent;
-        // struct
-        // {
-        //     LEDWidget * LedWidget;
-        // } UpdateLedStateEvent;
+        struct
+        {
+            LEDWidget * LedWidget;
+        } UpdateLedStateEvent;
     };
 
     EventHandler Handler;
