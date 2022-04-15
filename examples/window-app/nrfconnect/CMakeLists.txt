@@ -57,6 +57,7 @@ target_sources(app PRIVATE
                main/AppTask.cpp
                main/main.cpp
                main/ZclCallbacks.cpp
+               main/WindowCovering.cpp
                ${GEN_DIR}/window-app/zap-generated/callback-stub.cpp
                ${GEN_DIR}/window-app/zap-generated/IMClusterCommandHandler.cpp
                ${NRFCONNECT_COMMON}/util/LEDWidget.cpp

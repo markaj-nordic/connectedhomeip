@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "WindowCovering.h"
 #include <platform/CHIPDeviceLayer.h>
 
 struct k_timer;
@@ -38,6 +39,15 @@ private:
     {
         Normal,
         FactoryReset,
+        MoveSelection,
+        Movement,
+        Invalid
+    };
+
+    enum class TimerType : uint8_t
+    {
+        Function,
+        Movement,
         Invalid
     };
 
@@ -45,22 +55,29 @@ private:
     void DispatchEvent(AppEvent * aEvent);
 
     // statics needed to interact with zephyr C API
-    static void CancelTimer(void);
-    static void StartTimer(uint32_t aTimeoutInMs);
+    static void CancelTimer(TimerType aTimerType);
+    static void StartTimer(TimerType aTimerType, uint32_t aTimeoutInMs);
     static void FunctionTimerEventHandler(AppEvent * aEvent);
+    static void MovementTimerEventHandler(AppEvent * aEvent);
     static void FunctionHandler(AppEvent * aEvent);
     static void ButtonEventHandler(uint32_t aButtonsState, uint32_t aHasChanged);
-    static void TimerEventHandler(k_timer * aTimer);
+    static void TimerTimeoutCallback(k_timer * aTimer);
+    static void FunctionTimerTimeoutCallback(k_timer * aTimer);
+    static void MovementTimerTimeoutCallback(k_timer * aTimer);
     static void PostEvent(AppEvent * aEvent);
     static void UpdateStatusLED();
     static void LEDStateUpdateHandler(LEDWidget & aLedWidget);
     static void UpdateLedStateEventHandler(AppEvent * aEvent);
     static void StartBLEAdvertisementHandler(AppEvent * aEvent);
     static void ChipEventHandler(const chip::DeviceLayer::ChipDeviceEvent * aEvent, intptr_t aArg);
+    static void LiftHandler(AppEvent * aEvent);
+    void ToggleLiftMoveDirection();
 
     OperatingMode mMode{ OperatingMode::Normal };
     bool mFunctionTimerActive{ false };
+    bool mMovementTimerActive{ false };
     bool mIsThreadProvisioned{ false };
     bool mIsThreadEnabled{ false };
     bool mHaveBLEConnections{ false };
+    OperationalState mMoveType{ OperationalState::MovingUpOrOpen };
 };
