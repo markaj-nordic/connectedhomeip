@@ -16,7 +16,7 @@
  *    limitations under the License.
  */
 
-#include "LightingManager.h"
+#include "PWMManager.h"
 
 #include "AppConfig.h"
 
@@ -28,9 +28,9 @@
 
 LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 
-LightingManager LightingManager::sLight;
+PWMManager PWMManager::sPWM;
 
-int LightingManager::Init(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel)
+int PWMManager::Init(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel)
 {
     // We use a gpioPin instead of a LEDWidget here because we want to use PWM
     // and other features instead of just on/off.
@@ -52,13 +52,13 @@ int LightingManager::Init(const device * pwmDevice, uint32_t pwmChannel, uint8_t
     return 0;
 }
 
-void LightingManager::SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB)
+void PWMManager::SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB)
 {
     mActionInitiated_CB = aActionInitiated_CB;
     mActionCompleted_CB = aActionCompleted_CB;
 }
 
-bool LightingManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, uint8_t * value)
+bool PWMManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, uint8_t * value)
 {
     // TODO: this function is called InitiateAction because we want to implement some features such as ramping up here.
     bool action_initiated = false;
@@ -76,14 +76,14 @@ bool LightingManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t 
         new_state        = kState_Off;
     }
     else if (aAction == LEVEL_ACTION && *value != mLevel)
-    {
+    {   
         action_initiated = true;
         if (*value == 0)
         {
             new_state = kState_Off;
         }
         else
-        {
+        {   
             new_state = kState_On;
         }
     }
@@ -100,7 +100,8 @@ bool LightingManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t 
             Set(new_state == kState_On);
         }
         else if (aAction == LEVEL_ACTION)
-        {
+        {   
+            mState = new_state;
             SetLevel(*value);
         }
 
@@ -113,20 +114,20 @@ bool LightingManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t 
     return action_initiated;
 }
 
-void LightingManager::SetLevel(uint8_t aLevel)
+void PWMManager::SetLevel(uint8_t aLevel)
 {
     LOG_INF("Setting brightness level to %u", aLevel);
     mLevel = aLevel;
     UpdateLight();
 }
 
-void LightingManager::Set(bool aOn)
+void PWMManager::Set(bool aOn)
 {
     mState = aOn ? kState_On : kState_Off;
     UpdateLight();
 }
 
-void LightingManager::UpdateLight()
+void PWMManager::UpdateLight()
 {
     constexpr uint32_t kPwmWidthUs  = 20000u;
     const uint8_t maxEffectiveLevel = mMaxLevel - mMinLevel;

@@ -20,7 +20,7 @@
 
 #include "AppEvent.h"
 #include "LEDWidget.h"
-#include "LightingManager.h"
+#include "PWMManager.h"
 
 #include <platform/CHIPDeviceLayer.h>
 
@@ -42,7 +42,7 @@ class AppTask
 public:
     CHIP_ERROR StartApp();
 
-    void PostLightingActionRequest(LightingManager::Action_t aAction);
+    void PostLightingActionRequest(PWMManager::Action_t aAction);
     void PostEvent(AppEvent * event);
     void UpdateClusterState();
 
@@ -57,8 +57,8 @@ private:
     friend AppTask & GetAppTask(void);
     CHIP_ERROR Init();
 
-    static void ActionInitiated(LightingManager::Action_t aAction, int32_t aActor);
-    static void ActionCompleted(LightingManager::Action_t aAction, int32_t aActor);
+    static void ActionInitiated(PWMManager::Action_t aAction, int32_t aActor);
+    static void ActionCompleted(PWMManager::Action_t aAction, int32_t aActor);
 
     void CancelTimer(void);
 

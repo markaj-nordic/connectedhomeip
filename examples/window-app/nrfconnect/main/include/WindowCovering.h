@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "LEDWidget.h"
+
 #include <app/clusters/window-covering-server/window-covering-server.h>
 
 #include <cstdint>
@@ -33,33 +35,26 @@ public:
         return sInstance;
     }
 
-    // struct CoverWorkData
-    // {
-    //     chip::EndpointId mEndpointId;
-    //     bool isTilt;
-
-    //     union
-    //     {
-    //         chip::Percent100ths percent100ths;
-    //         OperationalStatus opStatus;
-    //     };
-    // };
-
     void LiftMove(OperationalState direction, NPercent100ths target);
     void ScheduleLift();
     void ScheduleOperationalStatusSetWithGlobalUpdate(OperationalStatus opStatus);
-    static void CallbackPositionSet(intptr_t arg);
-    static void CallbackOperationalStatusSetWithGlobalUpdate(intptr_t arg);
     void StartLifting(OperationalState aMoveDirection);
     void StopLifting();
     void CancelTimer();
     void StartTimer(uint32_t aTimeoutInMs);
-    static void TimerTimeoutCallback(k_timer * aTimer);
+    void UpdateLiftLED();
+    uint8_t LiftToBrightness(uint16_t aLiftPosition);
 
+    static void CallbackPositionSet(intptr_t arg);
+    static void CallbackOperationalStatusSetWithGlobalUpdate(intptr_t arg);
+    static void ScheduleLiftLEDUpdateCallback(intptr_t arg);
+    static void TimerTimeoutCallback(k_timer * aTimer);
+    static constexpr chip::EndpointId Endpoint(){ return 1; };
+ 
 private:
     OperationalState mLiftOpState = OperationalState::Stall;
     OperationalState mTiltOpState = OperationalState::Stall;
     bool mContinueWork{ false };
-    static constexpr chip::EndpointId sEndpoint{ 1 };
+    LEDWidget mLiftLed;
     static constexpr auto sTimeoutMs{ 100 };
 };

@@ -1,6 +1,6 @@
 /*
  *
- *    Copyright (c) 2020 Project CHIP Authors
+ *    Copyright (c) 2022 Project CHIP Authors
  *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,10 @@
 
 #pragma once
 
-#include "AppEvent.h"
-
 #include <cstdint>
 #include <drivers/gpio.h>
 
-class LightingManager
+class PWMManager
 {
 public:
     enum Action_t : uint8_t
@@ -50,7 +48,7 @@ public:
     void SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB);
 
 private:
-    friend LightingManager & LightingMgr();
+    friend PWMManager & PWMMgr();
     State_t mState;
     uint8_t mMinLevel;
     uint8_t mMaxLevel;
@@ -65,10 +63,10 @@ private:
     void SetLevel(uint8_t aLevel);
     void UpdateLight();
 
-    static LightingManager sLight;
+    static PWMManager sPWM;
 };
 
-inline LightingManager & LightingMgr(void)
+inline PWMManager & PWMMgr(void)
 {
-    return LightingManager::sLight;
+    return PWMManager::sPWM;
 }

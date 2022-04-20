@@ -20,6 +20,7 @@
  */
 
 #include <AppConfig.h>
+#include "WindowCovering.h"
 
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app-common/zap-generated/callback.h>
@@ -55,6 +56,10 @@ void MatterPostAttributeChangeCallback(const app::ConcreteAttributePath & attrib
 
 /* Forwards all attributes changes */
 void MatterWindowCoveringClusterServerAttributeChangedCallback(const app::ConcreteAttributePath & attributePath)
-{
-    // TODO : UpdateWindowCoveringDevice(attributePath.mEndpointId, attributePath.mAttributeId);
+{   
+    if (attributePath.mEndpointId == WindowCovering::Endpoint() 
+        && attributePath.mAttributeId == Attributes::CurrentPositionLiftPercent100ths::Id)
+    {
+        WindowCovering::Instance().UpdateLiftLED();
+    }
 }

@@ -21,7 +21,7 @@
 #include "AppConfig.h"
 #include "AppEvent.h"
 #include "LEDWidget.h"
-#include "LightingManager.h"
+#include "PWMManager.h"
 #include "ThreadUtil.h"
 
 #include <app-common/zap-generated/attribute-id.h>
@@ -139,13 +139,13 @@ CHIP_ERROR AppTask::Init()
     uint8_t maxLightLevel = kDefaultMaxLevel;
     Clusters::LevelControl::Attributes::MaxLevel::Get(kLightEndpointId, &maxLightLevel);
 
-    int ret = LightingMgr().Init(LIGHTING_PWM_DEVICE, LIGHTING_PWM_CHANNEL, minLightLevel, maxLightLevel);
+    int ret = PWMMgr().Init(LIGHTING_PWM_DEVICE, LIGHTING_PWM_CHANNEL, minLightLevel, maxLightLevel);
     if (ret != 0)
     {
         return chip::System::MapErrorZephyr(ret);
     }
 
-    LightingMgr().SetCallbacks(ActionInitiated, ActionCompleted);
+    PWMMgr().SetCallbacks(ActionInitiated, ActionCompleted);
 
     // Initialize buttons
     ret = dk_buttons_init(ButtonEventHandler);
@@ -210,21 +210,21 @@ CHIP_ERROR AppTask::StartApp()
 
 void AppTask::LightingActionEventHandler(AppEvent * aEvent)
 {
-    LightingManager::Action_t action = LightingManager::INVALID_ACTION;
+    PWMManager::Action_t action = PWMManager::INVALID_ACTION;
     int32_t actor                    = 0;
 
     if (aEvent->Type == AppEvent::kEventType_Lighting)
     {
-        action = static_cast<LightingManager::Action_t>(aEvent->LightingEvent.Action);
+        action = static_cast<PWMManager::Action_t>(aEvent->LightingEvent.Action);
         actor  = aEvent->LightingEvent.Actor;
     }
     else if (aEvent->Type == AppEvent::kEventType_Button)
     {
-        action = LightingMgr().IsTurnedOn() ? LightingManager::OFF_ACTION : LightingManager::ON_ACTION;
+        action = PWMMgr().IsTurnedOn() ? PWMManager::OFF_ACTION : PWMManager::ON_ACTION;
         actor  = AppEvent::kEventType_Button;
     }
 
-    if (action != LightingManager::INVALID_ACTION && !LightingMgr().InitiateAction(action, actor, 0, NULL))
+    if (action != PWMManager::INVALID_ACTION && !PWMMgr().InitiateAction(action, actor, 0, NULL))
         LOG_INF("Action is already in progress or active.");
 }
 
@@ -502,33 +502,33 @@ void AppTask::StartTimer(uint32_t aTimeoutInMs)
     mFunctionTimerActive = true;
 }
 
-void AppTask::ActionInitiated(LightingManager::Action_t aAction, int32_t aActor)
+void AppTask::ActionInitiated(PWMManager::Action_t aAction, int32_t aActor)
 {
-    if (aAction == LightingManager::ON_ACTION)
+    if (aAction == PWMManager::ON_ACTION)
     {
         LOG_INF("Turn On Action has been initiated");
     }
-    else if (aAction == LightingManager::OFF_ACTION)
+    else if (aAction == PWMManager::OFF_ACTION)
     {
         LOG_INF("Turn Off Action has been initiated");
     }
-    else if (aAction == LightingManager::LEVEL_ACTION)
+    else if (aAction == PWMManager::LEVEL_ACTION)
     {
         LOG_INF("Level Action has been initiated");
     }
 }
 
-void AppTask::ActionCompleted(LightingManager::Action_t aAction, int32_t aActor)
+void AppTask::ActionCompleted(PWMManager::Action_t aAction, int32_t aActor)
 {
-    if (aAction == LightingManager::ON_ACTION)
+    if (aAction == PWMManager::ON_ACTION)
     {
         LOG_INF("Turn On Action has been completed");
     }
-    else if (aAction == LightingManager::OFF_ACTION)
+    else if (aAction == PWMManager::OFF_ACTION)
     {
         LOG_INF("Turn Off Action has been completed");
     }
-    else if (aAction == LightingManager::LEVEL_ACTION)
+    else if (aAction == PWMManager::LEVEL_ACTION)
     {
         LOG_INF("Level Action has been completed");
     }
@@ -539,7 +539,7 @@ void AppTask::ActionCompleted(LightingManager::Action_t aAction, int32_t aActor)
     }
 }
 
-void AppTask::PostLightingActionRequest(LightingManager::Action_t aAction)
+void AppTask::PostLightingActionRequest(PWMManager::Action_t aAction)
 {
     AppEvent event;
     event.Type                 = AppEvent::kEventType_Lighting;
@@ -571,14 +571,14 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
 void AppTask::UpdateClusterState()
 {
     // write the new on/off value
-    EmberAfStatus status = Clusters::OnOff::Attributes::OnOff::Set(kLightEndpointId, LightingMgr().IsTurnedOn());
+    EmberAfStatus status = Clusters::OnOff::Attributes::OnOff::Set(kLightEndpointId, PWMMgr().IsTurnedOn());
 
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {
         LOG_ERR("Updating on/off cluster failed: %x", status);
     }
 
-    status = Clusters::LevelControl::Attributes::CurrentLevel::Set(kLightEndpointId, LightingMgr().GetLevel());
+    status = Clusters::LevelControl::Attributes::CurrentLevel::Set(kLightEndpointId, PWMMgr().GetLevel());
 
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {

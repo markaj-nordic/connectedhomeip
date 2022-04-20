@@ -16,6 +16,10 @@
  */
 
 #include "WindowCovering.h"
+#include "AppConfig.h"
+#include "PWMManager.h"
+
+#include <dk_buttons_and_leds.h>
 
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/util/af.h>
@@ -35,6 +39,9 @@ WindowCovering::WindowCovering()
 {
     k_timer_init(&sActionTimer, &WindowCovering::TimerTimeoutCallback, nullptr);
     k_timer_user_data_set(&sActionTimer, this);
+
+    mLiftLed.Init(LIFT_STATE_LED);
+    (void)PWMMgr().Init(LIFT_PWM_DEVICE, LIFT_PWM_CHANNEL, 0, 255);
 }
 
 void WindowCovering::ScheduleLift()
@@ -48,9 +55,7 @@ void WindowCovering::CallbackPositionSet(intptr_t arg)
     chip::Percent100ths percent100ths{};
     NPercent100ths current;
 
-    chip::DeviceLayer::PlatformMgr().LockChipStack();
-    status = Attributes::CurrentPositionLiftPercent100ths::Get(sEndpoint, current);
-    chip::DeviceLayer::PlatformMgr().UnlockChipStack();
+    status = Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current);
 
     if ((status == EMBER_ZCL_STATUS_SUCCESS) && !current.IsNull())
     {
@@ -65,7 +70,7 @@ void WindowCovering::CallbackPositionSet(intptr_t arg)
     NPercent100ths position;
     position.SetNonNull(percent100ths);
 
-    LiftPositionSet(sEndpoint, position);
+    LiftPositionSet(Endpoint(), position);
 }
 
 void WindowCovering::ScheduleOperationalStatusSetWithGlobalUpdate(OperationalStatus opStatus)
@@ -80,7 +85,7 @@ void WindowCovering::ScheduleOperationalStatusSetWithGlobalUpdate(OperationalSta
 void WindowCovering::CallbackOperationalStatusSetWithGlobalUpdate(intptr_t arg)
 {
     // auto * data = reinterpret_cast<OperationalStatus *>(arg);
-    // OperationalStatusSetWithGlobalUpdated(sEndpoint, *data);
+    // OperationalStatusSetWithGlobalUpdated(Endpoint(), *data);
 
     // chip::Platform::Delete(data);
 }
@@ -88,10 +93,8 @@ void WindowCovering::CallbackOperationalStatusSetWithGlobalUpdate(intptr_t arg)
 void WindowCovering::StartLifting(OperationalState aMoveDirection)
 {
     mLiftOpState = aMoveDirection;
-    LOG_INF("Starting lifting timer");
     mContinueWork = true;
     Instance().StartTimer(sTimeoutMs);
-    LOG_INF("Starting lifting timer... done");
 }
 
 void WindowCovering::StopLifting()
@@ -118,4 +121,43 @@ void WindowCovering::TimerTimeoutCallback(k_timer * aTimer)
     {
         Instance().StartTimer(sTimeoutMs);
     }
+}
+
+void WindowCovering::UpdateLiftLED()
+{   
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(ScheduleLiftLEDUpdateCallback);
+}
+
+void WindowCovering::ScheduleLiftLEDUpdateCallback(intptr_t)
+{
+    EmberAfStatus status;
+    chip::app::DataModel::Nullable<uint16_t> currentPosition;
+
+    status = Attributes::CurrentPositionLift::Get(Endpoint(), currentPosition);
+
+    if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
+    {   
+        uint8_t brightness = Instance().LiftToBrightness(currentPosition.Value());
+        LOG_INF("brightness: %d", brightness);
+        PWMMgr().InitiateAction(PWMManager::LEVEL_ACTION, 0, 0, &brightness);
+    }
+}
+
+uint8_t WindowCovering::LiftToBrightness(uint16_t aLiftPosition)
+{   
+    uint16_t installedClosedLimit;
+    uint16_t installedOpenLimit;
+    uint8_t result{ 0 };
+    EmberAfStatus status = Attributes::InstalledOpenLimitLift::Get(Endpoint(), &installedOpenLimit);
+    status = Attributes::InstalledClosedLimitLift::Get(Endpoint(), &installedClosedLimit);
+
+    if (EMBER_ZCL_STATUS_SUCCESS == status)
+    {
+        LOG_INF("Lift open limit: %d", installedOpenLimit);
+        LOG_INF("Lift close limit: %d", installedClosedLimit);
+        float value = 255.0f/65535.0f * aLiftPosition;
+        LOG_INF("value: %d", (int)value);
+        return value;
+    }
+    return result;
 }
