@@ -117,6 +117,7 @@ CHIP_ERROR AppTask::Init()
 
     UpdateStatusLED();
     WindowCovering::Instance().UpdateLiftLED();
+    WindowCovering::Instance().UpdateTiltLED();
 
     // Initialize buttons
     auto ret = dk_buttons_init(ButtonEventHandler);

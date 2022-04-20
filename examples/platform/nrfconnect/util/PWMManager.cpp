@@ -28,37 +28,27 @@
 
 LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 
-PWMManager PWMManager::sPWM;
+PWMDevice::PWMDevice(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel) :
+    mState(kState_On), mMinLevel(minLevel), mMaxLevel(maxLevel), mLevel(maxLevel), mPwmDevice(pwmDevice), mPwmChannel(pwmChannel)
+{}
 
-int PWMManager::Init(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel)
+int PWMDevice::Init()
 {
-    // We use a gpioPin instead of a LEDWidget here because we want to use PWM
-    // and other features instead of just on/off.
-
-    mState      = kState_On;
-    mMinLevel   = minLevel;
-    mMaxLevel   = maxLevel;
-    mLevel      = maxLevel;
-    mPwmDevice  = pwmDevice;
-    mPwmChannel = pwmChannel;
-
     if (!device_is_ready(mPwmDevice))
     {
         LOG_ERR("PWM device %s is not ready", mPwmDevice->name);
         return -ENODEV;
     }
-
     Set(false);
     return 0;
 }
-
-void PWMManager::SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB)
+void PWMDevice::SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB)
 {
     mActionInitiated_CB = aActionInitiated_CB;
     mActionCompleted_CB = aActionCompleted_CB;
 }
 
-bool PWMManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, uint8_t * value)
+bool PWMDevice::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, uint8_t * value)
 {
     // TODO: this function is called InitiateAction because we want to implement some features such as ramping up here.
     bool action_initiated = false;
@@ -114,20 +104,20 @@ bool PWMManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size,
     return action_initiated;
 }
 
-void PWMManager::SetLevel(uint8_t aLevel)
+void PWMDevice::SetLevel(uint8_t aLevel)
 {
     LOG_INF("Setting brightness level to %u", aLevel);
     mLevel = aLevel;
     UpdateLight();
 }
 
-void PWMManager::Set(bool aOn)
+void PWMDevice::Set(bool aOn)
 {
     mState = aOn ? kState_On : kState_Off;
     UpdateLight();
 }
 
-void PWMManager::UpdateLight()
+void PWMDevice::UpdateLight()
 {
     constexpr uint32_t kPwmWidthUs  = 20000u;
     const uint8_t maxEffectiveLevel = mMaxLevel - mMinLevel;

@@ -33,10 +33,15 @@ using namespace ::chip::Credentials;
 using namespace ::chip::DeviceLayer;
 using namespace chip::app::Clusters::WindowCovering;
 
-WindowCovering::WindowCovering()
+WindowCovering::WindowCovering() :
+    mLiftIndicator(LIFT_PWM_DEVICE, LIFT_PWM_CHANNEL, 0, 255), mTiltIndicator(TILT_PWM_DEVICE, TILT_PWM_CHANNEL, 0, 255)
 {
     mLiftLED.Init(LIFT_STATE_LED);
-    (void) PWMMgr().Init(LIFT_PWM_DEVICE, LIFT_PWM_CHANNEL, 0, 255);
+    mTiltLED.Init(TILT_STATE_LED);
+    mLiftIndicator.Init();
+    mTiltIndicator.Init();
+    // PWMManager::Instance().RegisterDevice(mLiftIndicator);
+    // PWMManager::Instance().RegisterDevice(mTiltIndicator);
 }
 
 void WindowCovering::ScheduleMove(const OperationalState & aDirection)
@@ -153,7 +158,7 @@ void WindowCovering::ScheduleLiftLEDUpdateCallback(intptr_t)
     {
         uint8_t brightness = Instance().LiftToBrightness(currentPosition.Value());
         LOG_INF("brightness: %d", brightness);
-        PWMMgr().InitiateAction(PWMManager::LEVEL_ACTION, 0, 0, &brightness);
+        Instance().mLiftIndicator.InitiateAction(PWMDevice::LEVEL_ACTION, 0, 0, &brightness);
     }
 }
 
@@ -171,6 +176,46 @@ uint8_t WindowCovering::LiftToBrightness(uint16_t aLiftPosition)
         LOG_INF("Lift open limit: %d", installedOpenLimit);
         LOG_INF("Lift close limit: %d", installedClosedLimit);
         float value = 255.0f / 65535.0f * aLiftPosition;
+        LOG_INF("value: %d", (int) value);
+        result = value;
+    }
+    return result;
+}
+
+void WindowCovering::UpdateTiltLED()
+{
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(ScheduleTiltLEDUpdateCallback);
+}
+
+void WindowCovering::ScheduleTiltLEDUpdateCallback(intptr_t)
+{
+    EmberAfStatus status;
+    chip::app::DataModel::Nullable<uint16_t> currentPosition;
+
+    status = Attributes::CurrentPositionTilt::Get(Endpoint(), currentPosition);
+
+    if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
+    {
+        uint8_t brightness = Instance().TiltToBrightness(currentPosition.Value());
+        LOG_INF("brightness: %d", brightness);
+        Instance().mTiltIndicator.InitiateAction(PWMDevice::LEVEL_ACTION, 0, 0, &brightness);
+    }
+}
+
+uint8_t WindowCovering::TiltToBrightness(uint16_t aTiltPosition)
+{
+    uint16_t installedClosedLimit;
+    uint16_t installedOpenLimit;
+    uint8_t result{ 0 };
+    EmberAfStatus status = Attributes::InstalledOpenLimitTilt::Get(Endpoint(), &installedOpenLimit);
+    status               = Attributes::InstalledClosedLimitTilt::Get(Endpoint(), &installedClosedLimit);
+
+    if (EMBER_ZCL_STATUS_SUCCESS == status)
+    {
+        // TODO: use the actual limits
+        LOG_INF("Tilt open limit: %d", installedOpenLimit);
+        LOG_INF("Tilt close limit: %d", installedClosedLimit);
+        float value = 255.0f / 65535.0f * aTiltPosition;
         LOG_INF("value: %d", (int) value);
         result = value;
     }

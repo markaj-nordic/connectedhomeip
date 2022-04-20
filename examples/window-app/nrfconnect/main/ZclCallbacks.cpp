@@ -62,4 +62,9 @@ void MatterWindowCoveringClusterServerAttributeChangedCallback(const app::Concre
     {
         WindowCovering::Instance().UpdateLiftLED();
     }
+    else if (attributePath.mEndpointId == WindowCovering::Endpoint() &&
+             attributePath.mAttributeId == Attributes::CurrentPositionTiltPercent100ths::Id)
+    {
+        WindowCovering::Instance().UpdateTiltLED();
+    }
 }

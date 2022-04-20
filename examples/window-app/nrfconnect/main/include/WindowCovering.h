@@ -18,6 +18,7 @@
 #pragma once
 
 #include "LEDWidget.h"
+#include "PWMManager.h"
 
 #include <app/clusters/window-covering-server/window-covering-server.h>
 
@@ -46,6 +47,7 @@ public:
     void SetMoveType(const MoveType & aMoveType) { mCurrentMoveType = aMoveType; }
     MoveType GetMoveType() { return mCurrentMoveType; }
     void UpdateLiftLED();
+    void UpdateTiltLED();
 
     static constexpr chip::EndpointId Endpoint() { return 1; };
 
@@ -53,14 +55,19 @@ private:
     void SchedulePositionSet();
     void ScheduleOperationalStatusSetWithGlobalUpdate();
     uint8_t LiftToBrightness(uint16_t aLiftPosition);
+    uint8_t TiltToBrightness(uint16_t aTiltPosition);
 
     static void SetOperationalStatus(const OperationalStatus & aStatus);
     static uint8_t OperationalStateToValue(const OperationalState & aState);
     static void CallbackPositionSet(intptr_t arg);
     static void CallbackOperationalStatusSetWithGlobalUpdate(intptr_t aArg);
     static void ScheduleLiftLEDUpdateCallback(intptr_t aArg);
+    static void ScheduleTiltLEDUpdateCallback(intptr_t aArg);
 
     OperationalStatus mOperationalStatus{};
     MoveType mCurrentMoveType;
     LEDWidget mLiftLED;
+    LEDWidget mTiltLED;
+    PWMDevice mLiftIndicator;
+    PWMDevice mTiltIndicator;
 };

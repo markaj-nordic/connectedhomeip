@@ -18,10 +18,11 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <drivers/gpio.h>
 
-class PWMManager
+class PWMDevice
 {
 public:
     enum Action_t : uint8_t
@@ -41,14 +42,14 @@ public:
 
     using LightingCallback_fn = void (*)(Action_t, int32_t);
 
-    int Init(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel);
+    PWMDevice(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel);
+    int Init();
     bool IsTurnedOn() const { return mState == kState_On; }
     uint8_t GetLevel() const { return mLevel; }
     bool InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, uint8_t * value);
     void SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB);
 
 private:
-    friend PWMManager & PWMMgr();
     State_t mState;
     uint8_t mMinLevel;
     uint8_t mMaxLevel;
@@ -62,11 +63,38 @@ private:
     void Set(bool aOn);
     void SetLevel(uint8_t aLevel);
     void UpdateLight();
-
-    static PWMManager sPWM;
 };
 
-inline PWMManager & PWMMgr(void)
+template <int size>
+class PWMManager
 {
-    return PWMManager::sPWM;
-}
+public:
+    static PWMManager & Instance()
+    {
+        static PWMManager<2> sInstance;
+        return sInstance;
+    }
+    void RegisterDevice(const PWMDevice & device)
+    {
+        if (CanAddElement())
+        {
+            mDevices[mIndex++] = device;
+        }
+    }
+    bool InitiateAction(const device * aPwmDevice, PWMDevice::Action_t aAction, int32_t aActor, uint16_t aSize, uint8_t * aValue)
+    {
+        for (auto it = mDevices.begin(); it != mDevices.end(); ++it)
+        {
+            if (it->mPwmDevice == aPwmDevice)
+            {
+                return it->InitiateAction(aAction, aActor, aSize, aValue);
+            }
+        }
+        return false;
+    }
+
+private:
+    bool CanAddElement() { return (mIndex + 1 <= mDevices.size()); }
+    std::array<PWMDevice, size> mDevices;
+    uint8_t mIndex{ 0 };
+};
