@@ -28,6 +28,13 @@ using namespace chip::app::Clusters::WindowCovering;
 class WindowCovering
 {
 public:
+    enum class MoveType : uint8_t
+    {
+        LIFT = 0,
+        TILT,
+        NONE
+    };
+
     WindowCovering();
     static WindowCovering & Instance()
     {
@@ -35,26 +42,25 @@ public:
         return sInstance;
     }
 
-    void LiftMove(OperationalState direction, NPercent100ths target);
-    void ScheduleLift();
-    void ScheduleOperationalStatusSetWithGlobalUpdate(OperationalStatus opStatus);
-    void StartLifting(OperationalState aMoveDirection);
-    void StopLifting();
-    void CancelTimer();
-    void StartTimer(uint32_t aTimeoutInMs);
+    void ScheduleMove(const OperationalState & aDirection);
+    void SetMoveType(const MoveType & aMoveType) { mCurrentMoveType = aMoveType; }
+    MoveType GetMoveType() { return mCurrentMoveType; }
     void UpdateLiftLED();
+
+    static constexpr chip::EndpointId Endpoint() { return 1; };
+
+private:
+    void SchedulePositionSet();
+    void ScheduleOperationalStatusSetWithGlobalUpdate();
     uint8_t LiftToBrightness(uint16_t aLiftPosition);
 
+    static void SetOperationalStatus(const OperationalStatus & aStatus);
+    static uint8_t OperationalStateToValue(const OperationalState & aState);
     static void CallbackPositionSet(intptr_t arg);
-    static void CallbackOperationalStatusSetWithGlobalUpdate(intptr_t arg);
-    static void ScheduleLiftLEDUpdateCallback(intptr_t arg);
-    static void TimerTimeoutCallback(k_timer * aTimer);
-    static constexpr chip::EndpointId Endpoint(){ return 1; };
- 
-private:
-    OperationalState mLiftOpState = OperationalState::Stall;
-    OperationalState mTiltOpState = OperationalState::Stall;
-    bool mContinueWork{ false };
-    LEDWidget mLiftLed;
-    static constexpr auto sTimeoutMs{ 100 };
+    static void CallbackOperationalStatusSetWithGlobalUpdate(intptr_t aArg);
+    static void ScheduleLiftLEDUpdateCallback(intptr_t aArg);
+
+    OperationalStatus mOperationalStatus{};
+    MoveType mCurrentMoveType;
+    LEDWidget mLiftLED;
 };

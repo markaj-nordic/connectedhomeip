@@ -51,9 +51,8 @@ LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 K_MSGQ_DEFINE(sAppEventQueue, sizeof(AppEvent), APP_EVENT_QUEUE_SIZE, alignof(AppEvent));
 
 static LEDWidget sStatusLED;
-static UnusedLedsWrapper<3> sUnusedLeds{ {DK_LED3, DK_LED4 } };
+static UnusedLedsWrapper<3> sUnusedLeds{ { DK_LED3, DK_LED4 } };
 static k_timer sFunctionTimer;
-static k_timer sMovementTimer;
 namespace LedConsts {
 constexpr uint32_t kBlinkRate_ms{ 500 };
 namespace StatusLed {
@@ -131,10 +130,6 @@ CHIP_ERROR AppTask::Init()
     k_timer_init(&sFunctionTimer, &AppTask::FunctionTimerTimeoutCallback, nullptr);
     k_timer_user_data_set(&sFunctionTimer, this);
 
-    // Initialize movement timer user data
-    k_timer_init(&sMovementTimer, &AppTask::MovementTimerTimeoutCallback, nullptr);
-    k_timer_user_data_set(&sMovementTimer, this);
-
     // Initialize CHIP server
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
 
@@ -196,11 +191,19 @@ void AppTask::ButtonEventHandler(uint32_t aButtonState, uint32_t aHasChanged)
         PostEvent(&event);
     }
 
-    if (LIFT_BUTTON_MASK & aHasChanged)
+    if (OPEN_BUTTON_MASK & aHasChanged)
     {
-        event.ButtonEvent.PinNo  = LIFT_BUTTON;
-        event.ButtonEvent.Action = (LIFT_BUTTON_MASK & aButtonState) ? BUTTON_PUSH_EVENT : BUTTON_RELEASE_EVENT;
-        event.Handler            = LiftHandler;
+        event.ButtonEvent.PinNo  = OPEN_BUTTON;
+        event.ButtonEvent.Action = (OPEN_BUTTON_MASK & aButtonState) ? BUTTON_PUSH_EVENT : BUTTON_RELEASE_EVENT;
+        event.Handler            = OpenHandler;
+        PostEvent(&event);
+    }
+
+    if (CLOSE_BUTTON_MASK & aHasChanged)
+    {
+        event.ButtonEvent.PinNo  = CLOSE_BUTTON;
+        event.ButtonEvent.Action = (CLOSE_BUTTON_MASK & aButtonState) ? BUTTON_PUSH_EVENT : BUTTON_RELEASE_EVENT;
+        event.Handler            = CloseHandler;
         PostEvent(&event);
     }
 }
@@ -217,18 +220,6 @@ void AppTask::FunctionTimerTimeoutCallback(k_timer * aTimer)
     PostEvent(&event);
 }
 
-void AppTask::MovementTimerTimeoutCallback(k_timer * aTimer)
-{
-    if (!aTimer)
-        return;
-
-    AppEvent event;
-    event.Type               = AppEvent::Type::Timer;
-    event.TimerEvent.Context = k_timer_user_data_get(aTimer);
-    event.Handler            = MovementTimerEventHandler;
-    PostEvent(&event);
-}
-
 void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
 {
     if (!aEvent)
@@ -242,7 +233,7 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
         LOG_INF("Factory Reset Triggered. Release button within %ums to cancel.", FACTORY_RESET_TRIGGER_TIMEOUT);
 
         // Start timer for FACTORY_RESET_CANCEL_WINDOW_TIMEOUT to allow user to cancel, if required.
-        StartTimer(TimerType::Function, FACTORY_RESET_CANCEL_WINDOW_TIMEOUT);
+        StartTimer(FACTORY_RESET_CANCEL_WINDOW_TIMEOUT);
         Instance().mMode = OperatingMode::FactoryReset;
 
 #ifdef CONFIG_STATE_LEDS
@@ -262,21 +253,6 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
     }
 }
 
-void AppTask::MovementTimerEventHandler(AppEvent * aEvent)
-{
-    if (!aEvent)
-        return;
-    if (aEvent->Type != AppEvent::Type::Timer || Instance().mMode != OperatingMode::Normal)
-        return;
-
-    if (Instance().mMovementTimerActive)
-    {
-        CancelTimer(TimerType::Movement);
-        LOG_INF("Starting lifting in timer timeout handler");
-        WindowCovering::Instance().StartLifting(Instance().mMoveType);
-    }
-}
-
 void AppTask::FunctionHandler(AppEvent * aEvent)
 {
     if (!aEvent)
@@ -292,7 +268,7 @@ void AppTask::FunctionHandler(AppEvent * aEvent)
     {
         if (!Instance().mFunctionTimerActive && Instance().mMode == OperatingMode::Normal)
         {
-            StartTimer(TimerType::Function, FACTORY_RESET_TRIGGER_TIMEOUT);
+            StartTimer(FACTORY_RESET_TRIGGER_TIMEOUT);
         }
     }
     else
@@ -302,7 +278,7 @@ void AppTask::FunctionHandler(AppEvent * aEvent)
             sUnusedLeds.Set(false);
 
             UpdateStatusLED();
-            CancelTimer(TimerType::Function);
+            CancelTimer();
 
             // Change the function to none selected since factory reset has been canceled.
             Instance().mMode = OperatingMode::Normal;
@@ -311,7 +287,7 @@ void AppTask::FunctionHandler(AppEvent * aEvent)
         }
         else if (Instance().mFunctionTimerActive)
         {
-            CancelTimer(TimerType::Function);
+            CancelTimer();
             Instance().mMode = OperatingMode::Normal;
         }
     }
@@ -337,50 +313,83 @@ void AppTask::StartBLEAdvertisementHandler(AppEvent *)
     }
 }
 
-void AppTask::LiftHandler(AppEvent * aEvent)
+void AppTask::OpenHandler(AppEvent * aEvent)
 {
     if (!aEvent)
         return;
-    if (aEvent->ButtonEvent.PinNo != LIFT_BUTTON || Instance().mMode != OperatingMode::Normal)
+    if (aEvent->ButtonEvent.PinNo != OPEN_BUTTON || Instance().mMode != OperatingMode::Normal)
         return;
 
     if (aEvent->ButtonEvent.Action == BUTTON_PUSH_EVENT)
     {
-        if (!Instance().mMovementTimerActive)
+        Instance().mOpenButtonIsPressed = true;
+        if (Instance().mCloseButtonIsPressed)
         {
-            LOG_INF("Starting movement timer");
-            StartTimer(TimerType::Movement, MOVEMENT_START_WINDOW_TIMEOUT);
+            Instance().ToggleMoveType();
         }
     }
     else if (aEvent->ButtonEvent.Action == BUTTON_RELEASE_EVENT)
     {
-        if (Instance().mMovementTimerActive)
+        if (!Instance().mCloseButtonIsPressed)
         {
-            CancelTimer(TimerType::Movement);
-            Instance().ToggleLiftMoveDirection();
+            if (!Instance().mMoveTypeRecentlyChanged)
+            {
+                WindowCovering::Instance().ScheduleMove(OperationalState::MovingUpOrOpen);
+            }
+            else
+            {
+                Instance().mMoveTypeRecentlyChanged = false;
+            }
         }
-        // release happened more than 2 seconds after pressing the button,
-        // we assume that the flag was cleared in MovementTimerEventHandler
-        else if (!Instance().mMovementTimerActive)
-        {
-            LOG_INF("Stopping movement");
-            WindowCovering::Instance().StopLifting();
-        }
+        Instance().mOpenButtonIsPressed = false;
     }
 }
 
-void AppTask::ToggleLiftMoveDirection()
+void AppTask::CloseHandler(AppEvent * aEvent)
 {
-    if (Instance().mMoveType == OperationalState::MovingUpOrOpen)
-    {   
-        LOG_INF("Lift movement: closing");
-        Instance().mMoveType = OperationalState::MovingDownOrClose;
+    if (!aEvent)
+        return;
+    if (aEvent->ButtonEvent.PinNo != CLOSE_BUTTON || Instance().mMode != OperatingMode::Normal)
+        return;
+
+    if (aEvent->ButtonEvent.Action == BUTTON_PUSH_EVENT)
+    {
+        Instance().mCloseButtonIsPressed = true;
+        if (Instance().mOpenButtonIsPressed)
+        {
+            Instance().ToggleMoveType();
+        }
+    }
+    else if (aEvent->ButtonEvent.Action == BUTTON_RELEASE_EVENT)
+    {
+        if (!Instance().mOpenButtonIsPressed)
+        {
+            if (!Instance().mMoveTypeRecentlyChanged)
+            {
+                WindowCovering::Instance().ScheduleMove(OperationalState::MovingDownOrClose);
+            }
+            else
+            {
+                Instance().mMoveTypeRecentlyChanged = false;
+            }
+        }
+        Instance().mCloseButtonIsPressed = false;
+    }
+}
+
+void AppTask::ToggleMoveType()
+{
+    if (WindowCovering::Instance().GetMoveType() == WindowCovering::MoveType::LIFT)
+    {
+        LOG_INF("Tilt movement set");
+        WindowCovering::Instance().SetMoveType(WindowCovering::MoveType::TILT);
     }
     else
     {
-        LOG_INF("Lift movement: opening");
-        Instance().mMoveType = OperationalState::MovingUpOrOpen;
+        LOG_INF("Lift movement set");
+        WindowCovering::Instance().SetMoveType(WindowCovering::MoveType::LIFT);
     }
+    mMoveTypeRecentlyChanged = true;
 }
 
 void AppTask::UpdateLedStateEventHandler(AppEvent * aEvent)
@@ -448,32 +457,16 @@ void AppTask::ChipEventHandler(const ChipDeviceEvent * aEvent, intptr_t /* aArg 
     }
 }
 
-void AppTask::CancelTimer(TimerType aTimerType)
+void AppTask::CancelTimer()
 {
-    if (aTimerType == TimerType::Function)
-    {
-        k_timer_stop(&sFunctionTimer);
-        Instance().mFunctionTimerActive = false;
-    }
-    else if (aTimerType == TimerType::Movement)
-    {
-        k_timer_stop(&sMovementTimer);
-        Instance().mMovementTimerActive = false;
-    }
+    k_timer_stop(&sFunctionTimer);
+    Instance().mFunctionTimerActive = false;
 }
 
-void AppTask::StartTimer(TimerType aTimerType, uint32_t aTimeoutInMs)
+void AppTask::StartTimer(uint32_t aTimeoutInMs)
 {
-    if (aTimerType == TimerType::Function)
-    {
-        k_timer_start(&sFunctionTimer, K_MSEC(aTimeoutInMs), K_NO_WAIT);
-        Instance().mFunctionTimerActive = true;
-    }
-    else if (aTimerType == TimerType::Movement)
-    {
-        k_timer_start(&sMovementTimer, K_MSEC(aTimeoutInMs), K_NO_WAIT);
-        Instance().mMovementTimerActive = true;
-    }
+    k_timer_start(&sFunctionTimer, K_MSEC(aTimeoutInMs), K_NO_WAIT);
+    Instance().mFunctionTimerActive = true;
 }
 
 void AppTask::PostEvent(AppEvent * aEvent)

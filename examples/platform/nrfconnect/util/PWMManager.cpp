@@ -76,14 +76,14 @@ bool PWMManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size,
         new_state        = kState_Off;
     }
     else if (aAction == LEVEL_ACTION && *value != mLevel)
-    {   
+    {
         action_initiated = true;
         if (*value == 0)
         {
             new_state = kState_Off;
         }
         else
-        {   
+        {
             new_state = kState_On;
         }
     }
@@ -100,7 +100,7 @@ bool PWMManager::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size,
             Set(new_state == kState_On);
         }
         else if (aAction == LEVEL_ACTION)
-        {   
+        {
             mState = new_state;
             SetLevel(*value);
         }

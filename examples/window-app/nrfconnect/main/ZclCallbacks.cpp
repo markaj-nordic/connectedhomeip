@@ -19,8 +19,8 @@
  *   This file implements the handler for data model messages.
  */
 
-#include <AppConfig.h>
 #include "WindowCovering.h"
+#include <AppConfig.h>
 
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app-common/zap-generated/callback.h>
@@ -56,9 +56,9 @@ void MatterPostAttributeChangeCallback(const app::ConcreteAttributePath & attrib
 
 /* Forwards all attributes changes */
 void MatterWindowCoveringClusterServerAttributeChangedCallback(const app::ConcreteAttributePath & attributePath)
-{   
-    if (attributePath.mEndpointId == WindowCovering::Endpoint() 
-        && attributePath.mAttributeId == Attributes::CurrentPositionLiftPercent100ths::Id)
+{
+    if (attributePath.mEndpointId == WindowCovering::Endpoint() &&
+        attributePath.mAttributeId == Attributes::CurrentPositionLiftPercent100ths::Id)
     {
         WindowCovering::Instance().UpdateLiftLED();
     }
