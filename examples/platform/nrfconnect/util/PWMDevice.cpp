@@ -16,7 +16,7 @@
  *    limitations under the License.
  */
 
-#include "PWMManager.h"
+#include "PWMDevice.h"
 
 #include "AppConfig.h"
 
@@ -43,6 +43,19 @@ int PWMDevice::Init()
     Set(false);
     return 0;
 }
+
+int PWMDevice::Init(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel)
+{
+    mState      = kState_On;
+    mMinLevel   = aMinLevel;
+    mMaxLevel   = aMaxLevel;
+    mLevel      = aMaxLevel;
+    mPwmDevice  = aPWMDevice;
+    mPwmChannel = aPWMChannel;
+
+    return Init();
+}
+
 void PWMDevice::SetCallbacks(PWMCallback aActionInitiatedClb, PWMCallback aActionCompletedClb)
 {
     mActionInitiatedClb = aActionInitiatedClb;

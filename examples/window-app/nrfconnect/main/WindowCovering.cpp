@@ -17,7 +17,7 @@
 
 #include "WindowCovering.h"
 #include "AppConfig.h"
-#include "PWMManager.h"
+#include "PWMDevice.h"
 
 #include <dk_buttons_and_leds.h>
 

@@ -1,5 +1,4 @@
 /*
- *
  *    Copyright (c) 2022 Project CHIP Authors
  *    All rights reserved.
  *
@@ -18,7 +17,6 @@
 
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <drivers/gpio.h>
 
@@ -43,7 +41,9 @@ public:
     using PWMCallback = void (*)(Action_t, int32_t);
 
     PWMDevice(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel);
+    PWMDevice() = default;
     int Init();
+    int Init(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel);
     bool IsTurnedOn() const { return mState == kState_On; }
     uint8_t GetLevel() const { return mLevel; }
     uint8_t GetMinLevel() const { return mMinLevel; }
@@ -66,39 +66,4 @@ private:
     void Set(bool aOn);
     void SetLevel(uint8_t aLevel);
     void UpdateLight();
-};
-
-class PWMManager
-{
-public:
-    static PWMManager & Instance()
-    {
-        static PWMManager sInstance;
-        return sInstance;
-    }
-    void RegisterDevice(PWMDevice * aDevice)
-    {
-        if (CanAddElement())
-        {
-            mDevices[mIndex++] = aDevice;
-        }
-    }
-    bool InitiateAction(const device * aPwmDevice, PWMDevice::Action_t aAction, int32_t aActor, uint8_t * aValue)
-    {
-        for (auto it = mDevices.begin(); it != mDevices.end(); ++it)
-        {
-            if ((*it)->GetDevice() == aPwmDevice)
-            {
-                return (*it)->InitiateAction(aAction, aActor, aValue);
-            }
-        }
-        return false;
-    }
-
-private:
-    bool CanAddElement() { return (mIndex + 1 <= mDevices.size()); }
-
-    static constexpr uint8_t sNumberOfPWMs{ 4 };
-    std::array<PWMDevice *, sNumberOfPWMs> mDevices;
-    std::size_t mIndex{ 0 };
 };
