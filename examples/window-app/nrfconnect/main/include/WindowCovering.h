@@ -43,24 +43,27 @@ public:
         return sInstance;
     }
 
-    void ScheduleMove(const OperationalState & aDirection);
-    void SetMoveType(MoveType aMoveType) { mCurrentMoveType = aMoveType; }
+    void StartMove(MoveType aMoveType);
+    void SetSingleStepTarget(OperationalState aDirection);
+    void SetMoveType(MoveType aMoveType);
     MoveType GetMoveType() { return mCurrentMoveType; }
-    void UpdatePositionLED(MoveType aMoveType);
 
+    static void PositionLEDUpdate(MoveType aMoveType);
     static constexpr chip::EndpointId Endpoint() { return 1; };
 
 private:
-    void SchedulePositionSet();
     void ScheduleOperationalStatusSetWithGlobalUpdate();
-    static uint8_t PositionToBrightness(uint16_t aLiftPosition, MoveType aMoveType);
     void SetBrightness(MoveType aMoveType, uint16_t aPosition);
+    void SetTargetPosition(OperationalState aDirection, chip::Percent100ths aPosition);
+    void UpdateOperationalStatus(MoveType aMoveType, OperationalState aDirection);
 
+    static uint8_t PositionToBrightness(uint16_t aLiftPosition, MoveType aMoveType);
     static void SetOperationalStatus(const OperationalStatus & aStatus);
     static uint8_t OperationalStateToValue(const OperationalState & aState);
-    static void CallbackPositionSet(intptr_t arg);
-    static void OperationalStatusSetWithGlobalUpdate(intptr_t aArg);
-    static void PositionLEDUpdate(intptr_t aArg);
+    static void CallbackPositionSet(intptr_t);
+    static void OperationalStatusSetWithGlobalUpdate();
+    static void MoveTimerTimeoutCallback(k_timer * aTimer);
+    static bool TargetCompleted();
 
     OperationalStatus mOperationalStatus{};
     MoveType mCurrentMoveType;
@@ -68,4 +71,5 @@ private:
     LEDWidget mTiltLED;
     PWMDevice mLiftIndicator;
     PWMDevice mTiltIndicator;
+    k_timer mMoveTimer;
 };

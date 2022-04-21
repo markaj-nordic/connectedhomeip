@@ -116,8 +116,8 @@ CHIP_ERROR AppTask::Init()
     sStatusLED.Init(SYSTEM_STATE_LED);
 
     UpdateStatusLED();
-    WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::LIFT);
-    WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::TILT);
+    WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::LIFT);
+    WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::TILT);
 
     // Initialize buttons
     auto ret = dk_buttons_init(ButtonEventHandler);
@@ -335,7 +335,7 @@ void AppTask::OpenHandler(AppEvent * aEvent)
         {
             if (!Instance().mMoveTypeRecentlyChanged)
             {
-                WindowCovering::Instance().ScheduleMove(OperationalState::MovingUpOrOpen);
+                WindowCovering::Instance().SetSingleStepTarget(OperationalState::MovingUpOrOpen);
             }
             else
             {
@@ -367,7 +367,7 @@ void AppTask::CloseHandler(AppEvent * aEvent)
         {
             if (!Instance().mMoveTypeRecentlyChanged)
             {
-                WindowCovering::Instance().ScheduleMove(OperationalState::MovingDownOrClose);
+                WindowCovering::Instance().SetSingleStepTarget(OperationalState::MovingDownOrClose);
             }
             else
             {

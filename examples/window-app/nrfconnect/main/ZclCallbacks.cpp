@@ -57,14 +57,22 @@ void MatterPostAttributeChangeCallback(const app::ConcreteAttributePath & attrib
 /* Forwards all attributes changes */
 void MatterWindowCoveringClusterServerAttributeChangedCallback(const app::ConcreteAttributePath & attributePath)
 {
-    if (attributePath.mEndpointId == WindowCovering::Endpoint() &&
-        attributePath.mAttributeId == Attributes::CurrentPositionLiftPercent100ths::Id)
+    if (attributePath.mEndpointId == WindowCovering::Endpoint())
     {
-        WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::LIFT);
-    }
-    else if (attributePath.mEndpointId == WindowCovering::Endpoint() &&
-             attributePath.mAttributeId == Attributes::CurrentPositionTiltPercent100ths::Id)
-    {
-        WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::TILT);
+        switch (attributePath.mAttributeId)
+        {
+        case Attributes::TargetPositionLiftPercent100ths::Id:
+            WindowCovering::Instance().StartMove(WindowCovering::MoveType::LIFT);
+            break;
+        case Attributes::TargetPositionTiltPercent100ths::Id:
+            WindowCovering::Instance().StartMove(WindowCovering::MoveType::TILT);
+            break;
+        case Attributes::CurrentPositionLiftPercent100ths::Id:
+            WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::LIFT);
+            break;
+        case Attributes::CurrentPositionTiltPercent100ths::Id:
+            WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::TILT);
+            break;
+        };
     }
 }

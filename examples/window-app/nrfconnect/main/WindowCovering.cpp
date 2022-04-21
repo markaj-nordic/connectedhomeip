@@ -33,6 +33,9 @@ using namespace ::chip::Credentials;
 using namespace ::chip::DeviceLayer;
 using namespace chip::app::Clusters::WindowCovering;
 
+static k_timer sMoveTimer;
+static constexpr uint32_t sMoveTimeoutMs{ 200 };
+
 static constexpr float FromOneRangeToAnother(uint32_t aInMin, uint32_t aInMax, uint32_t aOutMin, uint32_t aOutMax, uint32_t aInput)
 {
     const auto diffInput  = aInMax - aInMin;
@@ -51,31 +54,21 @@ WindowCovering::WindowCovering() :
     mTiltLED.Init(TILT_STATE_LED);
     mLiftIndicator.Init();
     mTiltIndicator.Init();
+
+    k_timer_init(&sMoveTimer, MoveTimerTimeoutCallback, nullptr);
 }
 
-void WindowCovering::ScheduleMove(const OperationalState & aDirection)
+void WindowCovering::StartMove(MoveType aMoveType)
 {
-    switch (mCurrentMoveType)
-    {
-    case MoveType::LIFT:
-        mOperationalStatus.lift   = aDirection;
-        mOperationalStatus.global = mOperationalStatus.lift;
-        mOperationalStatus.tilt   = OperationalState::Stall;
-        break;
-    case MoveType::TILT:
-        mOperationalStatus.tilt   = aDirection;
-        mOperationalStatus.global = mOperationalStatus.tilt;
-        mOperationalStatus.lift   = OperationalState::Stall;
-        break;
-    default:
-        break;
-    }
-    SchedulePositionSet();
-    ScheduleOperationalStatusSetWithGlobalUpdate();
+    mCurrentMoveType = aMoveType;
+    k_timer_start(&sMoveTimer, K_MSEC(sMoveTimeoutMs), K_NO_WAIT);
 }
 
-void WindowCovering::SchedulePositionSet()
+void WindowCovering::MoveTimerTimeoutCallback(k_timer * aTimer)
 {
+    if (!aTimer)
+        return;
+
     chip::DeviceLayer::PlatformMgr().ScheduleWork(CallbackPositionSet);
 }
 
@@ -97,7 +90,7 @@ void WindowCovering::CallbackPositionSet(intptr_t)
     if ((status == EMBER_ZCL_STATUS_SUCCESS) && !current.IsNull())
     {
         static constexpr auto sPercentDelta{ WC_PERCENT100THS_MAX_CLOSED / 50 };
-        percent100ths = ComputePercent100thsStep(Instance().mOperationalStatus.global, current.Value(), sPercentDelta);
+        percent100ths = ComputePercent100thsStep(OperationalStatusGet(Endpoint()).global, current.Value(), sPercentDelta);
     }
     else
     {
@@ -114,14 +107,100 @@ void WindowCovering::CallbackPositionSet(intptr_t)
     {
         TiltPositionSet(Endpoint(), position);
     }
+
+    if (!TargetCompleted())
+    {
+        k_timer_start(&sMoveTimer, K_MSEC(sMoveTimeoutMs), K_NO_WAIT);
+    }
 }
 
-void WindowCovering::ScheduleOperationalStatusSetWithGlobalUpdate()
+bool WindowCovering::TargetCompleted()
 {
-    chip::DeviceLayer::PlatformMgr().ScheduleWork(OperationalStatusSetWithGlobalUpdate);
+    NPercent100ths current{};
+    NPercent100ths target{};
+    EmberAfStatus status{};
+
+    if (Instance().mCurrentMoveType == MoveType::LIFT)
+    {
+        status = Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current);
+        status = Attributes::TargetPositionLiftPercent100ths::Get(Endpoint(), target);
+    }
+    else if (Instance().mCurrentMoveType == MoveType::TILT)
+    {
+        status = Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), current);
+        status = Attributes::TargetPositionTiltPercent100ths::Get(Endpoint(), target);
+    }
+    return (current == target);
 }
 
-void WindowCovering::OperationalStatusSetWithGlobalUpdate(intptr_t)
+void WindowCovering::SetMoveType(MoveType aMoveType)
+{
+    mCurrentMoveType = aMoveType;
+}
+
+void WindowCovering::SetSingleStepTarget(OperationalState aDirection)
+{
+    EmberAfStatus status{};
+    NPercent100ths current{};
+
+    UpdateOperationalStatus(mCurrentMoveType, aDirection);
+
+    if (Instance().mCurrentMoveType == MoveType::LIFT)
+    {
+        status = Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current);
+    }
+    else if (Instance().mCurrentMoveType == MoveType::TILT)
+    {
+        status = Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), current);
+    }
+
+    if ((status == EMBER_ZCL_STATUS_SUCCESS) && !current.IsNull())
+    {
+        static constexpr auto sPercentDelta{ WC_PERCENT100THS_MAX_CLOSED / 50 };
+        chip::Percent100ths percent100ths =
+            ComputePercent100thsStep(OperationalStatusGet(Endpoint()).global, current.Value(), sPercentDelta);
+        SetTargetPosition(aDirection, percent100ths);
+    }
+    else
+    {
+        LOG_ERR("Cannot read the current position. Error: %d", static_cast<uint8_t>(status));
+    }
+}
+
+void WindowCovering::SetTargetPosition(OperationalState aDirection, chip::Percent100ths aPosition)
+{
+    EmberAfStatus status{};
+    if (Instance().mCurrentMoveType == MoveType::LIFT)
+    {
+        status = Attributes::TargetPositionLiftPercent100ths::Set(Endpoint(), aPosition);
+    }
+    else if (Instance().mCurrentMoveType == MoveType::TILT)
+    {
+        status = Attributes::TargetPositionTiltPercent100ths::Set(Endpoint(), aPosition);
+    }
+}
+
+void WindowCovering::UpdateOperationalStatus(MoveType aMoveType, OperationalState aDirection)
+{
+    switch (aMoveType)
+    {
+    case MoveType::LIFT:
+        mOperationalStatus.lift   = aDirection;
+        mOperationalStatus.global = mOperationalStatus.lift;
+        mOperationalStatus.tilt   = OperationalState::Stall;
+        break;
+    case MoveType::TILT:
+        mOperationalStatus.tilt   = aDirection;
+        mOperationalStatus.global = mOperationalStatus.tilt;
+        mOperationalStatus.lift   = OperationalState::Stall;
+        break;
+    default:
+        break;
+    }
+    OperationalStatusSetWithGlobalUpdate();
+}
+
+void WindowCovering::OperationalStatusSetWithGlobalUpdate()
 {
     OperationalStatusSet(Endpoint(), Instance().mOperationalStatus);
 }
@@ -151,23 +230,12 @@ uint8_t WindowCovering::OperationalStateToValue(const OperationalState & state)
     }
 }
 
-void WindowCovering::UpdatePositionLED(MoveType aMoveType)
+void WindowCovering::PositionLEDUpdate(MoveType aMoveType)
 {
-    MoveType * moveType = chip::Platform::New<MoveType>();
-    VerifyOrReturn(moveType != nullptr, emberAfWindowCoveringClusterPrint("No memory for async call data"));
-
-    *moveType = aMoveType;
-    chip::DeviceLayer::PlatformMgr().ScheduleWork(PositionLEDUpdate, reinterpret_cast<intptr_t>(moveType));
-}
-
-void WindowCovering::PositionLEDUpdate(intptr_t aArg)
-{
-    MoveType * moveType = reinterpret_cast<MoveType *>(aArg);
-
     EmberAfStatus status;
     chip::app::DataModel::Nullable<uint16_t> currentPosition;
 
-    if (*moveType == MoveType::LIFT)
+    if (aMoveType == MoveType::LIFT)
     {
         status = Attributes::CurrentPositionLift::Get(Endpoint(), currentPosition);
         if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
@@ -175,7 +243,7 @@ void WindowCovering::PositionLEDUpdate(intptr_t aArg)
             Instance().SetBrightness(MoveType::LIFT, currentPosition.Value());
         }
     }
-    else if (*moveType == MoveType::TILT)
+    else if (aMoveType == MoveType::TILT)
     {
         status = Attributes::CurrentPositionTilt::Get(Endpoint(), currentPosition);
         if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
@@ -183,8 +251,6 @@ void WindowCovering::PositionLEDUpdate(intptr_t aArg)
             Instance().SetBrightness(MoveType::TILT, currentPosition.Value());
         }
     }
-
-    chip::Platform::Delete(moveType);
 }
 
 void WindowCovering::SetBrightness(MoveType aMoveType, uint16_t aPosition)
