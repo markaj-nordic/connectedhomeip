@@ -51,7 +51,7 @@ LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 K_MSGQ_DEFINE(sAppEventQueue, sizeof(AppEvent), APP_EVENT_QUEUE_SIZE, alignof(AppEvent));
 
 static LEDWidget sStatusLED;
-static UnusedLedsWrapper<3> sUnusedLeds{ { DK_LED3, DK_LED4 } };
+static UnusedLedsWrapper<1> sUnusedLeds{ { DK_LED4 } };
 static k_timer sFunctionTimer;
 namespace LedConsts {
 constexpr uint32_t kBlinkRate_ms{ 500 };
@@ -116,8 +116,8 @@ CHIP_ERROR AppTask::Init()
     sStatusLED.Init(SYSTEM_STATE_LED);
 
     UpdateStatusLED();
-    WindowCovering::Instance().UpdateLiftLED();
-    WindowCovering::Instance().UpdateTiltLED();
+    WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::LIFT);
+    WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::TILT);
 
     // Initialize buttons
     auto ret = dk_buttons_init(ButtonEventHandler);
@@ -382,13 +382,13 @@ void AppTask::ToggleMoveType()
 {
     if (WindowCovering::Instance().GetMoveType() == WindowCovering::MoveType::LIFT)
     {
-        LOG_INF("Tilt movement set");
         WindowCovering::Instance().SetMoveType(WindowCovering::MoveType::TILT);
+        LOG_INF("Window covering move: tilt");
     }
     else
     {
-        LOG_INF("Lift movement set");
         WindowCovering::Instance().SetMoveType(WindowCovering::MoveType::LIFT);
+        LOG_INF("Window covering move: lift");
     }
     mMoveTypeRecentlyChanged = true;
 }

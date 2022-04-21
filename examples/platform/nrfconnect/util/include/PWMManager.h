@@ -40,14 +40,17 @@ public:
         kState_Off,
     };
 
-    using LightingCallback_fn = void (*)(Action_t, int32_t);
+    using PWMCallback = void (*)(Action_t, int32_t);
 
-    PWMDevice(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel);
+    PWMDevice(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel);
     int Init();
     bool IsTurnedOn() const { return mState == kState_On; }
     uint8_t GetLevel() const { return mLevel; }
-    bool InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, uint8_t * value);
-    void SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB);
+    uint8_t GetMinLevel() const { return mMinLevel; }
+    uint8_t GetMaxLevel() const { return mMaxLevel; }
+    bool InitiateAction(Action_t aAction, int32_t aActor, uint8_t * aValue);
+    void SetCallbacks(PWMCallback aActionInitiatedClb, PWMCallback aActionCompletedClb);
+    const device * GetDevice() { return mPwmDevice; }
 
 private:
     State_t mState;
@@ -57,37 +60,36 @@ private:
     const device * mPwmDevice;
     uint32_t mPwmChannel;
 
-    LightingCallback_fn mActionInitiated_CB;
-    LightingCallback_fn mActionCompleted_CB;
+    PWMCallback mActionInitiatedClb;
+    PWMCallback mActionCompletedClb;
 
     void Set(bool aOn);
     void SetLevel(uint8_t aLevel);
     void UpdateLight();
 };
 
-template <int size>
 class PWMManager
 {
 public:
     static PWMManager & Instance()
     {
-        static PWMManager<2> sInstance;
+        static PWMManager sInstance;
         return sInstance;
     }
-    void RegisterDevice(const PWMDevice & device)
+    void RegisterDevice(PWMDevice * aDevice)
     {
         if (CanAddElement())
         {
-            mDevices[mIndex++] = device;
+            mDevices[mIndex++] = aDevice;
         }
     }
-    bool InitiateAction(const device * aPwmDevice, PWMDevice::Action_t aAction, int32_t aActor, uint16_t aSize, uint8_t * aValue)
+    bool InitiateAction(const device * aPwmDevice, PWMDevice::Action_t aAction, int32_t aActor, uint8_t * aValue)
     {
         for (auto it = mDevices.begin(); it != mDevices.end(); ++it)
         {
-            if (it->mPwmDevice == aPwmDevice)
+            if ((*it)->GetDevice() == aPwmDevice)
             {
-                return it->InitiateAction(aAction, aActor, aSize, aValue);
+                return (*it)->InitiateAction(aAction, aActor, aValue);
             }
         }
         return false;
@@ -95,6 +97,8 @@ public:
 
 private:
     bool CanAddElement() { return (mIndex + 1 <= mDevices.size()); }
-    std::array<PWMDevice, size> mDevices;
-    uint8_t mIndex{ 0 };
+
+    static constexpr uint8_t sNumberOfPWMs{ 4 };
+    std::array<PWMDevice *, sNumberOfPWMs> mDevices;
+    std::size_t mIndex{ 0 };
 };

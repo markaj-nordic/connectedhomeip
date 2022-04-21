@@ -28,8 +28,9 @@
 
 LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 
-PWMDevice::PWMDevice(const device * pwmDevice, uint32_t pwmChannel, uint8_t minLevel, uint8_t maxLevel) :
-    mState(kState_On), mMinLevel(minLevel), mMaxLevel(maxLevel), mLevel(maxLevel), mPwmDevice(pwmDevice), mPwmChannel(pwmChannel)
+PWMDevice::PWMDevice(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel) :
+    mState(kState_On), mMinLevel(aMinLevel), mMaxLevel(aMaxLevel), mLevel(aMaxLevel), mPwmDevice(aPWMDevice),
+    mPwmChannel(aPWMChannel)
 {}
 
 int PWMDevice::Init()
@@ -42,13 +43,13 @@ int PWMDevice::Init()
     Set(false);
     return 0;
 }
-void PWMDevice::SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB)
+void PWMDevice::SetCallbacks(PWMCallback aActionInitiatedClb, PWMCallback aActionCompletedClb)
 {
-    mActionInitiated_CB = aActionInitiated_CB;
-    mActionCompleted_CB = aActionCompleted_CB;
+    mActionInitiatedClb = aActionInitiatedClb;
+    mActionCompletedClb = aActionCompletedClb;
 }
 
-bool PWMDevice::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, uint8_t * value)
+bool PWMDevice::InitiateAction(Action_t aAction, int32_t aActor, uint8_t * aValue)
 {
     // TODO: this function is called InitiateAction because we want to implement some features such as ramping up here.
     bool action_initiated = false;
@@ -65,10 +66,10 @@ bool PWMDevice::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, 
         action_initiated = true;
         new_state        = kState_Off;
     }
-    else if (aAction == LEVEL_ACTION && *value != mLevel)
+    else if (aAction == LEVEL_ACTION && *aValue != mLevel)
     {
         action_initiated = true;
-        if (*value == 0)
+        if (*aValue == 0)
         {
             new_state = kState_Off;
         }
@@ -80,9 +81,9 @@ bool PWMDevice::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, 
 
     if (action_initiated)
     {
-        if (mActionInitiated_CB)
+        if (mActionInitiatedClb)
         {
-            mActionInitiated_CB(aAction, aActor);
+            mActionInitiatedClb(aAction, aActor);
         }
 
         if (aAction == ON_ACTION || aAction == OFF_ACTION)
@@ -92,12 +93,12 @@ bool PWMDevice::InitiateAction(Action_t aAction, int32_t aActor, uint16_t size, 
         else if (aAction == LEVEL_ACTION)
         {
             mState = new_state;
-            SetLevel(*value);
+            SetLevel(*aValue);
         }
 
-        if (mActionCompleted_CB)
+        if (mActionCompletedClb)
         {
-            mActionCompleted_CB(aAction, aActor);
+            mActionCompletedClb(aAction, aActor);
         }
     }
 

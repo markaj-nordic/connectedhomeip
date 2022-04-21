@@ -60,11 +60,11 @@ void MatterWindowCoveringClusterServerAttributeChangedCallback(const app::Concre
     if (attributePath.mEndpointId == WindowCovering::Endpoint() &&
         attributePath.mAttributeId == Attributes::CurrentPositionLiftPercent100ths::Id)
     {
-        WindowCovering::Instance().UpdateLiftLED();
+        WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::LIFT);
     }
     else if (attributePath.mEndpointId == WindowCovering::Endpoint() &&
              attributePath.mAttributeId == Attributes::CurrentPositionTiltPercent100ths::Id)
     {
-        WindowCovering::Instance().UpdateTiltLED();
+        WindowCovering::Instance().UpdatePositionLED(WindowCovering::MoveType::TILT);
     }
 }

@@ -44,25 +44,23 @@ public:
     }
 
     void ScheduleMove(const OperationalState & aDirection);
-    void SetMoveType(const MoveType & aMoveType) { mCurrentMoveType = aMoveType; }
+    void SetMoveType(MoveType aMoveType) { mCurrentMoveType = aMoveType; }
     MoveType GetMoveType() { return mCurrentMoveType; }
-    void UpdateLiftLED();
-    void UpdateTiltLED();
+    void UpdatePositionLED(MoveType aMoveType);
 
     static constexpr chip::EndpointId Endpoint() { return 1; };
 
 private:
     void SchedulePositionSet();
     void ScheduleOperationalStatusSetWithGlobalUpdate();
-    uint8_t LiftToBrightness(uint16_t aLiftPosition);
-    uint8_t TiltToBrightness(uint16_t aTiltPosition);
+    static uint8_t PositionToBrightness(uint16_t aLiftPosition, MoveType aMoveType);
+    void SetBrightness(MoveType aMoveType, uint16_t aPosition);
 
     static void SetOperationalStatus(const OperationalStatus & aStatus);
     static uint8_t OperationalStateToValue(const OperationalState & aState);
     static void CallbackPositionSet(intptr_t arg);
-    static void CallbackOperationalStatusSetWithGlobalUpdate(intptr_t aArg);
-    static void ScheduleLiftLEDUpdateCallback(intptr_t aArg);
-    static void ScheduleTiltLEDUpdateCallback(intptr_t aArg);
+    static void OperationalStatusSetWithGlobalUpdate(intptr_t aArg);
+    static void PositionLEDUpdate(intptr_t aArg);
 
     OperationalStatus mOperationalStatus{};
     MoveType mCurrentMoveType;

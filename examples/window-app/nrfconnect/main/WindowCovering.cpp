@@ -33,6 +33,17 @@ using namespace ::chip::Credentials;
 using namespace ::chip::DeviceLayer;
 using namespace chip::app::Clusters::WindowCovering;
 
+static constexpr float FromOneRangeToAnother(uint32_t aInMin, uint32_t aInMax, uint32_t aOutMin, uint32_t aOutMax, uint32_t aInput)
+{
+    const auto diffInput  = aInMax - aInMin;
+    const auto diffOutput = aOutMax - aOutMin;
+    if (diffInput > 0)
+    {
+        return aOutMin + ((float) diffOutput / (float) diffInput) * (aInput - aInMin);
+    }
+    return 0.0f;
+}
+
 WindowCovering::WindowCovering() :
     mLiftIndicator(LIFT_PWM_DEVICE, LIFT_PWM_CHANNEL, 0, 255), mTiltIndicator(TILT_PWM_DEVICE, TILT_PWM_CHANNEL, 0, 255)
 {
@@ -40,8 +51,6 @@ WindowCovering::WindowCovering() :
     mTiltLED.Init(TILT_STATE_LED);
     mLiftIndicator.Init();
     mTiltIndicator.Init();
-    // PWMManager::Instance().RegisterDevice(mLiftIndicator);
-    // PWMManager::Instance().RegisterDevice(mTiltIndicator);
 }
 
 void WindowCovering::ScheduleMove(const OperationalState & aDirection)
@@ -109,10 +118,10 @@ void WindowCovering::CallbackPositionSet(intptr_t)
 
 void WindowCovering::ScheduleOperationalStatusSetWithGlobalUpdate()
 {
-    chip::DeviceLayer::PlatformMgr().ScheduleWork(CallbackOperationalStatusSetWithGlobalUpdate);
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(OperationalStatusSetWithGlobalUpdate);
 }
 
-void WindowCovering::CallbackOperationalStatusSetWithGlobalUpdate(intptr_t)
+void WindowCovering::OperationalStatusSetWithGlobalUpdate(intptr_t)
 {
     OperationalStatusSet(Endpoint(), Instance().mOperationalStatus);
 }
@@ -142,82 +151,81 @@ uint8_t WindowCovering::OperationalStateToValue(const OperationalState & state)
     }
 }
 
-void WindowCovering::UpdateLiftLED()
+void WindowCovering::UpdatePositionLED(MoveType aMoveType)
 {
-    chip::DeviceLayer::PlatformMgr().ScheduleWork(ScheduleLiftLEDUpdateCallback);
+    MoveType * moveType = chip::Platform::New<MoveType>();
+    VerifyOrReturn(moveType != nullptr, emberAfWindowCoveringClusterPrint("No memory for async call data"));
+
+    *moveType = aMoveType;
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(PositionLEDUpdate, reinterpret_cast<intptr_t>(moveType));
 }
 
-void WindowCovering::ScheduleLiftLEDUpdateCallback(intptr_t)
+void WindowCovering::PositionLEDUpdate(intptr_t aArg)
 {
+    MoveType * moveType = reinterpret_cast<MoveType *>(aArg);
+
     EmberAfStatus status;
     chip::app::DataModel::Nullable<uint16_t> currentPosition;
 
-    status = Attributes::CurrentPositionLift::Get(Endpoint(), currentPosition);
-
-    if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
+    if (*moveType == MoveType::LIFT)
     {
-        uint8_t brightness = Instance().LiftToBrightness(currentPosition.Value());
-        LOG_INF("brightness: %d", brightness);
-        Instance().mLiftIndicator.InitiateAction(PWMDevice::LEVEL_ACTION, 0, 0, &brightness);
+        status = Attributes::CurrentPositionLift::Get(Endpoint(), currentPosition);
+        if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
+        {
+            Instance().SetBrightness(MoveType::LIFT, currentPosition.Value());
+        }
+    }
+    else if (*moveType == MoveType::TILT)
+    {
+        status = Attributes::CurrentPositionTilt::Get(Endpoint(), currentPosition);
+        if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
+        {
+            Instance().SetBrightness(MoveType::TILT, currentPosition.Value());
+        }
+    }
+
+    chip::Platform::Delete(moveType);
+}
+
+void WindowCovering::SetBrightness(MoveType aMoveType, uint16_t aPosition)
+{
+    uint8_t brightness = PositionToBrightness(aPosition, aMoveType);
+    if (aMoveType == MoveType::LIFT)
+    {
+        mLiftIndicator.InitiateAction(PWMDevice::LEVEL_ACTION, 0, &brightness);
+    }
+    else if (aMoveType == MoveType::TILT)
+    {
+        mTiltIndicator.InitiateAction(PWMDevice::LEVEL_ACTION, 0, &brightness);
     }
 }
 
-uint8_t WindowCovering::LiftToBrightness(uint16_t aLiftPosition)
+uint8_t WindowCovering::PositionToBrightness(uint16_t aLiftPosition, MoveType aMoveType)
 {
-    uint16_t installedClosedLimit;
-    uint16_t installedOpenLimit;
-    uint8_t result{ 0 };
-    EmberAfStatus status = Attributes::InstalledOpenLimitLift::Get(Endpoint(), &installedOpenLimit);
-    status               = Attributes::InstalledClosedLimitLift::Get(Endpoint(), &installedClosedLimit);
+    uint16_t installedClosedLimit{};
+    uint16_t installedOpenLimit{};
+    uint8_t pwmMin{};
+    uint8_t pwmMax{};
+    EmberAfStatus status{};
+
+    if (aMoveType == MoveType::LIFT)
+    {
+        status = Attributes::InstalledOpenLimitLift::Get(Endpoint(), &installedOpenLimit);
+        status = Attributes::InstalledClosedLimitLift::Get(Endpoint(), &installedClosedLimit);
+        pwmMin = Instance().mLiftIndicator.GetMinLevel();
+        pwmMax = Instance().mLiftIndicator.GetMaxLevel();
+    }
+    else if (aMoveType == MoveType::TILT)
+    {
+        status = Attributes::InstalledOpenLimitTilt::Get(Endpoint(), &installedOpenLimit);
+        status = Attributes::InstalledClosedLimitTilt::Get(Endpoint(), &installedClosedLimit);
+        pwmMin = Instance().mTiltIndicator.GetMinLevel();
+        pwmMax = Instance().mTiltIndicator.GetMaxLevel();
+    }
 
     if (EMBER_ZCL_STATUS_SUCCESS == status)
     {
-        // TODO: use the actual limits
-        LOG_INF("Lift open limit: %d", installedOpenLimit);
-        LOG_INF("Lift close limit: %d", installedClosedLimit);
-        float value = 255.0f / 65535.0f * aLiftPosition;
-        LOG_INF("value: %d", (int) value);
-        result = value;
+        return FromOneRangeToAnother(installedOpenLimit, installedClosedLimit, pwmMin, pwmMax, aLiftPosition);
     }
-    return result;
-}
-
-void WindowCovering::UpdateTiltLED()
-{
-    chip::DeviceLayer::PlatformMgr().ScheduleWork(ScheduleTiltLEDUpdateCallback);
-}
-
-void WindowCovering::ScheduleTiltLEDUpdateCallback(intptr_t)
-{
-    EmberAfStatus status;
-    chip::app::DataModel::Nullable<uint16_t> currentPosition;
-
-    status = Attributes::CurrentPositionTilt::Get(Endpoint(), currentPosition);
-
-    if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
-    {
-        uint8_t brightness = Instance().TiltToBrightness(currentPosition.Value());
-        LOG_INF("brightness: %d", brightness);
-        Instance().mTiltIndicator.InitiateAction(PWMDevice::LEVEL_ACTION, 0, 0, &brightness);
-    }
-}
-
-uint8_t WindowCovering::TiltToBrightness(uint16_t aTiltPosition)
-{
-    uint16_t installedClosedLimit;
-    uint16_t installedOpenLimit;
-    uint8_t result{ 0 };
-    EmberAfStatus status = Attributes::InstalledOpenLimitTilt::Get(Endpoint(), &installedOpenLimit);
-    status               = Attributes::InstalledClosedLimitTilt::Get(Endpoint(), &installedClosedLimit);
-
-    if (EMBER_ZCL_STATUS_SUCCESS == status)
-    {
-        // TODO: use the actual limits
-        LOG_INF("Tilt open limit: %d", installedOpenLimit);
-        LOG_INF("Tilt close limit: %d", installedClosedLimit);
-        float value = 255.0f / 65535.0f * aTiltPosition;
-        LOG_INF("value: %d", (int) value);
-        result = value;
-    }
-    return result;
+    return 0;
 }
