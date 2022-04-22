@@ -42,12 +42,12 @@ void MatterPostAttributeChangeCallback(const app::ConcreteAttributePath & attrib
     switch (attributePath.mClusterId)
     {
     case app::Clusters::Identify::Id:
-        ChipLogProgress(Zcl, "Identify cluster ID: " ChipLogFormatMEI " Type: %u Value: %" PRIu16 ", length %" PRIu16,
-                        ChipLogValueMEI(attributePath.mAttributeId), type, *value, size);
+        ChipLogDetail(Zcl, "Identify cluster ID: " ChipLogFormatMEI " Type: %u Value: %" PRIu16 ", length %" PRIu16,
+                      ChipLogValueMEI(attributePath.mAttributeId), type, *value, size);
         break;
     case app::Clusters::WindowCovering::Id:
-        ChipLogProgress(Zcl, "WindowCovering cluster ID: " ChipLogFormatMEI " Type: %u Value: %" PRIu16 ", length %" PRIu16,
-                        ChipLogValueMEI(attributePath.mAttributeId), type, *value, size);
+        ChipLogDetail(Zcl, "WindowCovering cluster ID: " ChipLogFormatMEI " Type: %u Value: %" PRIu16 ", length %" PRIu16,
+                      ChipLogValueMEI(attributePath.mAttributeId), type, *value, size);
         break;
     default:
         break;

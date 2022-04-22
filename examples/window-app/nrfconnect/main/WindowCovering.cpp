@@ -36,32 +36,33 @@ using namespace chip::app::Clusters::WindowCovering;
 static k_timer sMoveTimer;
 static constexpr uint32_t sMoveTimeoutMs{ 200 };
 
-static constexpr float FromOneRangeToAnother(uint32_t aInMin, uint32_t aInMax, uint32_t aOutMin, uint32_t aOutMax, uint32_t aInput)
+static constexpr uint32_t FromOneRangeToAnother(uint32_t aInMin, uint32_t aInMax, uint32_t aOutMin, uint32_t aOutMax,
+                                                uint32_t aInput)
 {
     const auto diffInput  = aInMax - aInMin;
     const auto diffOutput = aOutMax - aOutMin;
     if (diffInput > 0)
     {
-        return aOutMin + ((float) diffOutput / (float) diffInput) * (aInput - aInMin);
+        return static_cast<uint32_t>(aOutMin + static_cast<uint64_t>(aInput - aInMin) * diffOutput / diffInput);
     }
-    return 0.0f;
+    return 0;
 }
 
-WindowCovering::WindowCovering() :
-    mLiftIndicator(LIFT_PWM_DEVICE, LIFT_PWM_CHANNEL, 0, 255), mTiltIndicator(TILT_PWM_DEVICE, TILT_PWM_CHANNEL, 0, 255)
+WindowCovering::WindowCovering()
 {
     mLiftLED.Init(LIFT_STATE_LED);
     mTiltLED.Init(TILT_STATE_LED);
-    mLiftIndicator.Init();
-    mTiltIndicator.Init();
+
+    if (mLiftIndicator.Init(LIFT_PWM_DEVICE, LIFT_PWM_CHANNEL, 0, 255) != 0)
+    {
+        LOG_ERR("Cannot initialize the lift indicator");
+    }
+    if (mTiltIndicator.Init(TILT_PWM_DEVICE, TILT_PWM_CHANNEL, 0, 255) != 0)
+    {
+        LOG_ERR("Cannot initialize the tilt indicator");
+    }
 
     k_timer_init(&sMoveTimer, MoveTimerTimeoutCallback, nullptr);
-}
-
-void WindowCovering::StartMove(MoveType aMoveType)
-{
-    mCurrentMoveType = aMoveType;
-    k_timer_start(&sMoveTimer, K_MSEC(sMoveTimeoutMs), K_NO_WAIT);
 }
 
 void WindowCovering::MoveTimerTimeoutCallback(k_timer * aTimer)
@@ -69,10 +70,34 @@ void WindowCovering::MoveTimerTimeoutCallback(k_timer * aTimer)
     if (!aTimer)
         return;
 
-    chip::DeviceLayer::PlatformMgr().ScheduleWork(CallbackPositionSet);
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(DriveCurrentPosition);
 }
 
-void WindowCovering::CallbackPositionSet(intptr_t)
+void WindowCovering::DriveCurrentPosition(intptr_t)
+{
+    NPercent100ths position{};
+    position.SetNonNull(CalculateSingleStep());
+
+    if (Instance().mCurrentMoveType == MoveType::LIFT)
+    {
+        LiftPositionSet(Endpoint(), position);
+    }
+    else if (Instance().mCurrentMoveType == MoveType::TILT)
+    {
+        TiltPositionSet(Endpoint(), position);
+    }
+
+    // assume single move completed
+    Instance().mInMove = false;
+
+    if (!TargetCompleted())
+    {
+        // continue to move
+        Instance().StartTimer(sMoveTimeoutMs);
+    }
+}
+
+chip::Percent100ths WindowCovering::CalculateSingleStep()
 {
     EmberAfStatus status{};
     chip::Percent100ths percent100ths{};
@@ -89,7 +114,7 @@ void WindowCovering::CallbackPositionSet(intptr_t)
 
     if ((status == EMBER_ZCL_STATUS_SUCCESS) && !current.IsNull())
     {
-        static constexpr auto sPercentDelta{ WC_PERCENT100THS_MAX_CLOSED / 50 };
+        static constexpr auto sPercentDelta{ WC_PERCENT100THS_MAX_CLOSED / 25 };
         percent100ths = ComputePercent100thsStep(OperationalStatusGet(Endpoint()).global, current.Value(), sPercentDelta);
     }
     else
@@ -97,87 +122,60 @@ void WindowCovering::CallbackPositionSet(intptr_t)
         LOG_ERR("Cannot read the current lift position. Error: %d", static_cast<uint8_t>(status));
     }
 
-    NPercent100ths position{};
-    position.SetNonNull(percent100ths);
-    if (Instance().mCurrentMoveType == MoveType::LIFT)
-    {
-        LiftPositionSet(Endpoint(), position);
-    }
-    else if (Instance().mCurrentMoveType == MoveType::TILT)
-    {
-        TiltPositionSet(Endpoint(), position);
-    }
-
-    if (!TargetCompleted())
-    {
-        k_timer_start(&sMoveTimer, K_MSEC(sMoveTimeoutMs), K_NO_WAIT);
-    }
+    return percent100ths;
 }
 
 bool WindowCovering::TargetCompleted()
 {
     NPercent100ths current{};
     NPercent100ths target{};
-    EmberAfStatus status{};
 
     if (Instance().mCurrentMoveType == MoveType::LIFT)
     {
-        status = Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current);
-        status = Attributes::TargetPositionLiftPercent100ths::Get(Endpoint(), target);
+        VerifyOrReturnError(Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current) == EMBER_ZCL_STATUS_SUCCESS,
+                            false);
+        VerifyOrReturnError(Attributes::TargetPositionLiftPercent100ths::Get(Endpoint(), target) == EMBER_ZCL_STATUS_SUCCESS,
+                            false);
     }
     else if (Instance().mCurrentMoveType == MoveType::TILT)
     {
-        status = Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), current);
-        status = Attributes::TargetPositionTiltPercent100ths::Get(Endpoint(), target);
+        VerifyOrReturnError(Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), current) == EMBER_ZCL_STATUS_SUCCESS,
+                            false);
+        VerifyOrReturnError(Attributes::TargetPositionTiltPercent100ths::Get(Endpoint(), target) == EMBER_ZCL_STATUS_SUCCESS,
+                            false);
     }
-    return (current == target);
+
+    if (!current.IsNull())
+    {
+        return (current == target);
+    }
+    else
+    {
+        LOG_ERR("Cannot read the shutter position");
+    }
+    return false;
 }
 
-void WindowCovering::SetMoveType(MoveType aMoveType)
+void WindowCovering::StartTimer(uint32_t aTimeoutMs)
 {
-    mCurrentMoveType = aMoveType;
+    k_timer_start(&sMoveTimer, K_MSEC(sMoveTimeoutMs), K_NO_WAIT);
+}
+
+void WindowCovering::StartMove(MoveType aMoveType)
+{
+    // drop if already in move
+    if (!mInMove)
+    {
+        mCurrentMoveType = aMoveType;
+        mInMove          = true;
+        StartTimer(sMoveTimeoutMs);
+    }
 }
 
 void WindowCovering::SetSingleStepTarget(OperationalState aDirection)
 {
-    EmberAfStatus status{};
-    NPercent100ths current{};
-
     UpdateOperationalStatus(mCurrentMoveType, aDirection);
-
-    if (Instance().mCurrentMoveType == MoveType::LIFT)
-    {
-        status = Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current);
-    }
-    else if (Instance().mCurrentMoveType == MoveType::TILT)
-    {
-        status = Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), current);
-    }
-
-    if ((status == EMBER_ZCL_STATUS_SUCCESS) && !current.IsNull())
-    {
-        static constexpr auto sPercentDelta{ WC_PERCENT100THS_MAX_CLOSED / 50 };
-        chip::Percent100ths percent100ths =
-            ComputePercent100thsStep(OperationalStatusGet(Endpoint()).global, current.Value(), sPercentDelta);
-        SetTargetPosition(aDirection, percent100ths);
-    }
-    else
-    {
-        LOG_ERR("Cannot read the current position. Error: %d", static_cast<uint8_t>(status));
-    }
-}
-
-void WindowCovering::SetTargetPosition(OperationalState aDirection, chip::Percent100ths aPosition)
-{
-    EmberAfStatus status{};
-    if (Instance().mCurrentMoveType == MoveType::LIFT)
-    {
-        status = Attributes::TargetPositionLiftPercent100ths::Set(Endpoint(), aPosition);
-    }
-    else if (Instance().mCurrentMoveType == MoveType::TILT)
-    {
-        status = Attributes::TargetPositionTiltPercent100ths::Set(Endpoint(), aPosition);
-    }
+    SetTargetPosition(aDirection, CalculateSingleStep());
 }
 
 void WindowCovering::UpdateOperationalStatus(MoveType aMoveType, OperationalState aDirection)
@@ -203,6 +201,29 @@ void WindowCovering::UpdateOperationalStatus(MoveType aMoveType, OperationalStat
 void WindowCovering::OperationalStatusSetWithGlobalUpdate()
 {
     OperationalStatusSet(Endpoint(), Instance().mOperationalStatus);
+}
+
+void WindowCovering::SetTargetPosition(OperationalState aDirection, chip::Percent100ths aPosition)
+{
+    EmberAfStatus status{};
+    if (Instance().mCurrentMoveType == MoveType::LIFT)
+    {
+        status = Attributes::TargetPositionLiftPercent100ths::Set(Endpoint(), aPosition);
+    }
+    else if (Instance().mCurrentMoveType == MoveType::TILT)
+    {
+        status = Attributes::TargetPositionTiltPercent100ths::Set(Endpoint(), aPosition);
+    }
+
+    if (status != EMBER_ZCL_STATUS_SUCCESS)
+    {
+        LOG_ERR("Cannot set the target position. Error: %d", static_cast<uint8_t>(status));
+    }
+}
+
+void WindowCovering::SetMoveType(MoveType aMoveType)
+{
+    mCurrentMoveType = aMoveType;
 }
 
 void WindowCovering::SetOperationalStatus(const OperationalStatus & aStatus)
@@ -272,26 +293,25 @@ uint8_t WindowCovering::PositionToBrightness(uint16_t aLiftPosition, MoveType aM
     uint16_t installedOpenLimit{};
     uint8_t pwmMin{};
     uint8_t pwmMax{};
-    EmberAfStatus status{};
 
     if (aMoveType == MoveType::LIFT)
     {
-        status = Attributes::InstalledOpenLimitLift::Get(Endpoint(), &installedOpenLimit);
-        status = Attributes::InstalledClosedLimitLift::Get(Endpoint(), &installedClosedLimit);
+        VerifyOrReturnError(Attributes::InstalledOpenLimitLift::Get(Endpoint(), &installedOpenLimit) == EMBER_ZCL_STATUS_SUCCESS,
+                            0);
+        VerifyOrReturnError(
+            Attributes::InstalledClosedLimitLift::Get(Endpoint(), &installedClosedLimit) == EMBER_ZCL_STATUS_SUCCESS, 0);
         pwmMin = Instance().mLiftIndicator.GetMinLevel();
         pwmMax = Instance().mLiftIndicator.GetMaxLevel();
     }
     else if (aMoveType == MoveType::TILT)
     {
-        status = Attributes::InstalledOpenLimitTilt::Get(Endpoint(), &installedOpenLimit);
-        status = Attributes::InstalledClosedLimitTilt::Get(Endpoint(), &installedClosedLimit);
+        VerifyOrReturnError(Attributes::InstalledOpenLimitTilt::Get(Endpoint(), &installedOpenLimit) == EMBER_ZCL_STATUS_SUCCESS,
+                            0);
+        VerifyOrReturnError(
+            Attributes::InstalledClosedLimitTilt::Get(Endpoint(), &installedClosedLimit) == EMBER_ZCL_STATUS_SUCCESS, 0);
         pwmMin = Instance().mTiltIndicator.GetMinLevel();
         pwmMax = Instance().mTiltIndicator.GetMaxLevel();
     }
 
-    if (EMBER_ZCL_STATUS_SUCCESS == status)
-    {
-        return FromOneRangeToAnother(installedOpenLimit, installedClosedLimit, pwmMin, pwmMax, aLiftPosition);
-    }
-    return 0;
+    return FromOneRangeToAnother(installedOpenLimit, installedClosedLimit, pwmMin, pwmMax, aLiftPosition);
 }

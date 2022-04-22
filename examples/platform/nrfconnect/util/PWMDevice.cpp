@@ -28,22 +28,6 @@
 
 LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 
-PWMDevice::PWMDevice(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel) :
-    mState(kState_On), mMinLevel(aMinLevel), mMaxLevel(aMaxLevel), mLevel(aMaxLevel), mPwmDevice(aPWMDevice),
-    mPwmChannel(aPWMChannel)
-{}
-
-int PWMDevice::Init()
-{
-    if (!device_is_ready(mPwmDevice))
-    {
-        LOG_ERR("PWM device %s is not ready", mPwmDevice->name);
-        return -ENODEV;
-    }
-    Set(false);
-    return 0;
-}
-
 int PWMDevice::Init(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel)
 {
     mState      = kState_On;
@@ -53,7 +37,14 @@ int PWMDevice::Init(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMi
     mPwmDevice  = aPWMDevice;
     mPwmChannel = aPWMChannel;
 
-    return Init();
+    if (!device_is_ready(mPwmDevice))
+    {
+        LOG_ERR("PWM device %s is not ready", mPwmDevice->name);
+        return -ENODEV;
+    }
+
+    Set(false);
+    return 0;
 }
 
 void PWMDevice::SetCallbacks(PWMCallback aActionInitiatedClb, PWMCallback aActionCompletedClb)

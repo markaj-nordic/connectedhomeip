@@ -40,9 +40,6 @@ public:
 
     using PWMCallback = void (*)(Action_t, int32_t);
 
-    PWMDevice(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel);
-    PWMDevice() = default;
-    int Init();
     int Init(const device * aPWMDevice, uint32_t aPWMChannel, uint8_t aMinLevel, uint8_t aMaxLevel);
     bool IsTurnedOn() const { return mState == kState_On; }
     uint8_t GetLevel() const { return mLevel; }

@@ -48,7 +48,7 @@ public:
 
     static void IdentifyStartHandler(Identify *);
     static void IdentifyStopHandler(Identify *);
-    PWMDevice GetLightingDevice() { return mPWMDevice; }
+    PWMDevice & GetLightingDevice() { return mPWMDevice; }
 
 private:
 #ifdef CONFIG_CHIP_PW_RPC

@@ -116,8 +116,6 @@ CHIP_ERROR AppTask::Init()
     sStatusLED.Init(SYSTEM_STATE_LED);
 
     UpdateStatusLED();
-    WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::LIFT);
-    WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::TILT);
 
     // Initialize buttons
     auto ret = dk_buttons_init(ButtonEventHandler);
@@ -151,7 +149,11 @@ CHIP_ERROR AppTask::Init()
     if (err != CHIP_NO_ERROR)
     {
         LOG_ERR("PlatformMgr().StartEventLoopTask() failed");
+        return err;
     }
+
+    WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::LIFT);
+    WindowCovering::Instance().PositionLEDUpdate(WindowCovering::MoveType::TILT);
 
     return err;
 }
@@ -438,13 +440,30 @@ void AppTask::UpdateStatusLED()
 #endif
 }
 
-void AppTask::ChipEventHandler(const ChipDeviceEvent * aEvent, intptr_t /* aArg */)
+void AppTask::ChipEventHandler(const ChipDeviceEvent * aEvent, intptr_t)
 {
     if (!aEvent)
         return;
     switch (aEvent->Type)
     {
     case DeviceEventType::kCHIPoBLEAdvertisingChange:
+#ifdef CONFIG_CHIP_NFC_COMMISSIONING
+        if (aEvent->CHIPoBLEAdvertisingChange.Result == kActivity_Started)
+        {
+            if (NFCMgr().IsTagEmulationStarted())
+            {
+                LOG_INF("NFC Tag emulation is already started");
+            }
+            else
+            {
+                ShareQRCodeOverNFC(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
+            }
+        }
+        else if (aEvent->CHIPoBLEAdvertisingChange.Result == kActivity_Stopped)
+        {
+            NFCMgr().StopTagEmulation();
+        }
+#endif
         Instance().mHaveBLEConnections = ConnectivityMgr().NumBLEConnections() != 0;
         UpdateStatusLED();
         break;

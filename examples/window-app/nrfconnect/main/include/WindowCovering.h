@@ -56,14 +56,16 @@ private:
     void SetBrightness(MoveType aMoveType, uint16_t aPosition);
     void SetTargetPosition(OperationalState aDirection, chip::Percent100ths aPosition);
     void UpdateOperationalStatus(MoveType aMoveType, OperationalState aDirection);
+    void StartTimer(uint32_t aTimeoutMs);
 
     static uint8_t PositionToBrightness(uint16_t aLiftPosition, MoveType aMoveType);
     static void SetOperationalStatus(const OperationalStatus & aStatus);
     static uint8_t OperationalStateToValue(const OperationalState & aState);
-    static void CallbackPositionSet(intptr_t);
+    static void DriveCurrentPosition(intptr_t);
     static void OperationalStatusSetWithGlobalUpdate();
     static void MoveTimerTimeoutCallback(k_timer * aTimer);
     static bool TargetCompleted();
+    static chip::Percent100ths CalculateSingleStep();
 
     OperationalStatus mOperationalStatus{};
     MoveType mCurrentMoveType;
@@ -72,4 +74,5 @@ private:
     PWMDevice mLiftIndicator;
     PWMDevice mTiltIndicator;
     k_timer mMoveTimer;
+    bool mInMove{ false };
 };
