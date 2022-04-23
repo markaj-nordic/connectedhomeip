@@ -76,7 +76,7 @@ void WindowCovering::MoveTimerTimeoutCallback(k_timer * aTimer)
 void WindowCovering::DriveCurrentPosition(intptr_t)
 {
     NPercent100ths position{};
-    position.SetNonNull(CalculateSingleStep());
+    position.SetNonNull(Instance().CalculateSingleStep());
 
     if (Instance().mCurrentMoveType == MoveType::LIFT)
     {
@@ -90,7 +90,7 @@ void WindowCovering::DriveCurrentPosition(intptr_t)
     // assume single move completed
     Instance().mInMove = false;
 
-    if (!TargetCompleted())
+    if (!Instance().TargetCompleted())
     {
         // continue to move
         Instance().StartTimer(sMoveTimeoutMs);
@@ -103,11 +103,11 @@ chip::Percent100ths WindowCovering::CalculateSingleStep()
     chip::Percent100ths percent100ths{};
     NPercent100ths current{};
 
-    if (Instance().mCurrentMoveType == MoveType::LIFT)
+    if (mCurrentMoveType == MoveType::LIFT)
     {
         status = Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current);
     }
-    else if (Instance().mCurrentMoveType == MoveType::TILT)
+    else if (mCurrentMoveType == MoveType::TILT)
     {
         status = Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), current);
     }
@@ -130,14 +130,14 @@ bool WindowCovering::TargetCompleted()
     NPercent100ths current{};
     NPercent100ths target{};
 
-    if (Instance().mCurrentMoveType == MoveType::LIFT)
+    if (mCurrentMoveType == MoveType::LIFT)
     {
         VerifyOrReturnError(Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), current) == EMBER_ZCL_STATUS_SUCCESS,
                             false);
         VerifyOrReturnError(Attributes::TargetPositionLiftPercent100ths::Get(Endpoint(), target) == EMBER_ZCL_STATUS_SUCCESS,
                             false);
     }
-    else if (Instance().mCurrentMoveType == MoveType::TILT)
+    else if (mCurrentMoveType == MoveType::TILT)
     {
         VerifyOrReturnError(Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), current) == EMBER_ZCL_STATUS_SUCCESS,
                             false);
@@ -223,7 +223,7 @@ void WindowCovering::PositionLEDUpdate(MoveType aMoveType)
 
     if (aMoveType == MoveType::LIFT)
     {
-        status = Attributes::CurrentPositionLift::Get(Endpoint(), currentPosition);
+        status = Attributes::CurrentPositionLiftPercent100ths::Get(Endpoint(), currentPosition);
         if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
         {
             Instance().SetBrightness(MoveType::LIFT, currentPosition.Value());
@@ -231,7 +231,7 @@ void WindowCovering::PositionLEDUpdate(MoveType aMoveType)
     }
     else if (aMoveType == MoveType::TILT)
     {
-        status = Attributes::CurrentPositionTilt::Get(Endpoint(), currentPosition);
+        status = Attributes::CurrentPositionTiltPercent100ths::Get(Endpoint(), currentPosition);
         if (EMBER_ZCL_STATUS_SUCCESS == status && !currentPosition.IsNull())
         {
             Instance().SetBrightness(MoveType::TILT, currentPosition.Value());
@@ -252,31 +252,24 @@ void WindowCovering::SetBrightness(MoveType aMoveType, uint16_t aPosition)
     }
 }
 
-uint8_t WindowCovering::PositionToBrightness(uint16_t aLiftPosition, MoveType aMoveType)
+uint8_t WindowCovering::PositionToBrightness(uint16_t aPosition, MoveType aMoveType)
 {
-    uint16_t installedClosedLimit{};
-    uint16_t installedOpenLimit{};
+    static constexpr uint32_t sPercent100thsMin{ 0 };
+    static constexpr uint32_t sPercent100thsMax{ 10000 };
+
     uint8_t pwmMin{};
     uint8_t pwmMax{};
 
     if (aMoveType == MoveType::LIFT)
     {
-        VerifyOrReturnError(Attributes::InstalledOpenLimitLift::Get(Endpoint(), &installedOpenLimit) == EMBER_ZCL_STATUS_SUCCESS,
-                            0);
-        VerifyOrReturnError(
-            Attributes::InstalledClosedLimitLift::Get(Endpoint(), &installedClosedLimit) == EMBER_ZCL_STATUS_SUCCESS, 0);
-        pwmMin = Instance().mLiftIndicator.GetMinLevel();
-        pwmMax = Instance().mLiftIndicator.GetMaxLevel();
+        pwmMin = mLiftIndicator.GetMinLevel();
+        pwmMax = mLiftIndicator.GetMaxLevel();
     }
     else if (aMoveType == MoveType::TILT)
     {
-        VerifyOrReturnError(Attributes::InstalledOpenLimitTilt::Get(Endpoint(), &installedOpenLimit) == EMBER_ZCL_STATUS_SUCCESS,
-                            0);
-        VerifyOrReturnError(
-            Attributes::InstalledClosedLimitTilt::Get(Endpoint(), &installedClosedLimit) == EMBER_ZCL_STATUS_SUCCESS, 0);
-        pwmMin = Instance().mTiltIndicator.GetMinLevel();
-        pwmMax = Instance().mTiltIndicator.GetMaxLevel();
+        pwmMin = mTiltIndicator.GetMinLevel();
+        pwmMax = mTiltIndicator.GetMaxLevel();
     }
 
-    return FromOneRangeToAnother(installedOpenLimit, installedClosedLimit, pwmMin, pwmMax, aLiftPosition);
+    return FromOneRangeToAnother(sPercent100thsMin, sPercent100thsMax, pwmMin, pwmMax, aPosition);
 }

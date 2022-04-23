@@ -47,8 +47,8 @@ public:
     void SetSingleStepTarget(OperationalState aDirection);
     void SetMoveType(MoveType aMoveType) { mCurrentMoveType = aMoveType; }
     MoveType GetMoveType() { return mCurrentMoveType; }
+    void PositionLEDUpdate(MoveType aMoveType);
 
-    static void PositionLEDUpdate(MoveType aMoveType);
     static constexpr chip::EndpointId Endpoint() { return 1; };
 
 private:
@@ -56,14 +56,14 @@ private:
     void SetTargetPosition(OperationalState aDirection, chip::Percent100ths aPosition);
     void UpdateOperationalStatus(MoveType aMoveType, OperationalState aDirection);
     void StartTimer(uint32_t aTimeoutMs);
+    uint8_t PositionToBrightness(uint16_t aPosition, MoveType aMoveType);
+    bool TargetCompleted();
+    chip::Percent100ths CalculateSingleStep();
 
-    static uint8_t PositionToBrightness(uint16_t aLiftPosition, MoveType aMoveType);
     static void DriveCurrentPosition(intptr_t);
     static void MoveTimerTimeoutCallback(k_timer * aTimer);
-    static bool TargetCompleted();
-    static chip::Percent100ths CalculateSingleStep();
 
-    OperationalStatus mOperationalStatus{};
+    OperationalStatus mOperationalStatus;
     MoveType mCurrentMoveType;
     LEDWidget mLiftLED;
     LEDWidget mTiltLED;
