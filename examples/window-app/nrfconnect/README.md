@@ -1,9 +1,9 @@
 # Matter nRF Connect Window Covering Example Application
 
-The nRF Connect Window Covering Example demonstrates how to remotely control
-a window shutter device. It uses buttons to test changing cover position and device
-states and LEDs to show the state of these changes. You can use this example as
-a reference for creating your own application.
+The nRF Connect Window Covering Example demonstrates how to remotely control a
+window shutter device. It uses buttons to test changing cover position and
+device states and LEDs to show the state of these changes. You can use this
+example as a reference for creating your own application.
 
 <p align="center">
   <img src="../../platform/nrfconnect/doc/images/Logo_RGB_H-small.png" alt="Nordic Semiconductor logo"/>
@@ -55,11 +55,11 @@ and [Zephyr RTOS](https://zephyrproject.org/). Visit Matter's
 [nRF Connect platform overview](../../../docs/guides/nrfconnect_platform_overview.md)
 to read more about the platform structure and dependencies.
 
-The Matter device that runs the window shutter application is controlled by
-the Matter controller device over the Thread protocol. By default,
-the Matter device has Thread disabled, and it should be paired with Matter
-controller and get configuration from it. Some actions required before
-establishing full communication are described below.
+The Matter device that runs the window shutter application is controlled by the
+Matter controller device over the Thread protocol. By default, the Matter device
+has Thread disabled, and it should be paired with Matter controller and get
+configuration from it. Some actions required before establishing full
+communication are described below.
 
 The example can be configured to use the secure bootloader and utilize it for
 performing over-the-air Device Firmware Upgrade using Bluetooth LE.
@@ -204,23 +204,23 @@ following states are possible:
 the mode of the shutter movement between lift and tilt; by default, after the
 device reset, the mode is set to lift.
 
-**Button 2** &mdash; pressed alone once, steps the shutter towards the open position.
-Depending on the current movement mode, it decreases the brightness of LED2 for lift
-mode and LED3 for tilt mode.
+**Button 2** &mdash; pressed alone once, steps the shutter towards the open
+position. Depending on the current movement mode, it decreases the brightness of
+LED2 for lift mode and LED3 for tilt mode.
 
-**Button 3** &mdash; pressed alone once, steps the shutter towards the close position.
-Depending on the current movement mode, it increases the brightness of LED3 for lift
-mode and LED3 for tilt mode.
+**Button 3** &mdash; pressed alone once, steps the shutter towards the close
+position. Depending on the current movement mode, it increases the brightness of
+LED3 for lift mode and LED3 for tilt mode.
 
 > **Note**:
 >
-> There are 25 steps needed to fully close the shutter from fully opened position,
-> and vise versa (each step takes approximately 200 ms, which aims to simulate
-> the real shutter movement). This means that, for instance, **Button 2** needs
-> to be pressed 25 times to fully lift the shutter and to cover the whole range
-> of **LED 2** brightness step by step. Note that the shutter positions and
-> brightness of **LED 2** and **LED 3** are stored in non-volatile memory
-> and are restored after every device reset. After the firmware update,
+> There are 25 steps needed to fully close the shutter from fully opened
+> position, and vise versa (each step takes approximately 200 ms, which aims to
+> simulate the real shutter movement). This means that, for instance, **Button
+> 2** needs to be pressed 25 times to fully lift the shutter and to cover the
+> whole range of **LED 2** brightness step by step. Note that the shutter
+> positions and brightness of **LED 2** and **LED 3** are stored in non-volatile
+> memory and are restored after every device reset. After the firmware update,
 > by default both LEDs are switched off, which corresponds to the shutter being
 > fully open, both lift-wise and tilt-wise.
 
@@ -396,9 +396,9 @@ For example, use the following command for `nrf52840dk_nrf52840`:
 
 Support for DFU using Matter OTA is enabled by default.
 
-To completely disable support for DFU, run the following command
-with _build-target_ replaced with the build target name of the Nordic
-Semiconductor kit you are using (for example `nrf52840dk_nrf52840`):
+To completely disable support for DFU, run the following command with
+_build-target_ replaced with the build target name of the Nordic Semiconductor
+kit you are using (for example `nrf52840dk_nrf52840`):
 
     $ west build -b build-target -- -DCONF_FILE=prj_no_dfu.conf
 
