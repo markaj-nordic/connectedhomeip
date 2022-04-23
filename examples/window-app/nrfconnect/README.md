@@ -201,8 +201,8 @@ following states are possible:
     instruction.
 
 **Button 2** and **Button 3** &mdash; pressed together at the same time switch
-the mode of the shutter movement between lift and tilt; by default, after the device reset,
-the mode is set to lift.
+the mode of the shutter movement between lift and tilt; by default, after the
+device reset, the mode is set to lift.
 
 **Button 2** &mdash; pressed alone once, steps the shutter towards the open position.
 Depending on the current movement mode, it decreases the brightness of LED2 for lift
@@ -214,14 +214,15 @@ mode and LED3 for tilt mode.
 
 > **Note**:
 >
-> There are 25 step needed to fully close the shutter from fully opened position,
-> and vise versa. This means that, for instance, **Button 2** needs to be pressed
-> 25 times to fully lift the shutter and to cover the whole range of **LED 2**
-> brightness step by step. Note that the shutter positions and brightness
-> od **LED 2** and **LED 3** are stored in non-volatile memory and are restored
-> after every device reset. After the firmware update, by default both LEDs
-> are switched off, which corresponds to the shutter being fully open, for
-> both lift and tilt.
+> There are 25 steps needed to fully close the shutter from fully opened position,
+> and vise versa (each step takes approximately 200 ms, which aims to simulate
+> the real shutter movement). This means that, for instance, **Button 2** needs
+> to be pressed 25 times to fully lift the shutter and to cover the whole range
+> of **LED 2** brightness step by step. Note that the shutter positions and
+> brightness of **LED 2** and **LED 3** are stored in non-volatile memory
+> and are restored after every device reset. After the firmware update,
+> by default both LEDs are switched off, which corresponds to the shutter being
+> fully open, both lift-wise and tilt-wise.
 
 **Button 4** &mdash; Pressing the button once starts the NFC tag emulation and
 enables Bluetooth LE advertising for the predefined period of time (15 minutes

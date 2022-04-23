@@ -195,11 +195,6 @@ void WindowCovering::UpdateOperationalStatus(MoveType aMoveType, OperationalStat
     default:
         break;
     }
-    OperationalStatusSetWithGlobalUpdate();
-}
-
-void WindowCovering::OperationalStatusSetWithGlobalUpdate()
-{
     OperationalStatusSet(Endpoint(), Instance().mOperationalStatus);
 }
 
@@ -218,36 +213,6 @@ void WindowCovering::SetTargetPosition(OperationalState aDirection, chip::Percen
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {
         LOG_ERR("Cannot set the target position. Error: %d", static_cast<uint8_t>(status));
-    }
-}
-
-void WindowCovering::SetMoveType(MoveType aMoveType)
-{
-    mCurrentMoveType = aMoveType;
-}
-
-void WindowCovering::SetOperationalStatus(const OperationalStatus & aStatus)
-{
-    uint8_t global = OperationalStateToValue(aStatus.global);
-    uint8_t lift   = OperationalStateToValue(aStatus.lift);
-    uint8_t tilt   = OperationalStateToValue(aStatus.tilt);
-    uint8_t value  = (global & 0x03) | static_cast<uint8_t>((lift & 0x03) << 2) | static_cast<uint8_t>((tilt & 0x03) << 4);
-    Attributes::OperationalStatus::Set(Endpoint(), value);
-}
-
-uint8_t WindowCovering::OperationalStateToValue(const OperationalState & state)
-{
-    switch (state)
-    {
-    case OperationalState::Stall:
-        return 0x00;
-    case OperationalState::MovingUpOrOpen:
-        return 0x01;
-    case OperationalState::MovingDownOrClose:
-        return 0x02;
-    case OperationalState::Reserved:
-    default:
-        return 0x03;
     }
 }
 
