@@ -66,11 +66,11 @@ static_library("nrfconnect") {
 
   if (chip_enable_wifi) {
     sources += [
+      "../Zephyr/WiFiManager.h",
       "ConnectivityManagerImplWiFi.cpp",
       "ConnectivityManagerImplWiFi.h",
       "NetworkCommissioningDriver.cpp",
       "NetworkCommissioningDriver.h",
-      "../Zephyr/WiFiManager.h"
     ]
     if (chip_mdns == "platform") {
       sources += [ "../Zephyr/DnssdImpl.cpp" ]
@@ -88,7 +88,7 @@ static_library("nrfconnect") {
   if (chip_enable_ota_requestor) {
     sources += [
       "OTAImageProcessorImpl.cpp",
-      "OTAImageProcessorImpl.h"
+      "OTAImageProcessorImpl.h",
     ]
   }
 
