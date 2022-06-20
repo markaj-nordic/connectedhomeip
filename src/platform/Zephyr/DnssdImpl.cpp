@@ -37,7 +37,7 @@ CHIP_ERROR ChipDnssdShutdown()
 
 const char * GetProtocolString(DnssdServiceProtocol protocol)
 {
-    return  "_udp"; // or "_tcp";
+    return "_udp"; // or "_tcp";
 }
 
 CHIP_ERROR ChipDnssdPublishService(const DnssdService * service, DnssdPublishCallback callback, void * context)

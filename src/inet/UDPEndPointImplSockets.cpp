@@ -136,7 +136,7 @@ CHIP_ERROR IPv4Bind(int socket, const IPAddress & address, uint16_t port)
     {
         // Allow socket transmitting broadcast packets.
         constexpr int enable = 1;
-        //setsockopt(socket, SOL_SOCKET, SO_BROADCAST, &enable, sizeof(enable));
+        // setsockopt(socket, SOL_SOCKET, SO_BROADCAST, &enable, sizeof(enable));
 
 #ifdef IP_MULTICAST_IF
         // Instruct the kernel that any messages to multicast destinations should be
