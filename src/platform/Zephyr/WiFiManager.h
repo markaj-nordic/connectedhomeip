@@ -43,10 +43,7 @@ public:
         return sInstance;
     }
 
-    CHIP_ERROR Init()
-    {
-        return CHIP_NO_ERROR;
-    }
+    CHIP_ERROR Init() { return CHIP_NO_ERROR; }
 };
 
 } // namespace DeviceLayer
