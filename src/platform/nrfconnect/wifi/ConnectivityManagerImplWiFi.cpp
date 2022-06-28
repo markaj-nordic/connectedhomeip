@@ -24,7 +24,6 @@
 #include <lib/support/CodeUtils.h>
 #include <lib/support/logging/CHIPLogging.h>
 #include <platform/DiagnosticDataProvider.h>
-// #include <platform/ESP32/NetworkCommissioningDriver.h> // the same for nrf?
 #include <platform/internal/BLEManager.h>
 
 #include "ConnectivityManagerImplWiFi.h"

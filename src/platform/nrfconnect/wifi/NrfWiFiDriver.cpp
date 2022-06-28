@@ -15,7 +15,7 @@
  *    limitations under the License.
  */
 
-#include "NetworkCommissioningDriver.h"
+#include "NrfWiFiDriver.h"
 
 #include <lib/support/CodeUtils.h>
 #include <lib/support/SafeInt.h>

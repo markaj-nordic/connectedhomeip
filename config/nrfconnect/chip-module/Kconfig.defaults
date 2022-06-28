@@ -40,6 +40,18 @@ config LOG_DEFAULT_LEVEL
 
 endif
 
+config FLASH
+    bool
+    default y
+
+config SETTINGS
+    bool
+    default y
+
+config NVS
+    bool
+    default y
+
 config PRINTK_SYNC
     bool
     default y
@@ -177,7 +189,7 @@ config CHIP_NFC_COMMISSIONING
     bool
     default y
 
-if !CHIP_WIFI_NRF # until the Wi-Fi driver is not fixed we must
+if !CHIP_WIFI # until the Wi-Fi driver is not fixed we must
                   # live with  OTA support only for Thread
 config CHIP_OTA_REQUESTOR
     bool
@@ -207,7 +219,7 @@ config IEEE802154_NRF5_RX_STACK_SIZE
 
 config NET_L2_OPENTHREAD
     bool
-    default y if !CHIP_WIFI_NRF
+    default y if !WIFI_NRF
 
 if NET_L2_OPENTHREAD
 
@@ -229,19 +241,7 @@ config OPENTHREAD_XPANID
 
 endif
 
-if CHIP_WIFI_NRF
-
-config FLASH
-    bool
-    default y
-
-config SETTINGS
-    bool
-    default y
-
-config NVS
-    bool
-    default y
+if CHIP_WIFI
 
 config MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG
     bool
@@ -255,22 +255,6 @@ config NET_IF_UNICAST_IPV6_ADDR_COUNT
 config NET_IF_MCAST_IPV6_ADDR_COUNT
     int
     default 8
-
-config NET_PKT_RX_COUNT
-    int
-    default 16
-
-config NET_PKT_TX_COUNT
-    int
-    default 16
-
-config NET_BUF_RX_COUNT
-    int
-    default 80
-
-config NET_BUF_TX_COUNT
-    int
-    default 80
 
 config NET_SOCKETS_POSIX_NAMES
     bool

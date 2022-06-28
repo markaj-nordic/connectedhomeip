@@ -36,7 +36,7 @@
 #endif
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
-#include "ConnectivityManagerImplWiFi.h"
+#include "wifi/ConnectivityManagerImplWiFi.h"
 #else
 #include <platform/internal/GenericConnectivityManagerImpl_NoWiFi.h>
 #endif

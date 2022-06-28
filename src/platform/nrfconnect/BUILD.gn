@@ -77,10 +77,10 @@ static_library("nrfconnect") {
 
   if (chip_enable_wifi) {
     sources += [
-      "ConnectivityManagerImplWiFi.cpp",
-      "ConnectivityManagerImplWiFi.h",
-      "NetworkCommissioningDriver.cpp",
-      "NetworkCommissioningDriver.h",
+      "wifi/ConnectivityManagerImplWiFi.cpp",
+      "wifi/ConnectivityManagerImplWiFi.h",
+      "wifi/NrfWiFiDriver.cpp",
+      "wifi/NrfWiFiDriver.h",
       "../Zephyr/WiFiManager.h"
     ]
     if (chip_mdns == "platform") {
