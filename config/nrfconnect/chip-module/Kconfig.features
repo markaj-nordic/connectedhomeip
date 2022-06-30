@@ -26,7 +26,6 @@ config CHIP_WIFI
 	imply NORDIC_SECURITY_BACKEND
 	imply MBEDTLS_ENTROPY_C
 	imply MBEDTLS_PSA_CRYPTO_C
-	imply DHCPV4
 	imply DNS_RESOLVER
 	imply NET_STATISTICS
 	imply NET_L2_ETHERNET
@@ -38,6 +37,8 @@ config CHIP_WIFI
 	imply USE_DT_CODE_PARTITION # might be removed when the OTA is enabled
 	imply NET_CONFIG_SETTINGS # might be removed when supplicant's KConfig is cleaned up
 	imply NET_IPV4 # needed by the supplicant to compile
+	imply NET_DHCPV4
+	imply ASSERT_NO_FILE_INFO # to fit in nRF53 flash
 
 config CHIP_QSPI_NOR
 	bool "Enable QSPI NOR feature set"

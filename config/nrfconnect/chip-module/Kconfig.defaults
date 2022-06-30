@@ -247,6 +247,10 @@ config MBEDTLS_PSA_CRYPTO_EXTERNAL_RNG
     bool
     default n
 
+config MBEDTLS_ENTROPY_C
+    bool
+    default y
+
 # align these numbers to match the OpenThread config
 config NET_IF_UNICAST_IPV6_ADDR_COUNT
     int
