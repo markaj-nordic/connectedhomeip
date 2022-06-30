@@ -22,8 +22,8 @@
 #include "AppConfig.h"
 #include "AppTask.h"
 
-#include <zephyr/logging/log.h>
-#include <zephyr/zephyr.h>
+#include <logging/log.h>
+#include <zephyr.h>
 
 LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 

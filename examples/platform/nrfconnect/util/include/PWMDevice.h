@@ -18,8 +18,8 @@
 #pragma once
 
 #include <cstdint>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pwm.h>
+#include <drivers/gpio.h>
+#include <drivers/pwm.h>
 
 class PWMDevice
 {

@@ -20,10 +20,10 @@
 #include "console/console.h"
 #include "pw_sys_io/sys_io.h"
 #include <cassert>
-#include <zephyr/zephyr.h>
+#include <zephyr.h>
 
 #ifdef CONFIG_USB
-#include <zephyr/usb/usb_device.h>
+#include <usb/usb_device.h>
 #endif
 
 extern "C" void pw_sys_io_Init()

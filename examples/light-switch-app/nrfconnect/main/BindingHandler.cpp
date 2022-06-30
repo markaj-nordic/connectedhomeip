@@ -21,7 +21,7 @@
 #include "ShellCommands.h"
 #endif
 
-#include <zephyr/logging/log.h>
+#include <logging/log.h>
 LOG_MODULE_DECLARE(app, CONFIG_MATTER_LOG_LEVEL);
 
 using namespace chip;

@@ -25,7 +25,7 @@
 
 #include <platform/CHIPDeviceLayer.h>
 
-#include <zephyr/zephyr.h>
+#include <zephyr.h>
 
 typedef void (*DFUOverSMPRestartAdvertisingHandler)(void);
 

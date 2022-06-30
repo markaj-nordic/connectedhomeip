@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <zephyr/kernel.h>
+#include <kernel.h>
 
 namespace chip {
 namespace rpc {
