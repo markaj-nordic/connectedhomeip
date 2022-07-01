@@ -52,6 +52,10 @@ config NVS
     bool
     default y
 
+config FLASH_MAP
+    bool
+    default y
+
 config PRINTK_SYNC
     bool
     default y
@@ -277,6 +281,10 @@ config NET_MAX_CONN
 config SHELL_STACK_SIZE
     int
     default 2616
+
+config HEAP_MEM_POOL_SIZE
+    int
+    default 200000
 
 endif
 
