@@ -22,7 +22,7 @@ if CHIP
 config CHIP_WIFI
 	bool "Enable nrfconnect Wi-Fi support"
 	default n
-	select WIFI_NRF
+	select NRF_700X
 	imply NORDIC_SECURITY_BACKEND
 	imply MBEDTLS_ENTROPY_C
 	imply MBEDTLS_PSA_CRYPTO_C
