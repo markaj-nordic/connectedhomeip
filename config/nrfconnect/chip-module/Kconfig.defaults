@@ -193,8 +193,9 @@ config CHIP_NFC_COMMISSIONING
     bool
     default y
 
-if !CHIP_WIFI # until the Wi-Fi driver is not fixed we must
-                  # live with  OTA support only for Thread
+if !CHIP_WIFI # unless the Wi-Fi driver is rebased with
+              # current ncs we will miss dfu_multi_image_pkg
+
 config CHIP_OTA_REQUESTOR
     bool
     default y
