@@ -36,6 +36,11 @@
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 
+#ifdef CONFIG_CHIP_WIFI
+#include <app/clusters/network-commissioning/network-commissioning.h>
+#include <platform/nrfconnect/wifi/NrfWiFiDriver.h>
+#endif
+
 #if CONFIG_CHIP_OTA_REQUESTOR
 #include "OTAUtil.h"
 #endif
@@ -123,6 +128,10 @@ constexpr uint32_t kOff_ms{ 950 };
 } // namespace StatusLed
 } // namespace LedConsts
 
+#ifdef CONFIG_CHIP_WIFI
+app::Clusters::NetworkCommissioning::Instance sWiFiCommissioningInstance(0, &(NetworkCommissioning::NrfWiFiDriver::GetInstance()));
+#endif
+
 CHIP_ERROR AppTask::Init()
 {
     // Initialize CHIP stack
@@ -160,8 +169,8 @@ CHIP_ERROR AppTask::Init()
         LOG_ERR("ConnectivityMgr().SetThreadDeviceType() failed");
         return err;
     }
-#elif !defined(CONFIG_CHIP_WIFI)
-    return CHIP_ERROR_INTERNAL;
+#elif defined(CONFIG_CHIP_WIFI)
+    sWiFiCommissioningInstance.Init();
 #endif
 
     // Initialize LEDs

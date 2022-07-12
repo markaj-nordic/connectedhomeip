@@ -16,6 +16,7 @@
  */
 
 #include "NrfWiFiDriver.h"
+#include <platform/Zephyr/WiFiManager.h>
 
 #include <lib/support/CodeUtils.h>
 #include <lib/support/SafeInt.h>
@@ -56,6 +57,7 @@ CHIP_ERROR NrfWiFiDriver::RevertConfiguration()
 Status NrfWiFiDriver::AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials, MutableCharSpan & outDebugText,
                                          uint8_t & outNetworkIndex)
 {
+    WiFiManager::Instance().AddNetwork(ssid, credentials);
     return Status::kSuccess;
 }
 
@@ -70,7 +72,16 @@ Status NrfWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, MutableC
     return Status::kSuccess;
 }
 
-void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback) {}
+void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback)
+{
+    Status networkingStatus = Status::kUnknownError;
+    mConnectCallback        = callback;
+    WiFiManager::Instance().Connect();
+    static constexpr auto kConnectTimeoutMs{ 30000 };
+    DeviceLayer::SystemLayer().StartTimer(
+        static_cast<System::Clock::Timeout>(kConnectTimeoutMs),
+        [](System::Layer *, void *) { NrfWiFiDriver::OnConnectWiFiNetworkFailed(); }, nullptr);
+}
 
 CHIP_ERROR GetConfiguredNetwork(Network & network)
 {
@@ -78,6 +89,26 @@ CHIP_ERROR GetConfiguredNetwork(Network & network)
 }
 
 void NrfWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callback) {}
+
+void NrfWiFiDriver::OnConnectWiFiNetwork()
+{
+    if (mConnectCallback)
+    {
+        DeviceLayer::SystemLayer().CancelTimer([](System::Layer *, void *) { NrfWiFiDriver::OnConnectWiFiNetworkFailed(); },
+                                               nullptr);
+        mConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);
+        mConnectCallback = nullptr;
+    }
+}
+
+void NrfWiFiDriver::OnConnectWiFiNetworkFailed()
+{
+    if (GetInstance().mConnectCallback)
+    {
+        GetInstance().mConnectCallback->OnResult(Status::kNetworkNotFound, CharSpan(), 0);
+        GetInstance().mConnectCallback = nullptr;
+    }
+}
 
 } // namespace NetworkCommissioning
 } // namespace DeviceLayer
