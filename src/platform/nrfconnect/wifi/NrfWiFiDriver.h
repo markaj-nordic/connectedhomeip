@@ -87,6 +87,11 @@ public:
         static NrfWiFiDriver instance;
         return instance;
     }
+
+    void OnConnectWiFiNetwork();
+    static void OnConnectWiFiNetworkFailed();
+
+    ConnectCallback * mConnectCallback{ nullptr };
 };
 
 } // namespace NetworkCommissioning

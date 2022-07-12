@@ -81,6 +81,7 @@ static_library("nrfconnect") {
 
   if (chip_enable_wifi) {
     sources += [
+      "../Zephyr/WiFiManager.cpp",
       "../Zephyr/WiFiManager.h",
       "wifi/ConnectivityManagerImplWiFi.cpp",
       "wifi/ConnectivityManagerImplWiFi.h",

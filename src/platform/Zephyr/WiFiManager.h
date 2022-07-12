@@ -17,18 +17,15 @@
 
 /**
  *    @file
- *          Provides the wrapper for Zephyr WiFi API
+ *          Provides the wrapper for Zephyr wpa_supplicant API
  */
 
 #pragma once
 
 #include "lib/core/CHIPError.h"
+#include <lib/support/Span.h>
 
-#include <net/wifi_mgmt.h>
-
-#include <zephyr.h>
-
-#include <lib/support/logging/CHIPLogging.h>
+struct wpa_ssid;
 
 namespace chip {
 namespace DeviceLayer {
@@ -43,7 +40,13 @@ public:
         return sInstance;
     }
 
-    CHIP_ERROR Init() { return CHIP_NO_ERROR; }
+    CHIP_ERROR Init();
+    CHIP_ERROR AddNetwork(ByteSpan ssid, ByteSpan credentials);
+    CHIP_ERROR Connect();
+
+private:
+    CHIP_ERROR AddPsk(ByteSpan credentials);
+    struct wpa_ssid * mSsid{ nullptr };
 };
 
 } // namespace DeviceLayer
