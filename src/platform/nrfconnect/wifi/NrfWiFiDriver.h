@@ -24,7 +24,7 @@ namespace NetworkCommissioning {
 namespace {
 constexpr uint8_t kMaxWiFiNetworks                  = 1;
 constexpr uint8_t kWiFiScanNetworksTimeOutSeconds   = 10;
-constexpr uint8_t kWiFiConnectNetworkTimeoutSeconds = 30;
+constexpr uint8_t kWiFiConnectNetworkTimeoutSeconds = 120;
 } // namespace
 
 class NrfScanResponseIterator : public Iterator<WiFiScanResponse>
@@ -89,7 +89,9 @@ public:
     }
 
     void OnConnectWiFiNetwork();
-    static void OnConnectWiFiNetworkFailed();
+    void OnConnectWiFiNetworkFailed();
+    static void WaitForConnectionAsync();
+    static void PollTimerCallback();
 
     ConnectCallback * mConnectCallback{ nullptr };
 };

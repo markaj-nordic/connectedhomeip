@@ -36,6 +36,7 @@
 extern "C" {
 #include "utils/common.h"
 #include "config.h"
+#include "ctrl_iface.h"
 #include "wpa_supplicant_i.h"
 }
 
@@ -99,6 +100,42 @@ CHIP_ERROR WiFiManager::AddPsk(ByteSpan credentials)
     }
 
     return CHIP_ERROR_INTERNAL;
+}
+
+WiFiManager::StationStatus WiFiManager::NetworkStatus()
+{
+    static const char * kQueryKeyword{ "STATUS" };
+    static constexpr uint8_t kKeywordLength{ 6 };
+    static constexpr uint16_t kMaxReplySize{ 512 };
+    char reply[kMaxReplySize];
+    const auto replySize = wpa_supplicant_ctrl_iface_status(wpa_s_0, kQueryKeyword + kKeywordLength, reply, kMaxReplySize);
+    return NetworkStatusStringToEnumCode(reply);
+}
+
+WiFiManager::StationStatus WiFiManager::NetworkStatusStringToEnumCode(const std::string & aFullStringStatus)
+{
+    const std::string extractedStatusString = ExtractNetworkStatusString(aFullStringStatus);
+
+    if (0 == extractedStatusString.compare("DISCONNECTED"))
+        return StationStatus::DISCONNECTED;
+    else if (0 == extractedStatusString.compare("SCANNING"))
+        return StationStatus::SCANNING;
+    else if (0 == extractedStatusString.compare("COMPLETED"))
+        return StationStatus::CONNECTED;
+    else
+        return StationStatus::NONE;
+}
+
+std::string WiFiManager::ExtractNetworkStatusString(const std::string & aFullStringStatus)
+{
+    // this parser is implemented according to the wpa_supplicant status string format
+    static constexpr const char * pattern{ "wpa_state=" };
+    auto pos                       = aFullStringStatus.find(pattern);
+    const auto wpaStateSubStr      = aFullStringStatus.substr(pos);
+    pos                            = wpaStateSubStr.find("=");
+    const auto wpaStateValueSubStr = wpaStateSubStr.substr(pos + 1);
+    pos                            = wpaStateValueSubStr.find("\n");
+    return wpaStateValueSubStr.substr(0, pos);
 }
 
 } // namespace DeviceLayer
