@@ -77,10 +77,39 @@ void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callbac
     Status networkingStatus = Status::kUnknownError;
     mConnectCallback        = callback;
     WiFiManager::Instance().Connect();
-    static constexpr auto kConnectTimeoutMs{ 30000 };
+    WaitForConnectionAsync();
+}
+
+void NrfWiFiDriver::WaitForConnectionAsync()
+{
     DeviceLayer::SystemLayer().StartTimer(
-        static_cast<System::Clock::Timeout>(kConnectTimeoutMs),
-        [](System::Layer *, void *) { NrfWiFiDriver::OnConnectWiFiNetworkFailed(); }, nullptr);
+        static_cast<System::Clock::Timeout>(2000), [](System::Layer *, void *) { NrfWiFiDriver::PollTimerCallback(); }, nullptr);
+}
+
+void NrfWiFiDriver::PollTimerCallback()
+{
+    static constexpr uint8_t kMaxRetriesNumber{ 60 };
+    static uint8_t retriesNumber;
+
+    WiFiManager::StationStatus status = WiFiManager::Instance().NetworkStatus();
+
+    if (WiFiManager::StationStatus::CONNECTED == status)
+    {
+        GetInstance().OnConnectWiFiNetwork();
+    }
+    else
+    {
+        if (retriesNumber++ < kMaxRetriesNumber)
+        {
+            // wait more time
+            WaitForConnectionAsync();
+        }
+        else
+        {
+            // connection timeout
+            GetInstance().OnConnectWiFiNetworkFailed();
+        }
+    }
 }
 
 CHIP_ERROR GetConfiguredNetwork(Network & network)
@@ -88,14 +117,10 @@ CHIP_ERROR GetConfiguredNetwork(Network & network)
     return CHIP_NO_ERROR;
 }
 
-void NrfWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callback) {}
-
 void NrfWiFiDriver::OnConnectWiFiNetwork()
 {
     if (mConnectCallback)
     {
-        DeviceLayer::SystemLayer().CancelTimer([](System::Layer *, void *) { NrfWiFiDriver::OnConnectWiFiNetworkFailed(); },
-                                               nullptr);
         mConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);
         mConnectCallback = nullptr;
     }
@@ -103,12 +128,14 @@ void NrfWiFiDriver::OnConnectWiFiNetwork()
 
 void NrfWiFiDriver::OnConnectWiFiNetworkFailed()
 {
-    if (GetInstance().mConnectCallback)
+    if (mConnectCallback)
     {
-        GetInstance().mConnectCallback->OnResult(Status::kNetworkNotFound, CharSpan(), 0);
-        GetInstance().mConnectCallback = nullptr;
+        mConnectCallback->OnResult(Status::kNetworkNotFound, CharSpan(), 0);
+        mConnectCallback = nullptr;
     }
 }
+
+void NrfWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callback) {}
 
 } // namespace NetworkCommissioning
 } // namespace DeviceLayer

@@ -24,6 +24,7 @@
 
 #include "lib/core/CHIPError.h"
 #include <lib/support/Span.h>
+#include <string>
 
 struct wpa_ssid;
 
@@ -34,6 +35,15 @@ class WiFiManager
 {
 
 public:
+    enum class StationStatus : uint8_t
+    {
+        DISCONNECTED,
+        SCANNING,
+        COMPLETED,
+        CONNECTED = COMPLETED,
+        NONE
+    };
+
     static WiFiManager & Instance()
     {
         static WiFiManager sInstance;
@@ -43,9 +53,13 @@ public:
     CHIP_ERROR Init();
     CHIP_ERROR AddNetwork(ByteSpan ssid, ByteSpan credentials);
     CHIP_ERROR Connect();
+    StationStatus NetworkStatus();
 
 private:
     CHIP_ERROR AddPsk(ByteSpan credentials);
+    static StationStatus NetworkStatusStringToEnumCode(const std::string & aFullStringStatus);
+    static std::string ExtractNetworkStatusString(const std::string & aFullStringStatus);
+
     struct wpa_ssid * mSsid{ nullptr };
 };
 
