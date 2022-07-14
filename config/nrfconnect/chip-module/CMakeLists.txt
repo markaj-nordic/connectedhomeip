@@ -233,8 +233,12 @@ if (CONFIG_CHIP_ROTATING_DEVICE_ID)
     chip_gn_arg_bool("chip_enable_additional_data_advertising" "true")
 endif()
 
-if (CONFIG_CHIP_ENABLE_DNSSD_SRP)
+if (CONFIG_NET_L2_OPENTHREAD)
     chip_gn_arg_string("chip_mdns" "platform")
+elseif(CONFIG_NRF_700X)
+    chip_gn_arg_string("chip_mdns" "minimal")
+else()
+    chip_gn_arg_string("chip_mdns" "none")
 endif()
 
 if (CHIP_PROJECT_CONFIG)

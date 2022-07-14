@@ -40,8 +40,6 @@ extern "C" {
 #include "wpa_supplicant_i.h"
 }
 
-#define MAX_SSID_LEN 32
-
 extern struct wpa_supplicant * wpa_s_0;
 
 namespace chip {
@@ -49,24 +47,34 @@ namespace DeviceLayer {
 
 CHIP_ERROR WiFiManager::Init()
 {
-    ChipLogError(NotSpecified, "Init called");
-    return CHIP_NO_ERROR;
+    // wpa_supplicant instance should be initialized in dedicated supplicant thread
+    if (!wpa_s_0)
+    {
+        ChipLogError(DeviceLayer, "wpa_supplicant is not initialized!");
+        return CHIP_ERROR_INTERNAL;
+    }
+    else
+    {
+        ChipLogDetail(DeviceLayer, "wpa_supplicant has been initialized");
+        return CHIP_NO_ERROR;
+    }
 }
 
-CHIP_ERROR WiFiManager::AddNetwork(ByteSpan ssid, ByteSpan credentials)
+CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials)
 {
-    ChipLogError(NotSpecified, "AddNetwork called");
-    mSsid = wpa_supplicant_add_network(wpa_s_0);
-    if (mSsid)
+    ChipLogDetail(DeviceLayer, "Adding WiFi network");
+    mpWpaNetwork = wpa_supplicant_add_network(wpa_s_0);
+    if (mpWpaNetwork)
     {
-        mSsid->ssid = (u8 *) k_malloc(MAX_SSID_LEN);
+        static constexpr size_t kMaxSsidLen{ 32 };
+        mpWpaNetwork->ssid = (u8 *) k_malloc(kMaxSsidLen);
 
-        if (mSsid->ssid)
+        if (mpWpaNetwork->ssid)
         {
-            memcpy(mSsid->ssid, ssid.data(), ssid.size());
-            mSsid->ssid_len             = ssid.size();
-            mSsid->key_mgmt             = WPA_KEY_MGMT_NONE;
-            mSsid->disabled             = 1;
+            memcpy(mpWpaNetwork->ssid, ssid.data(), ssid.size());
+            mpWpaNetwork->ssid_len      = ssid.size();
+            mpWpaNetwork->key_mgmt      = WPA_KEY_MGMT_NONE;
+            mpWpaNetwork->disabled      = 1;
             wpa_s_0->conf->filter_ssids = 1;
 
             AddPsk(credentials);
@@ -80,22 +88,21 @@ CHIP_ERROR WiFiManager::AddNetwork(ByteSpan ssid, ByteSpan credentials)
 
 CHIP_ERROR WiFiManager::Connect()
 {
-    ChipLogError(NotSpecified, "AddNetWiFiManager::Connect() called");
-    wpa_supplicant_enable_network(wpa_s_0, mSsid);
-    wpa_supplicant_select_network(wpa_s_0, mSsid);
-
+    ChipLogDetail(DeviceLayer, "Connecting to WiFi network");
+    wpa_supplicant_enable_network(wpa_s_0, mpWpaNetwork);
+    wpa_supplicant_select_network(wpa_s_0, mpWpaNetwork);
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR WiFiManager::AddPsk(ByteSpan credentials)
+CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
 {
-    mSsid->key_mgmt = WPA_KEY_MGMT_PSK;
-    str_clear_free(mSsid->passphrase);
-    mSsid->passphrase = dup_binstr(credentials.data(), credentials.size());
+    mpWpaNetwork->key_mgmt = WPA_KEY_MGMT_PSK;
+    str_clear_free(mpWpaNetwork->passphrase);
+    mpWpaNetwork->passphrase = dup_binstr(credentials.data(), credentials.size());
 
-    if (mSsid->passphrase)
+    if (mpWpaNetwork->passphrase)
     {
-        wpa_config_update_psk(mSsid);
+        wpa_config_update_psk(mpWpaNetwork);
         return CHIP_NO_ERROR;
     }
 
@@ -135,6 +142,7 @@ std::string WiFiManager::ExtractNetworkStatusString(const std::string & aFullStr
     pos                            = wpaStateSubStr.find("=");
     const auto wpaStateValueSubStr = wpaStateSubStr.substr(pos + 1);
     pos                            = wpaStateValueSubStr.find("\n");
+
     return wpaStateValueSubStr.substr(0, pos);
 }
 

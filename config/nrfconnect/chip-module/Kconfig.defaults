@@ -277,6 +277,10 @@ config MBEDTLS_SSL_OUT_CONTENT_LEN
     int
     default 900
 
+config CHIP_ENABLE_DNSSD_SRP
+    bool
+    default n
+
 # options managed by IP4/IP6 simultaneous support
 # aligned here to match OpenThread config
 config NET_MAX_ROUTERS

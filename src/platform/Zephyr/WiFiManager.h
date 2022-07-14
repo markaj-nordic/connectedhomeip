@@ -27,6 +27,7 @@
 #include <string>
 
 struct wpa_ssid;
+using WpaNetwork = struct wpa_ssid;
 
 namespace chip {
 namespace DeviceLayer {
@@ -51,16 +52,17 @@ public:
     }
 
     CHIP_ERROR Init();
-    CHIP_ERROR AddNetwork(ByteSpan ssid, ByteSpan credentials);
+    CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
     CHIP_ERROR Connect();
     StationStatus NetworkStatus();
 
 private:
-    CHIP_ERROR AddPsk(ByteSpan credentials);
+    CHIP_ERROR AddPsk(const ByteSpan & credentials);
+
     static StationStatus NetworkStatusStringToEnumCode(const std::string & aFullStringStatus);
     static std::string ExtractNetworkStatusString(const std::string & aFullStringStatus);
 
-    struct wpa_ssid * mSsid{ nullptr };
+    WpaNetwork * mpWpaNetwork{ nullptr };
 };
 
 } // namespace DeviceLayer

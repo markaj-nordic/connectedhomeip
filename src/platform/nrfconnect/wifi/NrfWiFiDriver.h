@@ -82,10 +82,10 @@ public:
                               uint8_t & outNetworkIndex) override;
     void ScanNetworks(ByteSpan ssid, ScanCallback * callback) override;
 
-    static NrfWiFiDriver & GetInstance()
+    static NrfWiFiDriver & Instance()
     {
-        static NrfWiFiDriver instance;
-        return instance;
+        static NrfWiFiDriver sInstance;
+        return sInstance;
     }
 
     void OnConnectWiFiNetwork();
@@ -93,7 +93,7 @@ public:
     static void WaitForConnectionAsync();
     static void PollTimerCallback();
 
-    ConnectCallback * mConnectCallback{ nullptr };
+    ConnectCallback * mpConnectCallback{ nullptr };
 };
 
 } // namespace NetworkCommissioning

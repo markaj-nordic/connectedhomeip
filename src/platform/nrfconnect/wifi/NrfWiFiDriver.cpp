@@ -24,15 +24,10 @@
 
 using namespace ::chip;
 using namespace ::chip::DeviceLayer::Internal;
+
 namespace chip {
 namespace DeviceLayer {
 namespace NetworkCommissioning {
-
-namespace {
-constexpr char kWiFiSSIDKeyName[]        = "wifi-ssid";
-constexpr char kWiFiCredentialsKeyName[] = "wifi-pass";
-static uint8_t WiFiSSIDStr[DeviceLayer::Internal::kMaxWiFiSSIDLength];
-} // namespace
 
 CHIP_ERROR NrfWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)
 {
@@ -75,7 +70,7 @@ Status NrfWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, MutableC
 void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback)
 {
     Status networkingStatus = Status::kUnknownError;
-    mConnectCallback        = callback;
+    mpConnectCallback       = callback;
     WiFiManager::Instance().Connect();
     WaitForConnectionAsync();
 }
@@ -95,7 +90,7 @@ void NrfWiFiDriver::PollTimerCallback()
 
     if (WiFiManager::StationStatus::CONNECTED == status)
     {
-        GetInstance().OnConnectWiFiNetwork();
+        Instance().OnConnectWiFiNetwork();
     }
     else
     {
@@ -107,7 +102,7 @@ void NrfWiFiDriver::PollTimerCallback()
         else
         {
             // connection timeout
-            GetInstance().OnConnectWiFiNetworkFailed();
+            Instance().OnConnectWiFiNetworkFailed();
         }
     }
 }
@@ -119,19 +114,19 @@ CHIP_ERROR GetConfiguredNetwork(Network & network)
 
 void NrfWiFiDriver::OnConnectWiFiNetwork()
 {
-    if (mConnectCallback)
+    if (mpConnectCallback)
     {
-        mConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);
-        mConnectCallback = nullptr;
+        mpConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);
+        mpConnectCallback = nullptr;
     }
 }
 
 void NrfWiFiDriver::OnConnectWiFiNetworkFailed()
 {
-    if (mConnectCallback)
+    if (mpConnectCallback)
     {
-        mConnectCallback->OnResult(Status::kNetworkNotFound, CharSpan(), 0);
-        mConnectCallback = nullptr;
+        mpConnectCallback->OnResult(Status::kNetworkNotFound, CharSpan(), 0);
+        mpConnectCallback = nullptr;
     }
 }
 
