@@ -129,7 +129,7 @@ constexpr uint32_t kOff_ms{ 950 };
 } // namespace LedConsts
 
 #ifdef CONFIG_CHIP_WIFI
-app::Clusters::NetworkCommissioning::Instance sWiFiCommissioningInstance(0, &(NetworkCommissioning::NrfWiFiDriver::GetInstance()));
+app::Clusters::NetworkCommissioning::Instance sWiFiCommissioningInstance(0, &(NetworkCommissioning::NrfWiFiDriver::Instance()));
 #endif
 
 CHIP_ERROR AppTask::Init()
