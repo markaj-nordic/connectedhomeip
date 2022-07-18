@@ -88,10 +88,6 @@ static_library("nrfconnect") {
       "wifi/NrfWiFiDriver.cpp",
       "wifi/NrfWiFiDriver.h",
     ]
-    if (chip_mdns == "platform") {
-      sources += [ "../Zephyr/DnssdImpl.cpp" ]
-      deps = [ "${chip_root}/src/lib/dnssd:platform_header" ]
-    }
   }
 
   if (chip_enable_nfc) {

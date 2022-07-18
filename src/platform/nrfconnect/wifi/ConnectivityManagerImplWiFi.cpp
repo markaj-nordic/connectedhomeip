@@ -36,49 +36,6 @@ using namespace ::chip::Inet;
 using namespace ::chip::System;
 using namespace ::chip::TLV;
 
-#define WIFI_BAND_2_4GHZ 2400
-#define WIFI_BAND_5_0GHZ 5000
-
-static uint16_t Map2400MHz(const uint8_t inChannel)
-{
-    uint16_t frequency = 0;
-
-    if (inChannel >= 1 && inChannel <= 13)
-    {
-        // Cast is OK because we definitely fit in 16 bits.
-        frequency = static_cast<uint16_t>(2412 + ((inChannel - 1) * 5));
-    }
-    else if (inChannel == 14)
-    {
-        frequency = 2484;
-    }
-
-    return frequency;
-}
-
-static uint16_t Map5000MHz(const uint8_t inChannel)
-{
-    uint16_t frequency = 0;
-
-    return frequency;
-}
-
-static uint16_t MapFrequency(const uint16_t inBand, const uint8_t inChannel)
-{
-    uint16_t frequency = 0;
-
-    if (inBand == WIFI_BAND_2_4GHZ)
-    {
-        frequency = Map2400MHz(inChannel);
-    }
-    else if (inBand == WIFI_BAND_5_0GHZ)
-    {
-        frequency = Map5000MHz(inChannel);
-    }
-
-    return frequency;
-}
-
 namespace chip {
 namespace DeviceLayer {
 
