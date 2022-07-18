@@ -69,8 +69,7 @@ Status NrfWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, MutableC
 
 void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback)
 {
-    Status networkingStatus = Status::kUnknownError;
-    mpConnectCallback       = callback;
+    mpConnectCallback = callback;
     WiFiManager::Instance().Connect();
     WaitForConnectionAsync();
 }

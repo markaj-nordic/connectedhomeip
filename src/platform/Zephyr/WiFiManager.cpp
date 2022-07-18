@@ -24,7 +24,7 @@
 
 #include <cstdlib>
 
-#include "lib/core/CHIPError.h"
+#include <lib/core/CHIPError.h>
 
 #include "common.h"
 #include <lib/support/logging/CHIPLogging.h>
@@ -34,10 +34,10 @@
 #include <zephyr.h>
 
 extern "C" {
-#include "utils/common.h"
-#include "config.h"
-#include "ctrl_iface.h"
-#include "wpa_supplicant_i.h"
+#include <utils/common.h>
+#include <config.h>
+#include <ctrl_iface.h>
+#include <wpa_supplicant_i.h>
 }
 
 extern struct wpa_supplicant * wpa_s_0;
@@ -77,9 +77,7 @@ CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & crede
             mpWpaNetwork->disabled      = 1;
             wpa_s_0->conf->filter_ssids = 1;
 
-            AddPsk(credentials);
-
-            return CHIP_NO_ERROR;
+            return AddPsk(credentials);
         }
     }
 
