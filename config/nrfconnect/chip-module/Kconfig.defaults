@@ -224,7 +224,7 @@ config IEEE802154_NRF5_RX_STACK_SIZE
 
 config NET_L2_OPENTHREAD
     bool
-    default y if !NRF_700X
+    default y if !WIFI_NRF700X
 
 if NET_L2_OPENTHREAD
 
