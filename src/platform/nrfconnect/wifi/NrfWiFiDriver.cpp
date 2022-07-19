@@ -34,10 +34,7 @@ CHIP_ERROR NrfWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChange
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR NrfWiFiDriver::Shutdown()
-{
-    return CHIP_NO_ERROR;
-}
+void NrfWiFiDriver::Shutdown() {}
 
 CHIP_ERROR NrfWiFiDriver::CommitConfiguration()
 {
