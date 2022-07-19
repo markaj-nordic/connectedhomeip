@@ -197,9 +197,6 @@ config CHIP_NFC_COMMISSIONING
     bool
     default y
 
-if !CHIP_WIFI # unless the Wi-Fi driver is rebased with
-              # current ncs we will miss dfu_multi_image_pkg
-
 config CHIP_OTA_REQUESTOR
     bool
     default y
@@ -207,8 +204,6 @@ config CHIP_OTA_REQUESTOR
 config CHIP_QSPI_NOR
     bool
     default y
-
-endif
 
 # Enable extended discovery
 config CHIP_EXTENDED_DISCOVERY
