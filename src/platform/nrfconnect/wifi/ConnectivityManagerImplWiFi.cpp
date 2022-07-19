@@ -83,36 +83,47 @@ void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void) {}
 
 ConnectivityManager::WiFiAPMode ConnectivityManagerImplWiFi::_GetWiFiAPMode(void)
 {
-    return ConnectivityManager::WiFiAPMode::kWiFiAPMode_Disabled;
+    return ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported;
 }
 
 CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiAPMode(ConnectivityManager::WiFiAPMode val)
 {
-    return CHIP_NO_ERROR;
+    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiAPActive(void)
 {
+    /* AP mode is unsupported */
     return false;
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiAPApplicationControlled(void)
 {
+    /* AP mode is unsupported */
     return false;
 }
 
-void ConnectivityManagerImplWiFi::_DemandStartWiFiAP(void) {}
+void ConnectivityManagerImplWiFi::_DemandStartWiFiAP(void)
+{ /* AP mode is unsupported */
+}
 
-void ConnectivityManagerImplWiFi::_StopOnDemandWiFiAP(void) {}
+void ConnectivityManagerImplWiFi::_StopOnDemandWiFiAP(void)
+{ /* AP mode is unsupported */
+}
 
-void ConnectivityManagerImplWiFi::_MaintainOnDemandWiFiAP(void) {}
+void ConnectivityManagerImplWiFi::_MaintainOnDemandWiFiAP(void)
+{ /* AP mode is unsupported */
+}
 
 System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiAPIdleTimeout(void)
 {
+    /* AP mode is unsupported */
     return System::Clock::kZero;
 }
 
-void ConnectivityManagerImplWiFi::_SetWiFiAPIdleTimeout(System::Clock::Timeout val) {}
+void ConnectivityManagerImplWiFi::_SetWiFiAPIdleTimeout(System::Clock::Timeout val)
+{ /* AP mode is unsupported */
+}
 
 CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
 {
@@ -144,17 +155,7 @@ const char * ConnectivityManagerImplWiFi::_WiFiStationModeToStr(ConnectivityMana
     return nullptr;
 }
 
-const char * ConnectivityManagerImplWiFi::_WiFiAPModeToStr(ConnectivityManager::WiFiAPMode mode)
-{
-    return nullptr;
-}
-
 const char * ConnectivityManagerImplWiFi::_WiFiStationStateToStr(ConnectivityManager::WiFiStationState state)
-{
-    return nullptr;
-}
-
-const char * ConnectivityManagerImplWiFi::_WiFiAPStateToStr(ConnectivityManager::WiFiAPState state)
 {
     return nullptr;
 }
