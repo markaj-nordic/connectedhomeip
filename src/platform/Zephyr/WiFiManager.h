@@ -55,6 +55,7 @@ public:
     CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
     CHIP_ERROR Connect();
     StationStatus NetworkStatus();
+    CHIP_ERROR GetMACAddress(uint8_t * buf);
 
 private:
     CHIP_ERROR AddPsk(const ByteSpan & credentials);

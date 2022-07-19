@@ -66,6 +66,13 @@ static_library("Zephyr") {
     }
   }
 
+if (chip_enable_wifi) {
+  sources += [
+    "WiFiManager.cpp",
+    "WiFiManager.h",
+    ]
+}
+
   if (chip_enable_nfc) {
     sources += [
       "NFCManagerImpl.cpp",

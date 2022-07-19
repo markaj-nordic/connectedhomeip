@@ -94,10 +94,5 @@ inline CHIP_ERROR ConfigurationManagerImpl::WritePersistedStorageValue(::chip::P
     return Internal::ZephyrConfig::WriteConfigValueCounter(key, value);
 }
 
-inline CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * /* buf */)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
 } // namespace DeviceLayer
 } // namespace chip

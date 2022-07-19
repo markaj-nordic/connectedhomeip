@@ -144,5 +144,16 @@ std::string WiFiManager::ExtractNetworkStatusString(const std::string & aFullStr
     return wpaStateValueSubStr.substr(0, pos);
 }
 
+CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * buf)
+{
+    // CONFIG_NET_DEFAULT_IF_FIRST is set by default
+    const net_if * const iface = net_if_get_default();
+    VerifyOrReturnError(iface != nullptr && iface->if_dev != nullptr, CHIP_ERROR_INTERNAL);
+
+    const auto linkAddrStruct = iface->if_dev->link_addr;
+    memcpy(buf, linkAddrStruct.addr, linkAddrStruct.len);
+    return CHIP_NO_ERROR;
+}
+
 } // namespace DeviceLayer
 } // namespace chip
