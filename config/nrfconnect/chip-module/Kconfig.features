@@ -28,16 +28,15 @@ config CHIP_WIFI
 	imply NORDIC_SECURITY_BACKEND
 	imply MBEDTLS_ENTROPY_C
 	imply MBEDTLS_PSA_CRYPTO_C
-	imply DNS_RESOLVER
 	imply NET_STATISTICS
-	imply NET_DHCPV4
 	imply NET_L2_ETHERNET
 	imply NET_PKT_TXTIME
 	imply NET_PKT_TIMESTAMP
 	imply MBEDTLS_PROMPTLESS
 	imply BUILD_OUTPUT_META
 	imply USE_DT_CODE_PARTITION # might be removed when the OTA is enabled
-	imply NET_IPV4 # needed by the supplicant to compile
+	imply NET_IPV6_ND # enable Neighbor Discovery to handle Router Advertisements
+	imply NET_IPV6_NBR_CACHE
 
 config CHIP_QSPI_NOR
 	bool "Enable QSPI NOR feature set"
