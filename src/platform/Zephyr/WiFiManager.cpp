@@ -34,9 +34,9 @@
 #include <zephyr.h>
 
 extern "C" {
-#include <utils/common.h>
 #include <config.h>
 #include <ctrl_iface.h>
+#include <utils/common.h>
 #include <wpa_supplicant_i.h>
 }
 
