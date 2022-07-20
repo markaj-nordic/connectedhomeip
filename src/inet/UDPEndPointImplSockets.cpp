@@ -583,7 +583,7 @@ void UDPEndPointImplSockets::HandlePendingIO(System::SocketEvents events)
     System::PacketBufferHandle lBuffer;
 
     lPacketInfo.Clear();
-    lPacketInfo.DestPort = mBoundPort;
+    lPacketInfo.DestPort  = mBoundPort;
     lPacketInfo.Interface = mBoundIntfId;
 
     lBuffer = System::PacketBufferHandle::New(System::PacketBuffer::kMaxSizeWithoutReserve, 0);
