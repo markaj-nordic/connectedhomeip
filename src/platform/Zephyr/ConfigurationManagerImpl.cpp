@@ -27,6 +27,7 @@
 #include <platform/internal/GenericConfigurationManagerImpl.ipp>
 
 #include <lib/core/CHIPVendorIdentifiers.hpp>
+#include <platform/Zephyr/WiFiManager.h>
 #include <platform/Zephyr/ZephyrConfig.h>
 
 #include <lib/support/CodeUtils.h>
@@ -178,6 +179,15 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
     PlatformMgr().Shutdown();
+}
+
+CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
+{
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+    return WiFiManager::Instance().GetMACAddress(buf);
+#else
+    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
+#endif
 }
 
 ConfigurationManager & ConfigurationMgrImpl()
