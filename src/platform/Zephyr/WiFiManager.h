@@ -26,6 +26,7 @@
 #include <lib/support/Span.h>
 #include <string>
 
+struct net_if;
 struct wpa_ssid;
 using WpaNetwork = struct wpa_ssid;
 
