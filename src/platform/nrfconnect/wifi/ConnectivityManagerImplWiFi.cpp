@@ -41,27 +41,46 @@ namespace DeviceLayer {
 
 ConnectivityManager::WiFiStationMode ConnectivityManagerImplWiFi::_GetWiFiStationMode(void)
 {
-    return ConnectivityManager::WiFiStationMode::kWiFiStationMode_Disabled;
+    if (mStationMode != ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled)
+    {
+        mStationMode = (WiFiManager::StationStatus::DISABLED == WiFiManager().Instance().GetStationStatus())
+            ? ConnectivityManager::WiFiStationMode::kWiFiStationMode_Disabled
+            : ConnectivityManager::WiFiStationMode::kWiFiStationMode_Enabled;
+    }
+    return mStationMode;
 }
 
-CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationMode(ConnectivityManager::WiFiStationMode val)
+CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationMode(ConnectivityManager::WiFiStationMode aMode)
 {
+    VerifyOrReturnError(ConnectivityManager::WiFiStationMode::kWiFiStationMode_NotSupported != aMode,
+                        CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
+
+    if (aMode != mStationMode)
+    {
+        mStationMode = aMode;
+        if (mStationMode != ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled)
+        {
+            bool doEnable{ ConnectivityManager::WiFiStationMode::kWiFiStationMode_Enabled == mStationMode };
+            return WiFiManager().Instance().EnableStation(doEnable);
+        }
+    }
+
     return CHIP_NO_ERROR;
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationEnabled(void)
 {
-    return false;
+    return (WiFiManager::StationStatus::DISABLED != WiFiManager().Instance().GetStationStatus());
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationApplicationControlled(void)
 {
-    return false;
+    return (ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled == mStationMode);
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationConnected(void)
 {
-    return false;
+    return (WiFiManager::StationStatus::CONNECTED == WiFiManager().Instance().GetStationStatus());
 }
 
 System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiStationReconnectInterval(void)
@@ -81,14 +100,45 @@ bool ConnectivityManagerImplWiFi::_IsWiFiStationProvisioned(void)
 
 void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void) {}
 
+CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
+{
+    return CHIP_NO_ERROR;
+}
+
+bool ConnectivityManagerImplWiFi::_CanStartWiFiScan()
+{
+    const auto status = WiFiManager().Instance().GetStationStatus();
+    return (status != WiFiManager::StationStatus::DISABLED) && (status != WiFiManager::StationStatus::SCANNING) &&
+        (status != WiFiManager::StationStatus::CONNECTING) && (status != WiFiManager::StationStatus::NONE);
+}
+
+void ConnectivityManagerImplWiFi::_OnWiFiScanDone() {}
+
+void ConnectivityManagerImplWiFi::_OnWiFiStationProvisionChange() {}
+
+CHIP_ERROR ConnectivityManagerImplWiFi::InitWiFi()
+{
+    return WiFiManager::Instance().Init();
+}
+
+void ConnectivityManagerImplWiFi::OnWiFiPlatformEvent(const ChipDeviceEvent * event)
+{
+    return;
+}
+
 ConnectivityManager::WiFiAPMode ConnectivityManagerImplWiFi::_GetWiFiAPMode(void)
 {
+    /* AP mode is unsupported */
     return ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported;
 }
 
-CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiAPMode(ConnectivityManager::WiFiAPMode val)
+CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiAPMode(ConnectivityManager::WiFiAPMode aMode)
 {
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
+    /* AP mode is unsupported */
+    VerifyOrReturnError(ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported == aMode ||
+                            ConnectivityManager::WiFiAPMode::kWiFiAPMode_Disabled == aMode,
+                        CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
+    return CHIP_NO_ERROR;
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiAPActive(void)
@@ -123,41 +173,6 @@ System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiAPIdleTimeout(void)
 
 void ConnectivityManagerImplWiFi::_SetWiFiAPIdleTimeout(System::Clock::Timeout val)
 { /* AP mode is unsupported */
-}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
-{
-    return CHIP_NO_ERROR;
-}
-
-bool ConnectivityManagerImplWiFi::_CanStartWiFiScan()
-{
-    return false;
-}
-
-void ConnectivityManagerImplWiFi::_OnWiFiScanDone() {}
-
-void ConnectivityManagerImplWiFi::_OnWiFiStationProvisionChange() {}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::InitWiFi()
-{
-    return WiFiManager::Instance().Init();
-}
-
-void ConnectivityManagerImplWiFi::OnWiFiPlatformEvent(const ChipDeviceEvent * event)
-{
-    return;
-}
-
-// helpers
-const char * ConnectivityManagerImplWiFi::_WiFiStationModeToStr(ConnectivityManager::WiFiStationMode mode)
-{
-    return nullptr;
-}
-
-const char * ConnectivityManagerImplWiFi::_WiFiStationStateToStr(ConnectivityManager::WiFiStationState state)
-{
-    return nullptr;
 }
 
 } // namespace DeviceLayer

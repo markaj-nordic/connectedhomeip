@@ -140,9 +140,9 @@ void NrfWiFiDriver::PollTimerCallback()
     static constexpr uint8_t kMaxRetriesNumber{ 60 };
     static uint8_t retriesNumber;
 
-    WiFiManager::StationStatus status = WiFiManager::Instance().NetworkStatus();
+    WiFiManager::StationStatus status = WiFiManager::Instance().GetStationStatus();
 
-    if (WiFiManager::StationStatus::CONNECTED == status)
+    if (WiFiManager::StationStatus::COMPLETED == status)
     {
         Instance().OnConnectWiFiNetwork();
     }

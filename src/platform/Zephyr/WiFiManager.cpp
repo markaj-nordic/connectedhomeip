@@ -36,8 +36,6 @@
 #include <zephyr.h>
 
 extern "C" {
-#include <utils/common.h>
-
 #include <config.h>
 #include <ctrl_iface.h>
 #include <wpa_supplicant_i.h>
@@ -66,6 +64,30 @@ net_if * GetInterface(Inet::InterfaceId interfaceId = Inet::InterfaceId::Null())
 }
 
 } // namespace
+
+// NOTE: it's NOT a unique keyed map
+const WiFiManager::StatusMap::StatusPair WiFiManager::StatusMap::sStatusMap[] = {
+    { WPA_DISCONNECTED, WiFiManager::StationStatus::DISCONNECTED },
+    { WPA_INTERFACE_DISABLED, WiFiManager::StationStatus::DISABLED },
+    { WPA_INACTIVE, WiFiManager::StationStatus::DISABLED },
+    { WPA_SCANNING, WiFiManager::StationStatus::SCANNING },
+    { WPA_AUTHENTICATING, WiFiManager::StationStatus::CONNECTING },
+    { WPA_ASSOCIATING, WiFiManager::StationStatus::CONNECTING },
+    { WPA_ASSOCIATED, WiFiManager::StationStatus::CONNECTED },
+    { WPA_4WAY_HANDSHAKE, WiFiManager::StationStatus::CONNECTING },
+    { WPA_GROUP_HANDSHAKE, WiFiManager::StationStatus::CONNECTING },
+    { WPA_COMPLETED, WiFiManager::StationStatus::COMPLETED }
+};
+
+WiFiManager::StationStatus WiFiManager::StatusMap::operator[](enum wpa_states aWpaState)
+{
+    for (size_t it = 0; it < sizeof(sStatusMap) / sizeof(WiFiManager::StatusMap::StatusPair); ++it)
+    {
+        if (aWpaState == sStatusMap[it].mWpaStatus)
+            return sStatusMap[it].mStatus;
+    }
+    return WiFiManager::StationStatus::NONE;
+}
 
 CHIP_ERROR WiFiManager::Init()
 {
@@ -136,7 +158,7 @@ CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & crede
 CHIP_ERROR WiFiManager::Connect()
 {
     ChipLogDetail(DeviceLayer, "Connecting to WiFi network");
-    wpa_supplicant_enable_network(wpa_s_0, mpWpaNetwork);
+    EnableStation(true);
     wpa_supplicant_select_network(wpa_s_0, mpWpaNetwork);
     return CHIP_NO_ERROR;
 }
@@ -156,43 +178,6 @@ CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
     return CHIP_ERROR_INTERNAL;
 }
 
-WiFiManager::StationStatus WiFiManager::NetworkStatus()
-{
-    static const char * kQueryKeyword{ "STATUS" };
-    static constexpr uint8_t kKeywordLength{ 6 };
-    static constexpr uint16_t kMaxReplySize{ 512 };
-    char reply[kMaxReplySize];
-    const auto replySize = wpa_supplicant_ctrl_iface_status(wpa_s_0, kQueryKeyword + kKeywordLength, reply, kMaxReplySize);
-    return NetworkStatusStringToEnumCode(reply);
-}
-
-WiFiManager::StationStatus WiFiManager::NetworkStatusStringToEnumCode(const std::string & aFullStringStatus)
-{
-    const std::string extractedStatusString = ExtractNetworkStatusString(aFullStringStatus);
-
-    if (0 == extractedStatusString.compare("DISCONNECTED"))
-        return StationStatus::DISCONNECTED;
-    else if (0 == extractedStatusString.compare("SCANNING"))
-        return StationStatus::SCANNING;
-    else if (0 == extractedStatusString.compare("COMPLETED"))
-        return StationStatus::CONNECTED;
-    else
-        return StationStatus::NONE;
-}
-
-std::string WiFiManager::ExtractNetworkStatusString(const std::string & aFullStringStatus)
-{
-    // this parser is implemented according to the wpa_supplicant status string format
-    static constexpr const char * pattern{ "wpa_state=" };
-    auto pos                       = aFullStringStatus.find(pattern);
-    const auto wpaStateSubStr      = aFullStringStatus.substr(pos);
-    pos                            = wpaStateSubStr.find("=");
-    const auto wpaStateValueSubStr = wpaStateSubStr.substr(pos + 1);
-    pos                            = wpaStateValueSubStr.find("\n");
-
-    return wpaStateValueSubStr.substr(0, pos);
-}
-
 CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * buf)
 {
     const net_if * const iface = GetInterface();
@@ -200,6 +185,40 @@ CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * buf)
 
     const auto linkAddrStruct = iface->if_dev->link_addr;
     memcpy(buf, linkAddrStruct.addr, linkAddrStruct.len);
+    return CHIP_NO_ERROR;
+}
+
+WiFiManager::StationStatus WiFiManager::GetStationStatus()
+{
+    if (wpa_s_0)
+    {
+        return StatusFromWpaStatus(wpa_s_0->wpa_state);
+    }
+    else
+    {
+        ChipLogError(DeviceLayer, "wpa_supplicant is not initialized!");
+        return StationStatus::NONE;
+    }
+}
+
+WiFiManager::StationStatus WiFiManager::StatusFromWpaStatus(wpa_states aStatus)
+{
+    ChipLogError(DeviceLayer, "WPA internal status: %d", static_cast<int>(aStatus));
+    return WiFiManager::StatusMap::GetMap()[aStatus];
+}
+
+CHIP_ERROR WiFiManager::EnableStation(bool aEnable)
+{
+    VerifyOrReturnError(nullptr != wpa_s_0 && nullptr != mpWpaNetwork, CHIP_ERROR_INTERNAL);
+    if (aEnable)
+    {
+        wpa_supplicant_enable_network(wpa_s_0, mpWpaNetwork);
+    }
+    else
+    {
+        wpa_supplicant_disable_network(wpa_s_0, mpWpaNetwork);
+        // TODO: wpa_supplicant_remove_network(wpa_s, ssid->id)??
+    }
     return CHIP_NO_ERROR;
 }
 

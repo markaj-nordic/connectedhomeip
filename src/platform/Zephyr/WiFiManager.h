@@ -24,7 +24,11 @@
 
 #include <lib/core/CHIPError.h>
 #include <lib/support/Span.h>
-#include <string>
+
+extern "C" {
+#include <common/defs.h>
+#include <utils/common.h>
+}
 
 struct net_if;
 struct wpa_ssid;
@@ -40,10 +44,32 @@ public:
     enum class StationStatus : uint8_t
     {
         DISCONNECTED,
+        DISABLED,
         SCANNING,
+        CONNECTING,
+        CONNECTED,
         COMPLETED,
-        CONNECTED = COMPLETED,
         NONE
+    };
+
+    class StatusMap
+    {
+    public:
+        static StatusMap & GetMap()
+        {
+            static StatusMap sInstance;
+            return sInstance;
+        }
+        StationStatus operator[](enum wpa_states aWpaState);
+
+    private:
+        struct StatusPair
+        {
+            wpa_states mWpaStatus;
+            WiFiManager::StationStatus mStatus;
+        };
+
+        static const StatusPair sStatusMap[];
     };
 
     static WiFiManager & Instance()
@@ -55,14 +81,13 @@ public:
     CHIP_ERROR Init();
     CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
     CHIP_ERROR Connect();
-    StationStatus NetworkStatus();
     CHIP_ERROR GetMACAddress(uint8_t * buf);
+    StationStatus GetStationStatus();
+    CHIP_ERROR EnableStation(bool aEnable);
 
 private:
     CHIP_ERROR AddPsk(const ByteSpan & credentials);
-
-    static StationStatus NetworkStatusStringToEnumCode(const std::string & aFullStringStatus);
-    static std::string ExtractNetworkStatusString(const std::string & aFullStringStatus);
+    StationStatus StatusFromWpaStatus(wpa_states aStatus);
 
     WpaNetwork * mpWpaNetwork{ nullptr };
 };
