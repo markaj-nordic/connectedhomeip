@@ -65,6 +65,7 @@ net_if * GetInterface(Inet::InterfaceId interfaceId = Inet::InterfaceId::Null())
 
 } // namespace
 
+// These enums shall reflect the overall ordered disconnected->connected flow
 // NOTE: it's NOT a unique keyed map
 const WiFiManager::StatusMap::StatusPair WiFiManager::StatusMap::sStatusMap[] = {
     { WPA_DISCONNECTED, WiFiManager::StationStatus::DISCONNECTED },
@@ -74,9 +75,9 @@ const WiFiManager::StatusMap::StatusPair WiFiManager::StatusMap::sStatusMap[] = 
     { WPA_AUTHENTICATING, WiFiManager::StationStatus::CONNECTING },
     { WPA_ASSOCIATING, WiFiManager::StationStatus::CONNECTING },
     { WPA_ASSOCIATED, WiFiManager::StationStatus::CONNECTED },
-    { WPA_4WAY_HANDSHAKE, WiFiManager::StationStatus::CONNECTING },
-    { WPA_GROUP_HANDSHAKE, WiFiManager::StationStatus::CONNECTING },
-    { WPA_COMPLETED, WiFiManager::StationStatus::COMPLETED }
+    { WPA_4WAY_HANDSHAKE, WiFiManager::StationStatus::PROVISIONING },
+    { WPA_GROUP_HANDSHAKE, WiFiManager::StationStatus::PROVISIONING },
+    { WPA_COMPLETED, WiFiManager::StationStatus::FULLY_PROVISIONED }
 };
 
 WiFiManager::StationStatus WiFiManager::StatusMap::operator[](enum wpa_states aWpaState)
@@ -86,6 +87,7 @@ WiFiManager::StationStatus WiFiManager::StatusMap::operator[](enum wpa_states aW
         if (aWpaState == sStatusMap[it].mWpaStatus)
             return sStatusMap[it].mStatus;
     }
+
     return WiFiManager::StationStatus::NONE;
 }
 
@@ -95,6 +97,7 @@ CHIP_ERROR WiFiManager::Init()
     if (!wpa_s_0)
     {
         ChipLogError(DeviceLayer, "wpa_supplicant is not initialized!");
+
         return CHIP_ERROR_INTERNAL;
     }
 
@@ -128,6 +131,7 @@ CHIP_ERROR WiFiManager::Init()
     });
 
     ChipLogDetail(DeviceLayer, "wpa_supplicant has been initialized");
+
     return CHIP_NO_ERROR;
 }
 
@@ -160,6 +164,7 @@ CHIP_ERROR WiFiManager::Connect()
     ChipLogDetail(DeviceLayer, "Connecting to WiFi network");
     EnableStation(true);
     wpa_supplicant_select_network(wpa_s_0, mpWpaNetwork);
+
     return CHIP_NO_ERROR;
 }
 
@@ -185,6 +190,7 @@ CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * buf)
 
     const auto linkAddrStruct = iface->if_dev->link_addr;
     memcpy(buf, linkAddrStruct.addr, linkAddrStruct.len);
+
     return CHIP_NO_ERROR;
 }
 
@@ -203,7 +209,7 @@ WiFiManager::StationStatus WiFiManager::GetStationStatus()
 
 WiFiManager::StationStatus WiFiManager::StatusFromWpaStatus(wpa_states aStatus)
 {
-    ChipLogError(DeviceLayer, "WPA internal status: %d", static_cast<int>(aStatus));
+    ChipLogDetail(DeviceLayer, "WPA internal status: %d", static_cast<int>(aStatus));
     return WiFiManager::StatusMap::GetMap()[aStatus];
 }
 
@@ -218,7 +224,27 @@ CHIP_ERROR WiFiManager::EnableStation(bool aEnable)
     {
         wpa_supplicant_disable_network(wpa_s_0, mpWpaNetwork);
         // TODO: wpa_supplicant_remove_network(wpa_s, ssid->id)??
+        // TODO: DisconnectStation()??
     }
+
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR WiFiManager::ClearStationProvisioningData()
+{
+    VerifyOrReturnError(nullptr != wpa_s_0 && nullptr != mpWpaNetwork, CHIP_ERROR_INTERNAL);
+    wpa_clear_keys(wpa_s_0, mpWpaNetwork->bssid);
+    str_clear_free(mpWpaNetwork->passphrase);
+    wpa_config_update_psk(mpWpaNetwork);
+
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR WiFiManager::DisconnectStation()
+{
+    VerifyOrReturnError(nullptr != wpa_s_0, CHIP_ERROR_INTERNAL);
+    wpas_request_disconnection(wpa_s_0);
+
     return CHIP_NO_ERROR;
 }
 

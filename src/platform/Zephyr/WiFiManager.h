@@ -26,8 +26,8 @@
 #include <lib/support/Span.h>
 
 extern "C" {
-#include <common/defs.h>
 #include <utils/common.h>
+#include <common/defs.h>
 }
 
 struct net_if;
@@ -43,13 +43,14 @@ class WiFiManager
 public:
     enum class StationStatus : uint8_t
     {
+        NONE,
         DISCONNECTED,
         DISABLED,
         SCANNING,
         CONNECTING,
         CONNECTED,
-        COMPLETED,
-        NONE
+        PROVISIONING,
+        FULLY_PROVISIONED
     };
 
     class StatusMap
@@ -79,14 +80,16 @@ public:
     }
 
     CHIP_ERROR Init();
-    CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
+    CHIP_ERROR AddNetwork(const ByteSpan & aSsid, const ByteSpan & aCredentials);
     CHIP_ERROR Connect();
-    CHIP_ERROR GetMACAddress(uint8_t * buf);
+    CHIP_ERROR GetMACAddress(uint8_t * aBuf);
     StationStatus GetStationStatus();
     CHIP_ERROR EnableStation(bool aEnable);
+    CHIP_ERROR ClearStationProvisioningData();
+    CHIP_ERROR DisconnectStation();
 
 private:
-    CHIP_ERROR AddPsk(const ByteSpan & credentials);
+    CHIP_ERROR AddPsk(const ByteSpan & aCredentials);
     StationStatus StatusFromWpaStatus(wpa_states aStatus);
 
     WpaNetwork * mpWpaNetwork{ nullptr };

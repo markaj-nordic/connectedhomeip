@@ -142,7 +142,7 @@ void NrfWiFiDriver::PollTimerCallback()
 
     WiFiManager::StationStatus status = WiFiManager::Instance().GetStationStatus();
 
-    if (WiFiManager::StationStatus::COMPLETED == status)
+    if (WiFiManager::StationStatus::FULLY_PROVISIONED == status)
     {
         Instance().OnConnectWiFiNetwork();
     }

@@ -39,6 +39,11 @@ using namespace ::chip::TLV;
 namespace chip {
 namespace DeviceLayer {
 
+CHIP_ERROR ConnectivityManagerImplWiFi::InitWiFi()
+{
+    return WiFiManager::Instance().Init();
+}
+
 ConnectivityManager::WiFiStationMode ConnectivityManagerImplWiFi::_GetWiFiStationMode(void)
 {
     if (mStationMode != ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled)
@@ -70,7 +75,7 @@ CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationMode(ConnectivityManager:
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationEnabled(void)
 {
-    return (WiFiManager::StationStatus::DISABLED != WiFiManager().Instance().GetStationStatus());
+    return (WiFiManager::StationStatus::DISABLED <= WiFiManager().Instance().GetStationStatus());
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationApplicationControlled(void)
@@ -80,45 +85,57 @@ bool ConnectivityManagerImplWiFi::_IsWiFiStationApplicationControlled(void)
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationConnected(void)
 {
-    return (WiFiManager::StationStatus::CONNECTED == WiFiManager().Instance().GetStationStatus());
+    return (WiFiManager::StationStatus::FULLY_PROVISIONED == WiFiManager().Instance().GetStationStatus());
 }
 
 System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiStationReconnectInterval(void)
 {
-    return System::Clock::kZero;
+    return mWiFiStationReconnectInterval;
 }
 
 CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationReconnectInterval(System::Clock::Timeout val)
 {
+    mWiFiStationReconnectInterval = val;
     return CHIP_NO_ERROR;
 }
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationProvisioned(void)
 {
-    return false;
+    return (WiFiManager::StationStatus::CONNECTED <= WiFiManager().Instance().GetStationStatus());
 }
 
-void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void) {}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
+void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void)
 {
-    return CHIP_NO_ERROR;
+    if (CHIP_NO_ERROR != WiFiManager().Instance().ClearStationProvisioningData())
+    {
+        ChipLogError(DeviceLayer, "Cannot clear WiFi station provisioning data");
+    }
 }
 
 bool ConnectivityManagerImplWiFi::_CanStartWiFiScan()
 {
-    const auto status = WiFiManager().Instance().GetStationStatus();
-    return (status != WiFiManager::StationStatus::DISABLED) && (status != WiFiManager::StationStatus::SCANNING) &&
-        (status != WiFiManager::StationStatus::CONNECTING) && (status != WiFiManager::StationStatus::NONE);
+    return (WiFiManager::StationStatus::CONNECTING < WiFiManager().Instance().GetStationStatus());
+}
+
+void ConnectivityManagerImplWiFi::_OnWiFiStationProvisionChange()
+{
+    if (_IsWiFiStationProvisioned())
+    {
+        // probably the network provisioning data has been cleared so drop the connection
+        WiFiManager().Instance().DisconnectStation();
+    }
+    else
+    {
+        // TODO: disconnected and connect with new credentials?
+    }
 }
 
 void ConnectivityManagerImplWiFi::_OnWiFiScanDone() {}
 
-void ConnectivityManagerImplWiFi::_OnWiFiStationProvisionChange() {}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::InitWiFi()
+CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
 {
-    return WiFiManager::Instance().Init();
+    // TODO: when network statistics are enabled
+    return CHIP_NO_ERROR;
 }
 
 void ConnectivityManagerImplWiFi::OnWiFiPlatformEvent(const ChipDeviceEvent * event)

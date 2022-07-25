@@ -69,6 +69,7 @@ private:
 
     ConnectivityManager::WiFiStationMode mStationMode{ ConnectivityManager::WiFiStationMode::kWiFiStationMode_Disabled };
     ConnectivityManager::WiFiStationState mStationState{ ConnectivityManager::WiFiStationState::kWiFiStationState_NotConnected };
+    System::Clock::Timeout mWiFiStationReconnectInterval{};
 
     static const char * _WiFiStationModeToStr(ConnectivityManager::WiFiStationMode mode);
     static const char * _WiFiAPModeToStr(ConnectivityManager::WiFiAPMode mode);
