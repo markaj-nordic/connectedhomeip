@@ -84,13 +84,13 @@ public:
     CHIP_ERROR Connect();
     CHIP_ERROR GetMACAddress(uint8_t * aBuf);
     StationStatus GetStationStatus();
-    CHIP_ERROR EnableStation(bool aEnable);
     CHIP_ERROR ClearStationProvisioningData();
     CHIP_ERROR DisconnectStation();
 
 private:
     CHIP_ERROR AddPsk(const ByteSpan & aCredentials);
     StationStatus StatusFromWpaStatus(wpa_states aStatus);
+    CHIP_ERROR EnableStation(bool aEnable);
 
     WpaNetwork * mpWpaNetwork{ nullptr };
 };

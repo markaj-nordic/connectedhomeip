@@ -38,6 +38,7 @@
 extern "C" {
 #include <config.h>
 #include <ctrl_iface.h>
+#include <scan.h>
 #include <wpa_supplicant_i.h>
 }
 
@@ -48,19 +49,19 @@ namespace DeviceLayer {
 
 namespace {
 
-in6_addr ToZephyrAddr(const Inet::IPAddress & address)
+in6_addr ToZephyrAddr(const Inet::IPAddress & aAddress)
 {
     in6_addr zephyrAddr;
 
-    static_assert(sizeof(zephyrAddr.s6_addr) == sizeof(address.Addr), "Unexpected address size");
-    memcpy(zephyrAddr.s6_addr, address.Addr, sizeof(address.Addr));
+    static_assert(sizeof(zephyrAddr.s6_addr) == sizeof(aAddress.Addr), "Unexpected address size");
+    memcpy(zephyrAddr.s6_addr, aAddress.Addr, sizeof(aAddress.Addr));
 
     return zephyrAddr;
 }
 
-net_if * GetInterface(Inet::InterfaceId interfaceId = Inet::InterfaceId::Null())
+net_if * GetInterface(Inet::InterfaceId aInterfaceId = Inet::InterfaceId::Null())
 {
-    return interfaceId.IsPresent() ? net_if_get_by_index(interfaceId.GetPlatformInterface()) : net_if_get_default();
+    return aInterfaceId.IsPresent() ? net_if_get_by_index(aInterfaceId.GetPlatformInterface()) : net_if_get_default();
 }
 
 } // namespace
@@ -135,7 +136,7 @@ CHIP_ERROR WiFiManager::Init()
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials)
+CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & aSsid, const ByteSpan & aCredentials)
 {
     ChipLogDetail(DeviceLayer, "Adding WiFi network");
     mpWpaNetwork = wpa_supplicant_add_network(wpa_s_0);
@@ -146,13 +147,13 @@ CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & crede
 
         if (mpWpaNetwork->ssid)
         {
-            memcpy(mpWpaNetwork->ssid, ssid.data(), ssid.size());
-            mpWpaNetwork->ssid_len      = ssid.size();
+            memcpy(mpWpaNetwork->ssid, aSsid.data(), aSsid.size());
+            mpWpaNetwork->ssid_len      = aSsid.size();
             mpWpaNetwork->key_mgmt      = WPA_KEY_MGMT_NONE;
             mpWpaNetwork->disabled      = 1;
             wpa_s_0->conf->filter_ssids = 1;
 
-            return AddPsk(credentials);
+            return AddPsk(aCredentials);
         }
     }
 
@@ -168,11 +169,11 @@ CHIP_ERROR WiFiManager::Connect()
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
+CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & aCredentials)
 {
     mpWpaNetwork->key_mgmt = WPA_KEY_MGMT_PSK;
     str_clear_free(mpWpaNetwork->passphrase);
-    mpWpaNetwork->passphrase = dup_binstr(credentials.data(), credentials.size());
+    mpWpaNetwork->passphrase = dup_binstr(aCredentials.data(), aCredentials.size());
 
     if (mpWpaNetwork->passphrase)
     {
@@ -183,13 +184,13 @@ CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
     return CHIP_ERROR_INTERNAL;
 }
 
-CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * buf)
+CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * aBuf)
 {
     const net_if * const iface = GetInterface();
     VerifyOrReturnError(iface != nullptr && iface->if_dev != nullptr, CHIP_ERROR_INTERNAL);
 
     const auto linkAddrStruct = iface->if_dev->link_addr;
-    memcpy(buf, linkAddrStruct.addr, linkAddrStruct.len);
+    memcpy(aBuf, linkAddrStruct.addr, linkAddrStruct.len);
 
     return CHIP_NO_ERROR;
 }
@@ -233,9 +234,12 @@ CHIP_ERROR WiFiManager::EnableStation(bool aEnable)
 CHIP_ERROR WiFiManager::ClearStationProvisioningData()
 {
     VerifyOrReturnError(nullptr != wpa_s_0 && nullptr != mpWpaNetwork, CHIP_ERROR_INTERNAL);
+    // TODO(?): wpa_supplicant_deauthenticate(wpa_s_0, 1); // 1 - unspecified reason (IEEE 802.11)
+    wpa_supplicant_cancel_scan(wpa_s_0);
     wpa_clear_keys(wpa_s_0, mpWpaNetwork->bssid);
     str_clear_free(mpWpaNetwork->passphrase);
     wpa_config_update_psk(mpWpaNetwork);
+    wpa_supplicant_set_state(wpa_s_0, WPA_INACTIVE);
 
     return CHIP_NO_ERROR;
 }
@@ -243,6 +247,7 @@ CHIP_ERROR WiFiManager::ClearStationProvisioningData()
 CHIP_ERROR WiFiManager::DisconnectStation()
 {
     VerifyOrReturnError(nullptr != wpa_s_0, CHIP_ERROR_INTERNAL);
+    wpa_supplicant_cancel_scan(wpa_s_0);
     wpas_request_disconnection(wpa_s_0);
 
     return CHIP_NO_ERROR;

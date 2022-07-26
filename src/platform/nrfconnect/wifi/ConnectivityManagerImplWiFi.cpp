@@ -66,7 +66,15 @@ CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationMode(ConnectivityManager:
         if (mStationMode != ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled)
         {
             bool doEnable{ ConnectivityManager::WiFiStationMode::kWiFiStationMode_Enabled == mStationMode };
-            return WiFiManager().Instance().EnableStation(doEnable);
+            if (doEnable)
+            {
+                OnStationConnected();
+            }
+            else
+            {
+                WiFiManager().Instance().DisconnectStation();
+                OnStationDisconnected();
+            }
         }
     }
 
@@ -106,9 +114,12 @@ bool ConnectivityManagerImplWiFi::_IsWiFiStationProvisioned(void)
 
 void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void)
 {
-    if (CHIP_NO_ERROR != WiFiManager().Instance().ClearStationProvisioningData())
+    if (_IsWiFiStationProvisioned())
     {
-        ChipLogError(DeviceLayer, "Cannot clear WiFi station provisioning data");
+        if (CHIP_NO_ERROR != WiFiManager().Instance().ClearStationProvisioningData())
+        {
+            ChipLogError(DeviceLayer, "Cannot clear WiFi station provisioning data");
+        }
     }
 }
 
@@ -141,6 +152,38 @@ CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
 void ConnectivityManagerImplWiFi::OnWiFiPlatformEvent(const ChipDeviceEvent * event)
 {
     return;
+}
+
+void ConnectivityManagerImplWiFi::OnStationConnected()
+{
+    // ensure the station is connected
+    if (_IsWiFiStationConnected())
+    {
+        ChipDeviceEvent connectEvent{};
+        connectEvent.Type                          = DeviceEventType::kWiFiConnectivityChange;
+        connectEvent.WiFiConnectivityChange.Result = kConnectivity_Established;
+        PlatformMgr().PostEventOrDie(&connectEvent);
+    }
+    else
+    {
+        ChipLogError(DeviceLayer, "WiFi Station is not connected!");
+    }
+}
+
+void ConnectivityManagerImplWiFi::OnStationDisconnected()
+{
+    // ensure the station is disconnected
+    if (WiFiManager::StationStatus::DISCONNECTED == WiFiManager().Instance().GetStationStatus())
+    {
+        ChipDeviceEvent disconnectEvent{};
+        disconnectEvent.Type                          = DeviceEventType::kWiFiConnectivityChange;
+        disconnectEvent.WiFiConnectivityChange.Result = kConnectivity_Lost;
+        PlatformMgr().PostEventOrDie(&disconnectEvent);
+    }
+    else
+    {
+        ChipLogError(DeviceLayer, "WiFi Station is not disconnected!");
+    }
 }
 
 ConnectivityManager::WiFiAPMode ConnectivityManagerImplWiFi::_GetWiFiAPMode(void)

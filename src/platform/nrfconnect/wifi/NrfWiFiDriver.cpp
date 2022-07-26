@@ -144,6 +144,7 @@ void NrfWiFiDriver::PollTimerCallback()
 
     if (WiFiManager::StationStatus::FULLY_PROVISIONED == status)
     {
+        ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
         Instance().OnConnectWiFiNetwork();
     }
     else

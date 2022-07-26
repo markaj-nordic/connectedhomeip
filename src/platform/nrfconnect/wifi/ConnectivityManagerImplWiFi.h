@@ -55,6 +55,8 @@ private:
     bool _CanStartWiFiScan();
     void _OnWiFiScanDone();
     void _OnWiFiStationProvisionChange();
+    void OnStationConnected();
+    void OnStationDisconnected();
 
     // Wi-Fi access point - not supported
     ConnectivityManager::WiFiAPMode _GetWiFiAPMode(void);
