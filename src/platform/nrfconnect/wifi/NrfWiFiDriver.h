@@ -39,6 +39,11 @@ public:
 class NrfWiFiDriver final : public WiFiDriver
 {
 public:
+    // Define non-volatile storage keys for SSID and password.
+    // The naming convention is aligned with DefaultStorageKeyAllocator class.
+    static constexpr const char * kSsidKey = "g/wi/s";
+    static constexpr const char * kPassKey = "g/wi/p";
+
     class WiFiNetworkIterator final : public NetworkIterator
     {
     public:
@@ -54,10 +59,14 @@ public:
 
     struct WiFiNetwork
     {
-        char ssid[DeviceLayer::Internal::kMaxWiFiSSIDLength];
-        uint8_t ssidLen = 0;
-        char credentials[DeviceLayer::Internal::kMaxWiFiKeyLength];
-        uint8_t credentialsLen = 0;
+        uint8_t ssid[DeviceLayer::Internal::kMaxWiFiSSIDLength];
+        size_t ssidLen = 0;
+        uint8_t pass[DeviceLayer::Internal::kMaxWiFiKeyLength];
+        size_t passLen = 0;
+
+        bool IsConfigured() const { return ssidLen > 0; }
+        ByteSpan GetSsidSpan() const { return ByteSpan(ssid, ssidLen); }
+        ByteSpan GetPassSpan() const { return ByteSpan(pass, passLen); }
     };
 
     // BaseDriver
@@ -93,7 +102,11 @@ public:
     static void WaitForConnectionAsync();
     static void PollTimerCallback();
 
+private:
+    void LoadFromStorage();
+
     ConnectCallback * mpConnectCallback{ nullptr };
+    WiFiNetwork mStagingNetwork;
 };
 
 } // namespace NetworkCommissioning

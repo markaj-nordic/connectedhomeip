@@ -16,6 +16,8 @@
  */
 
 #include "NrfWiFiDriver.h"
+
+#include <platform/KeyValueStoreManager.h>
 #include <platform/Zephyr/WiFiManager.h>
 
 #include <lib/support/CodeUtils.h>
@@ -24,6 +26,7 @@
 
 using namespace ::chip;
 using namespace ::chip::DeviceLayer::Internal;
+using namespace ::chip::DeviceLayer::PersistedStorage;
 
 namespace chip {
 namespace DeviceLayer {
@@ -31,6 +34,15 @@ namespace NetworkCommissioning {
 
 CHIP_ERROR NrfWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)
 {
+    LoadFromStorage();
+
+    if (mStagingNetwork.IsConfigured())
+    {
+        // TODO: Make WiFiManager able to change networks and disconnect
+        ReturnErrorOnFailure(WiFiManager::Instance().AddNetwork(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
+        ReturnErrorOnFailure(WiFiManager::Instance().Connect());
+    }
+
     return CHIP_NO_ERROR;
 }
 
@@ -38,37 +50,83 @@ void NrfWiFiDriver::Shutdown() {}
 
 CHIP_ERROR NrfWiFiDriver::CommitConfiguration()
 {
+    ReturnErrorOnFailure(KeyValueStoreMgr().Put(kPassKey, mStagingNetwork.pass, mStagingNetwork.passLen));
+    ReturnErrorOnFailure(KeyValueStoreMgr().Put(kSsidKey, mStagingNetwork.ssid, mStagingNetwork.ssidLen));
+
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR NrfWiFiDriver::RevertConfiguration()
 {
+    LoadFromStorage();
+
+    if (mStagingNetwork.IsConfigured())
+    {
+        ReturnErrorOnFailure(WiFiManager::Instance().AddNetwork(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
+        ReturnErrorOnFailure(WiFiManager::Instance().Connect());
+    }
+
     return CHIP_NO_ERROR;
 }
 
 Status NrfWiFiDriver::AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials, MutableCharSpan & outDebugText,
                                          uint8_t & outNetworkIndex)
 {
-    WiFiManager::Instance().AddNetwork(ssid, credentials);
+    outDebugText    = {};
+    outNetworkIndex = 0;
+
+    VerifyOrReturnError(!mStagingNetwork.IsConfigured() || ssid.data_equal(mStagingNetwork.GetSsidSpan()), Status::kBoundsExceeded);
+    VerifyOrReturnError(ssid.size() <= sizeof(mStagingNetwork.ssid), Status::kOutOfRange);
+    VerifyOrReturnError(credentials.size() <= sizeof(mStagingNetwork.pass), Status::kOutOfRange);
+
+    memcpy(mStagingNetwork.ssid, ssid.data(), ssid.size());
+    memcpy(mStagingNetwork.pass, credentials.data(), credentials.size());
+    mStagingNetwork.ssidLen = ssid.size();
+    mStagingNetwork.passLen = credentials.size();
+
     return Status::kSuccess;
 }
 
 Status NrfWiFiDriver::RemoveNetwork(ByteSpan networkId, MutableCharSpan & outDebugText, uint8_t & outNetworkIndex)
 {
+    outDebugText    = {};
+    outNetworkIndex = 0;
+
+    VerifyOrReturnError(networkId.data_equal(mStagingNetwork.GetSsidSpan()), Status::kNetworkIDNotFound);
+    mStagingNetwork.ssidLen = 0;
+
     return Status::kSuccess;
 }
 
 Status NrfWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, MutableCharSpan & outDebugText)
 {
-    // Only one network is supported now
+    outDebugText = {};
+
+    // Only one network is supported for now
+    VerifyOrReturnError(index == 0, Status::kOutOfRange);
+    VerifyOrReturnError(networkId.data_equal(mStagingNetwork.GetSsidSpan()), Status::kNetworkIDNotFound);
+
     return Status::kSuccess;
 }
 
 void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback)
 {
+    Status status = Status::kSuccess;
+
+    VerifyOrExit(networkId.data_equal(mStagingNetwork.GetSsidSpan()), status = Status::kNetworkIDNotFound);
+    VerifyOrExit(mpConnectCallback == nullptr, status = Status::kUnknownError);
+
     mpConnectCallback = callback;
+    WiFiManager::Instance().AddNetwork(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan());
     WiFiManager::Instance().Connect();
     WaitForConnectionAsync();
+
+exit:
+    if (status != Status::kSuccess)
+    {
+        mpConnectCallback = nullptr;
+        callback->OnResult(status, CharSpan(), 0);
+    }
 }
 
 void NrfWiFiDriver::WaitForConnectionAsync()
@@ -127,6 +185,16 @@ void NrfWiFiDriver::OnConnectWiFiNetworkFailed()
 }
 
 void NrfWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callback) {}
+
+void NrfWiFiDriver::LoadFromStorage()
+{
+    WiFiNetwork network;
+
+    mStagingNetwork = {};
+    ReturnOnFailure(KeyValueStoreMgr().Get(kSsidKey, network.ssid, sizeof(network.ssid), &network.ssidLen));
+    ReturnOnFailure(KeyValueStoreMgr().Get(kPassKey, network.pass, sizeof(network.pass), &network.passLen));
+    mStagingNetwork = network;
+}
 
 } // namespace NetworkCommissioning
 } // namespace DeviceLayer
