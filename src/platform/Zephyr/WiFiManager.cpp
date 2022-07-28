@@ -37,7 +37,6 @@
 
 extern "C" {
 #include <config.h>
-#include <ctrl_iface.h>
 #include <scan.h>
 #include <wpa_supplicant_i.h>
 }
@@ -49,19 +48,19 @@ namespace DeviceLayer {
 
 namespace {
 
-in6_addr ToZephyrAddr(const Inet::IPAddress & aAddress)
+in6_addr ToZephyrAddr(const Inet::IPAddress & address)
 {
     in6_addr zephyrAddr;
 
-    static_assert(sizeof(zephyrAddr.s6_addr) == sizeof(aAddress.Addr), "Unexpected address size");
-    memcpy(zephyrAddr.s6_addr, aAddress.Addr, sizeof(aAddress.Addr));
+    static_assert(sizeof(zephyrAddr.s6_addr) == sizeof(address.Addr), "Unexpected address size");
+    memcpy(zephyrAddr.s6_addr, address.Addr, sizeof(address.Addr));
 
     return zephyrAddr;
 }
 
-net_if * GetInterface(Inet::InterfaceId aInterfaceId = Inet::InterfaceId::Null())
+net_if * GetInterface(Inet::InterfaceId ifaceId = Inet::InterfaceId::Null())
 {
-    return aInterfaceId.IsPresent() ? net_if_get_by_index(aInterfaceId.GetPlatformInterface()) : net_if_get_default();
+    return ifaceId.IsPresent() ? net_if_get_by_index(ifaceId.GetPlatformInterface()) : net_if_get_default();
 }
 
 } // namespace
@@ -81,12 +80,12 @@ const WiFiManager::StatusMap::StatusPair WiFiManager::StatusMap::sStatusMap[] = 
     { WPA_COMPLETED, WiFiManager::StationStatus::FULLY_PROVISIONED }
 };
 
-WiFiManager::StationStatus WiFiManager::StatusMap::operator[](enum wpa_states aWpaState)
+WiFiManager::StationStatus WiFiManager::StatusMap::operator[](wpa_states wpaState)
 {
-    for (size_t it = 0; it < sizeof(sStatusMap) / sizeof(WiFiManager::StatusMap::StatusPair); ++it)
+    for (const auto & it : sStatusMap)
     {
-        if (aWpaState == sStatusMap[it].mWpaStatus)
-            return sStatusMap[it].mStatus;
+        if (wpaState == it.mWpaStatus)
+            return it.mStatus;
     }
 
     return WiFiManager::StationStatus::NONE;
@@ -136,7 +135,7 @@ CHIP_ERROR WiFiManager::Init()
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & aSsid, const ByteSpan & aCredentials)
+CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials)
 {
     ChipLogDetail(DeviceLayer, "Adding WiFi network");
     mpWpaNetwork = wpa_supplicant_add_network(wpa_s_0);
@@ -147,33 +146,36 @@ CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & aSsid, const ByteSpan & aCre
 
         if (mpWpaNetwork->ssid)
         {
-            memcpy(mpWpaNetwork->ssid, aSsid.data(), aSsid.size());
-            mpWpaNetwork->ssid_len      = aSsid.size();
+            memcpy(mpWpaNetwork->ssid, ssid.data(), ssid.size());
+            mpWpaNetwork->ssid_len      = ssid.size();
             mpWpaNetwork->key_mgmt      = WPA_KEY_MGMT_NONE;
             mpWpaNetwork->disabled      = 1;
             wpa_s_0->conf->filter_ssids = 1;
 
-            return AddPsk(aCredentials);
+            return AddPsk(credentials);
         }
     }
 
     return CHIP_ERROR_INTERNAL;
 }
 
-CHIP_ERROR WiFiManager::Connect()
+CHIP_ERROR WiFiManager::Connect(const ByteSpan & ssid, const ByteSpan & credentials)
 {
     ChipLogDetail(DeviceLayer, "Connecting to WiFi network");
-    EnableStation(true);
-    wpa_supplicant_select_network(wpa_s_0, mpWpaNetwork);
-
-    return CHIP_NO_ERROR;
+    CHIP_ERROR err = AddNetwork(ssid, credentials);
+    if (CHIP_NO_ERROR == err)
+    {
+        EnableStation(true);
+        wpa_supplicant_select_network(wpa_s_0, mpWpaNetwork);
+    }
+    return err;
 }
 
-CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & aCredentials)
+CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
 {
     mpWpaNetwork->key_mgmt = WPA_KEY_MGMT_PSK;
     str_clear_free(mpWpaNetwork->passphrase);
-    mpWpaNetwork->passphrase = dup_binstr(aCredentials.data(), aCredentials.size());
+    mpWpaNetwork->passphrase = dup_binstr(credentials.data(), credentials.size());
 
     if (mpWpaNetwork->passphrase)
     {
@@ -184,13 +186,13 @@ CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & aCredentials)
     return CHIP_ERROR_INTERNAL;
 }
 
-CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * aBuf)
+CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * buf)
 {
     const net_if * const iface = GetInterface();
     VerifyOrReturnError(iface != nullptr && iface->if_dev != nullptr, CHIP_ERROR_INTERNAL);
 
     const auto linkAddrStruct = iface->if_dev->link_addr;
-    memcpy(aBuf, linkAddrStruct.addr, linkAddrStruct.len);
+    memcpy(buf, linkAddrStruct.addr, linkAddrStruct.len);
 
     return CHIP_NO_ERROR;
 }
@@ -208,16 +210,16 @@ WiFiManager::StationStatus WiFiManager::GetStationStatus()
     }
 }
 
-WiFiManager::StationStatus WiFiManager::StatusFromWpaStatus(wpa_states aStatus)
+WiFiManager::StationStatus WiFiManager::StatusFromWpaStatus(wpa_states status)
 {
-    ChipLogDetail(DeviceLayer, "WPA internal status: %d", static_cast<int>(aStatus));
-    return WiFiManager::StatusMap::GetMap()[aStatus];
+    ChipLogDetail(DeviceLayer, "WPA internal status: %d", static_cast<int>(status));
+    return WiFiManager::StatusMap::GetMap()[status];
 }
 
-CHIP_ERROR WiFiManager::EnableStation(bool aEnable)
+CHIP_ERROR WiFiManager::EnableStation(bool enable)
 {
     VerifyOrReturnError(nullptr != wpa_s_0 && nullptr != mpWpaNetwork, CHIP_ERROR_INTERNAL);
-    if (aEnable)
+    if (enable)
     {
         wpa_supplicant_enable_network(wpa_s_0, mpWpaNetwork);
     }

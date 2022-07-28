@@ -61,7 +61,7 @@ public:
             static StatusMap sInstance;
             return sInstance;
         }
-        StationStatus operator[](enum wpa_states aWpaState);
+        StationStatus operator[](wpa_states wpaState);
 
     private:
         struct StatusPair
@@ -80,17 +80,17 @@ public:
     }
 
     CHIP_ERROR Init();
-    CHIP_ERROR AddNetwork(const ByteSpan & aSsid, const ByteSpan & aCredentials);
-    CHIP_ERROR Connect();
-    CHIP_ERROR GetMACAddress(uint8_t * aBuf);
+    CHIP_ERROR Connect(const ByteSpan & ssid, const ByteSpan & credentials);
+    CHIP_ERROR GetMACAddress(uint8_t * buf);
     StationStatus GetStationStatus();
     CHIP_ERROR ClearStationProvisioningData();
     CHIP_ERROR DisconnectStation();
 
 private:
-    CHIP_ERROR AddPsk(const ByteSpan & aCredentials);
-    StationStatus StatusFromWpaStatus(wpa_states aStatus);
-    CHIP_ERROR EnableStation(bool aEnable);
+    CHIP_ERROR AddPsk(const ByteSpan & credentials);
+    StationStatus StatusFromWpaStatus(wpa_states status);
+    CHIP_ERROR EnableStation(bool enable);
+    CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
 
     WpaNetwork * mpWpaNetwork{ nullptr };
 };

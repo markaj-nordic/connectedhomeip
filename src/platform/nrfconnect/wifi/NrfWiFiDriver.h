@@ -67,6 +67,7 @@ public:
         bool IsConfigured() const { return ssidLen > 0; }
         ByteSpan GetSsidSpan() const { return ByteSpan(ssid, ssidLen); }
         ByteSpan GetPassSpan() const { return ByteSpan(pass, passLen); }
+        void Clear() { ssidLen = 0; }
     };
 
     // BaseDriver

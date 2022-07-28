@@ -38,9 +38,7 @@ CHIP_ERROR NrfWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChange
 
     if (mStagingNetwork.IsConfigured())
     {
-        // TODO: Make WiFiManager able to change networks and disconnect
-        ReturnErrorOnFailure(WiFiManager::Instance().AddNetwork(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
-        ReturnErrorOnFailure(WiFiManager::Instance().Connect());
+        ReturnErrorOnFailure(WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
     }
 
     return CHIP_NO_ERROR;
@@ -58,12 +56,18 @@ CHIP_ERROR NrfWiFiDriver::CommitConfiguration()
 
 CHIP_ERROR NrfWiFiDriver::RevertConfiguration()
 {
+    // Disconnection should happen automatically when WiFiManager::Connect() is called.
+    // Here we do it also explicitly to ping the Connectivity Manager which
+    // will send the disconnection event as a result.
+    // TODO: refactor when the callback-based supplicant API is incorporated
+    WiFiManager::Instance().DisconnectStation();
+    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Disabled);
+
     LoadFromStorage();
 
     if (mStagingNetwork.IsConfigured())
     {
-        ReturnErrorOnFailure(WiFiManager::Instance().AddNetwork(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
-        ReturnErrorOnFailure(WiFiManager::Instance().Connect());
+        ReturnErrorOnFailure(WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
     }
 
     return CHIP_NO_ERROR;
@@ -93,7 +97,7 @@ Status NrfWiFiDriver::RemoveNetwork(ByteSpan networkId, MutableCharSpan & outDeb
     outNetworkIndex = 0;
 
     VerifyOrReturnError(networkId.data_equal(mStagingNetwork.GetSsidSpan()), Status::kNetworkIDNotFound);
-    mStagingNetwork.ssidLen = 0;
+    mStagingNetwork.Clear();
 
     return Status::kSuccess;
 }
@@ -117,8 +121,7 @@ void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callbac
     VerifyOrExit(mpConnectCallback == nullptr, status = Status::kUnknownError);
 
     mpConnectCallback = callback;
-    WiFiManager::Instance().AddNetwork(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan());
-    WiFiManager::Instance().Connect();
+    WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan());
     WaitForConnectionAsync();
 
 exit:

@@ -66,13 +66,14 @@ CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationMode(ConnectivityManager:
         if (mStationMode != ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled)
         {
             bool doEnable{ ConnectivityManager::WiFiStationMode::kWiFiStationMode_Enabled == mStationMode };
+            // TODO: when the connection/disconnection callback API is provided
+            // below calls should be used as a base of disconnect callback
             if (doEnable)
             {
                 OnStationConnected();
             }
             else
             {
-                WiFiManager().Instance().DisconnectStation();
                 OnStationDisconnected();
             }
         }
@@ -125,20 +126,14 @@ void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void)
 
 bool ConnectivityManagerImplWiFi::_CanStartWiFiScan()
 {
-    return (WiFiManager::StationStatus::CONNECTING < WiFiManager().Instance().GetStationStatus());
+    return (WiFiManager::StationStatus::DISABLED != WiFiManager().Instance().GetStationStatus() &&
+            WiFiManager::StationStatus::SCANNING != WiFiManager().Instance().GetStationStatus() &&
+            WiFiManager::StationStatus::CONNECTING != WiFiManager().Instance().GetStationStatus());
 }
 
 void ConnectivityManagerImplWiFi::_OnWiFiStationProvisionChange()
 {
-    if (_IsWiFiStationProvisioned())
-    {
-        // probably the network provisioning data has been cleared so drop the connection
-        WiFiManager().Instance().DisconnectStation();
-    }
-    else
-    {
-        // TODO: disconnected and connect with new credentials?
-    }
+    // do nothing
 }
 
 void ConnectivityManagerImplWiFi::_OnWiFiScanDone() {}
@@ -192,11 +187,11 @@ ConnectivityManager::WiFiAPMode ConnectivityManagerImplWiFi::_GetWiFiAPMode(void
     return ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported;
 }
 
-CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiAPMode(ConnectivityManager::WiFiAPMode aMode)
+CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiAPMode(ConnectivityManager::WiFiAPMode mode)
 {
     /* AP mode is unsupported */
-    VerifyOrReturnError(ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported == aMode ||
-                            ConnectivityManager::WiFiAPMode::kWiFiAPMode_Disabled == aMode,
+    VerifyOrReturnError(ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported == mode ||
+                            ConnectivityManager::WiFiAPMode::kWiFiAPMode_Disabled == mode,
                         CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
     return CHIP_NO_ERROR;
 }
