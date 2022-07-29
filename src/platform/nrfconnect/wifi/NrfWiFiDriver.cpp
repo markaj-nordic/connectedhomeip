@@ -34,17 +34,32 @@ namespace NetworkCommissioning {
 
 CHIP_ERROR NrfWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)
 {
+    mpNetworkStatusChangeCallback = networkStatusChangeCallback;
+
     LoadFromStorage();
 
     if (mStagingNetwork.IsConfigured())
     {
-        ReturnErrorOnFailure(WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
+        WiFiManager::ConnectionHandling handling{ [] { Instance().OnNetworkStatusChanged(Status::kSuccess); },
+                                                  [] { Instance().OnNetworkStatusChanged(Status::kUnknownError); },
+                                                  System::Clock::Timeout{ 40000 } };
+        ReturnErrorOnFailure(
+            WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan(), handling));
     }
 
     return CHIP_NO_ERROR;
 }
 
-void NrfWiFiDriver::Shutdown() {}
+void NrfWiFiDriver::OnNetworkStatusChanged(Status status)
+{
+    if (mpNetworkStatusChangeCallback)
+        mpNetworkStatusChangeCallback->OnNetworkingStatusChange(status, NullOptional, NullOptional);
+}
+
+void NrfWiFiDriver::Shutdown()
+{
+    mpNetworkStatusChangeCallback = nullptr;
+}
 
 CHIP_ERROR NrfWiFiDriver::CommitConfiguration()
 {
@@ -67,7 +82,11 @@ CHIP_ERROR NrfWiFiDriver::RevertConfiguration()
 
     if (mStagingNetwork.IsConfigured())
     {
-        ReturnErrorOnFailure(WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan()));
+        WiFiManager::ConnectionHandling handling{ [] { Instance().OnConnectWiFiNetwork(); },
+                                                  [] { Instance().OnConnectWiFiNetworkFailed(); },
+                                                  System::Clock::Timeout{ 40000 } };
+        ReturnErrorOnFailure(
+            WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan(), handling));
     }
 
     return CHIP_NO_ERROR;
@@ -116,52 +135,20 @@ Status NrfWiFiDriver::ReorderNetwork(ByteSpan networkId, uint8_t index, MutableC
 void NrfWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback)
 {
     Status status = Status::kSuccess;
+    WiFiManager::ConnectionHandling handling{ [] { Instance().OnConnectWiFiNetwork(); },
+                                              [] { Instance().OnConnectWiFiNetworkFailed(); }, System::Clock::Timeout{ 40000 } };
 
     VerifyOrExit(networkId.data_equal(mStagingNetwork.GetSsidSpan()), status = Status::kNetworkIDNotFound);
     VerifyOrExit(mpConnectCallback == nullptr, status = Status::kUnknownError);
 
     mpConnectCallback = callback;
-    WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan());
-    WaitForConnectionAsync();
+    WiFiManager::Instance().Connect(mStagingNetwork.GetSsidSpan(), mStagingNetwork.GetPassSpan(), handling);
 
 exit:
     if (status != Status::kSuccess)
     {
         mpConnectCallback = nullptr;
         callback->OnResult(status, CharSpan(), 0);
-    }
-}
-
-void NrfWiFiDriver::WaitForConnectionAsync()
-{
-    DeviceLayer::SystemLayer().StartTimer(
-        static_cast<System::Clock::Timeout>(2000), [](System::Layer *, void *) { NrfWiFiDriver::PollTimerCallback(); }, nullptr);
-}
-
-void NrfWiFiDriver::PollTimerCallback()
-{
-    static constexpr uint8_t kMaxRetriesNumber{ 60 };
-    static uint8_t retriesNumber;
-
-    WiFiManager::StationStatus status = WiFiManager::Instance().GetStationStatus();
-
-    if (WiFiManager::StationStatus::FULLY_PROVISIONED == status)
-    {
-        ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
-        Instance().OnConnectWiFiNetwork();
-    }
-    else
-    {
-        if (retriesNumber++ < kMaxRetriesNumber)
-        {
-            // wait more time
-            WaitForConnectionAsync();
-        }
-        else
-        {
-            // connection timeout
-            Instance().OnConnectWiFiNetworkFailed();
-        }
     }
 }
 
@@ -172,6 +159,8 @@ CHIP_ERROR GetConfiguredNetwork(Network & network)
 
 void NrfWiFiDriver::OnConnectWiFiNetwork()
 {
+    ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
+
     if (mpConnectCallback)
     {
         mpConnectCallback->OnResult(Status::kSuccess, CharSpan(), 0);

@@ -100,13 +100,13 @@ public:
 
     void OnConnectWiFiNetwork();
     void OnConnectWiFiNetworkFailed();
-    static void WaitForConnectionAsync();
-    static void PollTimerCallback();
+    void OnNetworkStatusChanged(Status status);
 
 private:
     void LoadFromStorage();
 
     ConnectCallback * mpConnectCallback{ nullptr };
+    NetworkStatusChangeCallback * mpNetworkStatusChangeCallback{ nullptr };
     WiFiNetwork mStagingNetwork;
 };
 

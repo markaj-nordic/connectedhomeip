@@ -24,6 +24,7 @@
 
 #include <lib/core/CHIPError.h>
 #include <lib/support/Span.h>
+#include <system/SystemLayer.h>
 
 extern "C" {
 #include <utils/common.h>
@@ -39,6 +40,8 @@ namespace DeviceLayer {
 
 class WiFiManager
 {
+
+using ConnectionCallback = void (*)();
 
 public:
     enum class StationStatus : uint8_t
@@ -79,8 +82,15 @@ public:
         return sInstance;
     }
 
+    struct ConnectionHandling
+    {
+        ConnectionCallback mOnConnectionSuccess{};
+        ConnectionCallback mOnConnectionFailed{};
+        System::Clock::Timeout mConnectionTimeoutMs{};
+    };
+
     CHIP_ERROR Init();
-    CHIP_ERROR Connect(const ByteSpan & ssid, const ByteSpan & credentials);
+    CHIP_ERROR Connect(const ByteSpan & ssid, const ByteSpan & credentials, const ConnectionHandling & handling);
     CHIP_ERROR GetMACAddress(uint8_t * buf);
     StationStatus GetStationStatus();
     CHIP_ERROR ClearStationProvisioningData();
@@ -91,8 +101,15 @@ private:
     StationStatus StatusFromWpaStatus(wpa_states status);
     CHIP_ERROR EnableStation(bool enable);
     CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
+    void PollTimerCallback();
+    void WaitForConnectionAsync();
+    void OnConnectionSuccess();
+    void OnConnectionFailed();
 
     WpaNetwork * mpWpaNetwork{ nullptr };
+    ConnectionCallback mConnectionSuccessClbk;
+    ConnectionCallback mConnectionFailedClbk;
+    System::Clock::Timeout mConnectionTimeoutMs;
 };
 
 } // namespace DeviceLayer

@@ -28,6 +28,7 @@
 #include <inet/UDPEndPointImplSockets.h>
 #include <lib/core/CHIPError.h>
 #include <lib/support/logging/CHIPLogging.h>
+#include <platform/CHIPDeviceLayer.h>
 
 #include "common.h"
 #include <net/net_event.h>
@@ -159,16 +160,38 @@ CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & crede
     return CHIP_ERROR_INTERNAL;
 }
 
-CHIP_ERROR WiFiManager::Connect(const ByteSpan & ssid, const ByteSpan & credentials)
+CHIP_ERROR WiFiManager::Connect(const ByteSpan & ssid, const ByteSpan & credentials, const ConnectionHandling & handling)
 {
     ChipLogDetail(DeviceLayer, "Connecting to WiFi network");
+
+    mConnectionSuccessClbk = handling.mOnConnectionSuccess;
+    mConnectionFailedClbk  = handling.mOnConnectionFailed;
+    mConnectionTimeoutMs   = handling.mConnectionTimeoutMs;
+
     CHIP_ERROR err = AddNetwork(ssid, credentials);
     if (CHIP_NO_ERROR == err)
     {
         EnableStation(true);
         wpa_supplicant_select_network(wpa_s_0, mpWpaNetwork);
+        WaitForConnectionAsync();
+    }
+    else
+    {
+        OnConnectionFailed();
     }
     return err;
+}
+
+void WiFiManager::OnConnectionSuccess()
+{
+    if (mConnectionSuccessClbk)
+        mConnectionSuccessClbk();
+}
+
+void WiFiManager::OnConnectionFailed()
+{
+    if (mConnectionFailedClbk)
+        mConnectionFailedClbk();
 }
 
 CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
@@ -253,6 +276,36 @@ CHIP_ERROR WiFiManager::DisconnectStation()
     wpas_request_disconnection(wpa_s_0);
 
     return CHIP_NO_ERROR;
+}
+
+void WiFiManager::WaitForConnectionAsync()
+{
+    chip::DeviceLayer::SystemLayer().StartTimer(
+        static_cast<System::Clock::Timeout>(1000), [](System::Layer *, void *) { Instance().PollTimerCallback(); }, nullptr);
+}
+
+void WiFiManager::PollTimerCallback()
+{
+    const uint32_t kMaxRetriesNumber{ mConnectionTimeoutMs.count() / 1000 };
+    static uint32_t retriesNumber{ 0 };
+
+    if (WiFiManager::StationStatus::FULLY_PROVISIONED == GetStationStatus())
+    {
+        OnConnectionSuccess();
+    }
+    else
+    {
+        if (retriesNumber++ < kMaxRetriesNumber)
+        {
+            // wait more time
+            WaitForConnectionAsync();
+        }
+        else
+        {
+            // connection timeout
+            OnConnectionFailed();
+        }
+    }
 }
 
 } // namespace DeviceLayer
