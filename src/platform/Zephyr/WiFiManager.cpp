@@ -22,24 +22,16 @@
 
 #include "WiFiManager.h"
 
-#include <cstdlib>
-
 #include <inet/InetInterface.h>
 #include <inet/UDPEndPointImplSockets.h>
-#include <lib/core/CHIPError.h>
 #include <lib/support/logging/CHIPLogging.h>
 #include <platform/CHIPDeviceLayer.h>
 
-#include "common.h"
-#include <net/net_event.h>
-#include <net/net_if.h>
-#include <net/wifi_mgmt.h>
 #include <zephyr.h>
 
 extern "C" {
-#include <config.h>
-#include <scan.h>
-#include <wpa_supplicant_i.h>
+#include <wpa_supplicant/config.h>
+#include <wpa_supplicant/scan.h>
 }
 
 extern struct wpa_supplicant * wpa_s_0;

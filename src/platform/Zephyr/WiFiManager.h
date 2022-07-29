@@ -26,9 +26,11 @@
 #include <lib/support/Span.h>
 #include <system/SystemLayer.h>
 
+#include <net/net_if.h>
+
 extern "C" {
-#include <utils/common.h>
-#include <common/defs.h>
+#include <src/utils/common.h>
+#include <wpa_supplicant/wpa_supplicant_i.h>
 }
 
 struct net_if;
@@ -41,7 +43,7 @@ namespace DeviceLayer {
 class WiFiManager
 {
 
-using ConnectionCallback = void (*)();
+    using ConnectionCallback = void (*)();
 
 public:
     enum class StationStatus : uint8_t
