@@ -37,7 +37,6 @@ class ConnectivityManagerImplWiFi
     friend class ConnectivityManager;
 
 protected:
-    void OnWiFiPlatformEvent(const ChipDeviceEvent * event);
     CHIP_ERROR InitWiFi();
 
 private:

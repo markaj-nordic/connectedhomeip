@@ -110,7 +110,9 @@ CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationReconnectInterval(System:
 
 bool ConnectivityManagerImplWiFi::_IsWiFiStationProvisioned(void)
 {
-    return (WiFiManager::StationStatus::CONNECTED <= WiFiManager().Instance().GetStationStatus());
+    // from Matter perspective `provisioned` means that the supplicant has been provided
+    // with SSID and password (doesn't matter if valid or not)
+    return (WiFiManager::StationStatus::CONNECTING <= WiFiManager().Instance().GetStationStatus());
 }
 
 void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void)
@@ -142,11 +144,6 @@ CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
 {
     // TODO: when network statistics are enabled
     return CHIP_NO_ERROR;
-}
-
-void ConnectivityManagerImplWiFi::OnWiFiPlatformEvent(const ChipDeviceEvent * event)
-{
-    return;
 }
 
 void ConnectivityManagerImplWiFi::OnStationConnected()
