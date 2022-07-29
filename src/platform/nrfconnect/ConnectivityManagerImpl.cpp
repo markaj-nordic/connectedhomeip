@@ -63,9 +63,6 @@ void ConnectivityManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     GenericConnectivityManagerImpl_Thread<ConnectivityManagerImpl>::_OnPlatformEvent(event);
 #endif
-#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
-    OnWiFiPlatformEvent(event);
-#endif
 }
 
 } // namespace DeviceLayer

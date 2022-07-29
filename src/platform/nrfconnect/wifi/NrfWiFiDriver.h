@@ -67,6 +67,7 @@ public:
         bool IsConfigured() const { return ssidLen > 0; }
         ByteSpan GetSsidSpan() const { return ByteSpan(ssid, ssidLen); }
         ByteSpan GetPassSpan() const { return ByteSpan(pass, passLen); }
+        void Clear() { ssidLen = 0; }
     };
 
     // BaseDriver
@@ -99,13 +100,13 @@ public:
 
     void OnConnectWiFiNetwork();
     void OnConnectWiFiNetworkFailed();
-    static void WaitForConnectionAsync();
-    static void PollTimerCallback();
+    void OnNetworkStatusChanged(Status status);
 
 private:
     void LoadFromStorage();
 
     ConnectCallback * mpConnectCallback{ nullptr };
+    NetworkStatusChangeCallback * mpNetworkStatusChangeCallback{ nullptr };
     WiFiNetwork mStagingNetwork;
 };
 
