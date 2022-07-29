@@ -27,8 +27,8 @@
 #include <system/SystemLayer.h>
 
 extern "C" {
-#include <utils/common.h>
 #include <common/defs.h>
+#include <utils/common.h>
 }
 
 struct net_if;
@@ -41,7 +41,7 @@ namespace DeviceLayer {
 class WiFiManager
 {
 
-using ConnectionCallback = void (*)();
+    using ConnectionCallback = void (*)();
 
 public:
     enum class StationStatus : uint8_t
