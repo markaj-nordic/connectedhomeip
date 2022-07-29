@@ -37,7 +37,6 @@ class ConnectivityManagerImplWiFi
     friend class ConnectivityManager;
 
 protected:
-    void OnWiFiPlatformEvent(const ChipDeviceEvent * event);
     CHIP_ERROR InitWiFi();
 
 private:
@@ -55,6 +54,8 @@ private:
     bool _CanStartWiFiScan();
     void _OnWiFiScanDone();
     void _OnWiFiStationProvisionChange();
+    void OnStationConnected();
+    void OnStationDisconnected();
 
     // Wi-Fi access point - not supported
     ConnectivityManager::WiFiAPMode _GetWiFiAPMode(void);
@@ -67,7 +68,10 @@ private:
     System::Clock::Timeout _GetWiFiAPIdleTimeout(void);
     void _SetWiFiAPIdleTimeout(System::Clock::Timeout val);
 
-    // helpers
+    ConnectivityManager::WiFiStationMode mStationMode{ ConnectivityManager::WiFiStationMode::kWiFiStationMode_Disabled };
+    ConnectivityManager::WiFiStationState mStationState{ ConnectivityManager::WiFiStationState::kWiFiStationState_NotConnected };
+    System::Clock::Timeout mWiFiStationReconnectInterval{};
+
     static const char * _WiFiStationModeToStr(ConnectivityManager::WiFiStationMode mode);
     static const char * _WiFiAPModeToStr(ConnectivityManager::WiFiAPMode mode);
     static const char * _WiFiStationStateToStr(ConnectivityManager::WiFiStationState state);

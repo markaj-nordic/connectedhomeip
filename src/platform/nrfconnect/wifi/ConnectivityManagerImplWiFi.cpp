@@ -39,124 +39,192 @@ using namespace ::chip::TLV;
 namespace chip {
 namespace DeviceLayer {
 
-ConnectivityManager::WiFiStationMode ConnectivityManagerImplWiFi::_GetWiFiStationMode(void)
-{
-    return ConnectivityManager::WiFiStationMode::kWiFiStationMode_Disabled;
-}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationMode(ConnectivityManager::WiFiStationMode val)
-{
-    return CHIP_NO_ERROR;
-}
-
-bool ConnectivityManagerImplWiFi::_IsWiFiStationEnabled(void)
-{
-    return false;
-}
-
-bool ConnectivityManagerImplWiFi::_IsWiFiStationApplicationControlled(void)
-{
-    return false;
-}
-
-bool ConnectivityManagerImplWiFi::_IsWiFiStationConnected(void)
-{
-    return false;
-}
-
-System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiStationReconnectInterval(void)
-{
-    return System::Clock::kZero;
-}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationReconnectInterval(System::Clock::Timeout val)
-{
-    return CHIP_NO_ERROR;
-}
-
-bool ConnectivityManagerImplWiFi::_IsWiFiStationProvisioned(void)
-{
-    return false;
-}
-
-void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void) {}
-
-ConnectivityManager::WiFiAPMode ConnectivityManagerImplWiFi::_GetWiFiAPMode(void)
-{
-    return ConnectivityManager::WiFiAPMode::kWiFiAPMode_Disabled;
-}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiAPMode(ConnectivityManager::WiFiAPMode val)
-{
-    return CHIP_NO_ERROR;
-}
-
-bool ConnectivityManagerImplWiFi::_IsWiFiAPActive(void)
-{
-    return false;
-}
-
-bool ConnectivityManagerImplWiFi::_IsWiFiAPApplicationControlled(void)
-{
-    return false;
-}
-
-void ConnectivityManagerImplWiFi::_DemandStartWiFiAP(void) {}
-
-void ConnectivityManagerImplWiFi::_StopOnDemandWiFiAP(void) {}
-
-void ConnectivityManagerImplWiFi::_MaintainOnDemandWiFiAP(void) {}
-
-System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiAPIdleTimeout(void)
-{
-    return System::Clock::kZero;
-}
-
-void ConnectivityManagerImplWiFi::_SetWiFiAPIdleTimeout(System::Clock::Timeout val) {}
-
-CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
-{
-    return CHIP_NO_ERROR;
-}
-
-bool ConnectivityManagerImplWiFi::_CanStartWiFiScan()
-{
-    return false;
-}
-
-void ConnectivityManagerImplWiFi::_OnWiFiScanDone() {}
-
-void ConnectivityManagerImplWiFi::_OnWiFiStationProvisionChange() {}
-
 CHIP_ERROR ConnectivityManagerImplWiFi::InitWiFi()
 {
     return WiFiManager::Instance().Init();
 }
 
-void ConnectivityManagerImplWiFi::OnWiFiPlatformEvent(const ChipDeviceEvent * event)
+ConnectivityManager::WiFiStationMode ConnectivityManagerImplWiFi::_GetWiFiStationMode(void)
 {
-    return;
+    if (mStationMode != ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled)
+    {
+        mStationMode = (WiFiManager::StationStatus::DISABLED == WiFiManager().Instance().GetStationStatus())
+            ? ConnectivityManager::WiFiStationMode::kWiFiStationMode_Disabled
+            : ConnectivityManager::WiFiStationMode::kWiFiStationMode_Enabled;
+    }
+    return mStationMode;
 }
 
-// helpers
-const char * ConnectivityManagerImplWiFi::_WiFiStationModeToStr(ConnectivityManager::WiFiStationMode mode)
+CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationMode(ConnectivityManager::WiFiStationMode aMode)
 {
-    return nullptr;
+    VerifyOrReturnError(ConnectivityManager::WiFiStationMode::kWiFiStationMode_NotSupported != aMode,
+                        CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
+
+    if (aMode != mStationMode)
+    {
+        mStationMode = aMode;
+        if (mStationMode != ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled)
+        {
+            bool doEnable{ ConnectivityManager::WiFiStationMode::kWiFiStationMode_Enabled == mStationMode };
+            // TODO: when the connection/disconnection callback API is provided
+            // below calls should be used as a base of disconnect callback
+            if (doEnable)
+            {
+                OnStationConnected();
+            }
+            else
+            {
+                OnStationDisconnected();
+            }
+        }
+    }
+
+    return CHIP_NO_ERROR;
 }
 
-const char * ConnectivityManagerImplWiFi::_WiFiAPModeToStr(ConnectivityManager::WiFiAPMode mode)
+bool ConnectivityManagerImplWiFi::_IsWiFiStationEnabled(void)
 {
-    return nullptr;
+    return (WiFiManager::StationStatus::DISABLED <= WiFiManager().Instance().GetStationStatus());
 }
 
-const char * ConnectivityManagerImplWiFi::_WiFiStationStateToStr(ConnectivityManager::WiFiStationState state)
+bool ConnectivityManagerImplWiFi::_IsWiFiStationApplicationControlled(void)
 {
-    return nullptr;
+    return (ConnectivityManager::WiFiStationMode::kWiFiStationMode_ApplicationControlled == mStationMode);
 }
 
-const char * ConnectivityManagerImplWiFi::_WiFiAPStateToStr(ConnectivityManager::WiFiAPState state)
+bool ConnectivityManagerImplWiFi::_IsWiFiStationConnected(void)
 {
-    return nullptr;
+    return (WiFiManager::StationStatus::FULLY_PROVISIONED == WiFiManager().Instance().GetStationStatus());
+}
+
+System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiStationReconnectInterval(void)
+{
+    return mWiFiStationReconnectInterval;
+}
+
+CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiStationReconnectInterval(System::Clock::Timeout val)
+{
+    mWiFiStationReconnectInterval = val;
+    return CHIP_NO_ERROR;
+}
+
+bool ConnectivityManagerImplWiFi::_IsWiFiStationProvisioned(void)
+{
+    // from Matter perspective `provisioned` means that the supplicant has been provided
+    // with SSID and password (doesn't matter if valid or not)
+    return (WiFiManager::StationStatus::CONNECTING <= WiFiManager().Instance().GetStationStatus());
+}
+
+void ConnectivityManagerImplWiFi::_ClearWiFiStationProvision(void)
+{
+    if (_IsWiFiStationProvisioned())
+    {
+        if (CHIP_NO_ERROR != WiFiManager().Instance().ClearStationProvisioningData())
+        {
+            ChipLogError(DeviceLayer, "Cannot clear WiFi station provisioning data");
+        }
+    }
+}
+
+bool ConnectivityManagerImplWiFi::_CanStartWiFiScan()
+{
+    return (WiFiManager::StationStatus::DISABLED != WiFiManager().Instance().GetStationStatus() &&
+            WiFiManager::StationStatus::SCANNING != WiFiManager().Instance().GetStationStatus() &&
+            WiFiManager::StationStatus::CONNECTING != WiFiManager().Instance().GetStationStatus());
+}
+
+void ConnectivityManagerImplWiFi::_OnWiFiStationProvisionChange()
+{
+    // do nothing
+}
+
+void ConnectivityManagerImplWiFi::_OnWiFiScanDone() {}
+
+CHIP_ERROR ConnectivityManagerImplWiFi::_GetAndLogWiFiStatsCounters(void)
+{
+    // TODO: when network statistics are enabled
+    return CHIP_NO_ERROR;
+}
+
+void ConnectivityManagerImplWiFi::OnStationConnected()
+{
+    // ensure the station is connected
+    if (_IsWiFiStationConnected())
+    {
+        ChipDeviceEvent connectEvent{};
+        connectEvent.Type                          = DeviceEventType::kWiFiConnectivityChange;
+        connectEvent.WiFiConnectivityChange.Result = kConnectivity_Established;
+        PlatformMgr().PostEventOrDie(&connectEvent);
+    }
+    else
+    {
+        ChipLogError(DeviceLayer, "WiFi Station is not connected!");
+    }
+}
+
+void ConnectivityManagerImplWiFi::OnStationDisconnected()
+{
+    // ensure the station is disconnected
+    if (WiFiManager::StationStatus::DISCONNECTED == WiFiManager().Instance().GetStationStatus())
+    {
+        ChipDeviceEvent disconnectEvent{};
+        disconnectEvent.Type                          = DeviceEventType::kWiFiConnectivityChange;
+        disconnectEvent.WiFiConnectivityChange.Result = kConnectivity_Lost;
+        PlatformMgr().PostEventOrDie(&disconnectEvent);
+    }
+    else
+    {
+        ChipLogError(DeviceLayer, "WiFi Station is not disconnected!");
+    }
+}
+
+ConnectivityManager::WiFiAPMode ConnectivityManagerImplWiFi::_GetWiFiAPMode(void)
+{
+    /* AP mode is unsupported */
+    return ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported;
+}
+
+CHIP_ERROR ConnectivityManagerImplWiFi::_SetWiFiAPMode(ConnectivityManager::WiFiAPMode mode)
+{
+    /* AP mode is unsupported */
+    VerifyOrReturnError(ConnectivityManager::WiFiAPMode::kWiFiAPMode_NotSupported == mode ||
+                            ConnectivityManager::WiFiAPMode::kWiFiAPMode_Disabled == mode,
+                        CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
+    return CHIP_NO_ERROR;
+}
+
+bool ConnectivityManagerImplWiFi::_IsWiFiAPActive(void)
+{
+    /* AP mode is unsupported */
+    return false;
+}
+
+bool ConnectivityManagerImplWiFi::_IsWiFiAPApplicationControlled(void)
+{
+    /* AP mode is unsupported */
+    return false;
+}
+
+void ConnectivityManagerImplWiFi::_DemandStartWiFiAP(void)
+{ /* AP mode is unsupported */
+}
+
+void ConnectivityManagerImplWiFi::_StopOnDemandWiFiAP(void)
+{ /* AP mode is unsupported */
+}
+
+void ConnectivityManagerImplWiFi::_MaintainOnDemandWiFiAP(void)
+{ /* AP mode is unsupported */
+}
+
+System::Clock::Timeout ConnectivityManagerImplWiFi::_GetWiFiAPIdleTimeout(void)
+{
+    /* AP mode is unsupported */
+    return System::Clock::kZero;
+}
+
+void ConnectivityManagerImplWiFi::_SetWiFiAPIdleTimeout(System::Clock::Timeout val)
+{ /* AP mode is unsupported */
 }
 
 } // namespace DeviceLayer

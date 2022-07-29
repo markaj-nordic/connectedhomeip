@@ -27,7 +27,11 @@
 #include <platform/internal/GenericConfigurationManagerImpl.ipp>
 
 #include <lib/core/CHIPVendorIdentifiers.hpp>
+
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 #include <platform/Zephyr/WiFiManager.h>
+#endif
+
 #include <platform/Zephyr/ZephyrConfig.h>
 
 #include <lib/support/CodeUtils.h>

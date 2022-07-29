@@ -24,7 +24,14 @@
 
 #include <lib/core/CHIPError.h>
 #include <lib/support/Span.h>
-#include <string>
+#include <system/SystemLayer.h>
+
+#include <net/net_if.h>
+
+extern "C" {
+#include <src/utils/common.h>
+#include <wpa_supplicant/wpa_supplicant_i.h>
+}
 
 struct net_if;
 struct wpa_ssid;
@@ -36,14 +43,39 @@ namespace DeviceLayer {
 class WiFiManager
 {
 
+    using ConnectionCallback = void (*)();
+
 public:
     enum class StationStatus : uint8_t
     {
+        NONE,
         DISCONNECTED,
+        DISABLED,
         SCANNING,
-        COMPLETED,
-        CONNECTED = COMPLETED,
-        NONE
+        CONNECTING,
+        CONNECTED,
+        PROVISIONING,
+        FULLY_PROVISIONED
+    };
+
+    class StatusMap
+    {
+    public:
+        static StatusMap & GetMap()
+        {
+            static StatusMap sInstance;
+            return sInstance;
+        }
+        StationStatus operator[](wpa_states wpaState);
+
+    private:
+        struct StatusPair
+        {
+            wpa_states mWpaStatus;
+            WiFiManager::StationStatus mStatus;
+        };
+
+        static const StatusPair sStatusMap[];
     };
 
     static WiFiManager & Instance()
@@ -52,19 +84,34 @@ public:
         return sInstance;
     }
 
+    struct ConnectionHandling
+    {
+        ConnectionCallback mOnConnectionSuccess{};
+        ConnectionCallback mOnConnectionFailed{};
+        System::Clock::Timeout mConnectionTimeoutMs{};
+    };
+
     CHIP_ERROR Init();
-    CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
-    CHIP_ERROR Connect();
-    StationStatus NetworkStatus();
+    CHIP_ERROR Connect(const ByteSpan & ssid, const ByteSpan & credentials, const ConnectionHandling & handling);
     CHIP_ERROR GetMACAddress(uint8_t * buf);
+    StationStatus GetStationStatus();
+    CHIP_ERROR ClearStationProvisioningData();
+    CHIP_ERROR DisconnectStation();
 
 private:
     CHIP_ERROR AddPsk(const ByteSpan & credentials);
-
-    static StationStatus NetworkStatusStringToEnumCode(const std::string & aFullStringStatus);
-    static std::string ExtractNetworkStatusString(const std::string & aFullStringStatus);
+    StationStatus StatusFromWpaStatus(wpa_states status);
+    CHIP_ERROR EnableStation(bool enable);
+    CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
+    void PollTimerCallback();
+    void WaitForConnectionAsync();
+    void OnConnectionSuccess();
+    void OnConnectionFailed();
 
     WpaNetwork * mpWpaNetwork{ nullptr };
+    ConnectionCallback mConnectionSuccessClbk;
+    ConnectionCallback mConnectionFailedClbk;
+    System::Clock::Timeout mConnectionTimeoutMs;
 };
 
 } // namespace DeviceLayer
