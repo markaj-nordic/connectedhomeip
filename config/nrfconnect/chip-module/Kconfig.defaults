@@ -296,9 +296,6 @@ config HEAP_MEM_POOL_SIZE
 
 endif
 
-choice OPENTHREAD_STACK_VERSION
-	default OPENTHREAD_THREAD_VERSION_1_3
-endchoice
 
 # Enable mbedTLS from nrf_security library
 
