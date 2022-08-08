@@ -24,6 +24,7 @@
 
 #include <lib/core/CHIPError.h>
 #include <lib/support/Span.h>
+#include <platform/NetworkCommissioning.h>
 #include <system/SystemLayer.h>
 
 #include <net/net_if.h>
@@ -84,6 +85,8 @@ public:
         return sInstance;
     }
 
+    using ScanCallback = void (*)(int /* status */, NetworkCommissioning::WiFiScanResponse *);
+
     struct ConnectionHandling
     {
         ConnectionCallback mOnConnectionSuccess{};
@@ -92,6 +95,7 @@ public:
     };
 
     CHIP_ERROR Init();
+    CHIP_ERROR Scan(const ByteSpan & ssid, ScanCallback callback);
     CHIP_ERROR Connect(const ByteSpan & ssid, const ByteSpan & credentials, const ConnectionHandling & handling);
     CHIP_ERROR GetMACAddress(uint8_t * buf);
     StationStatus GetStationStatus();
@@ -112,6 +116,7 @@ private:
     ConnectionCallback mConnectionSuccessClbk;
     ConnectionCallback mConnectionFailedClbk;
     System::Clock::Timeout mConnectionTimeoutMs;
+    ScanCallback mScanCallback{ nullptr };
 };
 
 } // namespace DeviceLayer

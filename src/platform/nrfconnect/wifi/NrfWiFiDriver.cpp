@@ -32,6 +32,34 @@ namespace chip {
 namespace DeviceLayer {
 namespace NetworkCommissioning {
 
+bool NrfWiFiScanResponseIterator::Next(WiFiScanResponse & item)
+{
+    if (mResultId < mResultCount)
+    {
+        item = mResults[mResultId++];
+        return true;
+    }
+    return false;
+}
+
+void NrfWiFiScanResponseIterator::Release()
+{
+    mResultId = mResultCount = 0;
+    Platform::MemoryFree(mResults);
+    mResults = nullptr;
+}
+
+void NrfWiFiScanResponseIterator::Add(const WiFiScanResponse & result)
+{
+    void * newResults = Platform::MemoryRealloc(mResults, (mResultCount + 1) * sizeof(WiFiScanResponse));
+
+    if (newResults)
+    {
+        mResults                 = static_cast<WiFiScanResponse *>(newResults);
+        mResults[mResultCount++] = result;
+    }
+}
+
 CHIP_ERROR NrfWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)
 {
     mpNetworkStatusChangeCallback = networkStatusChangeCallback;
@@ -177,7 +205,36 @@ void NrfWiFiDriver::OnConnectWiFiNetworkFailed()
     }
 }
 
-void NrfWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callback) {}
+void NrfWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callback)
+{
+    mScanCallback    = callback;
+    CHIP_ERROR error = WiFiManager::Instance().Scan(
+        ssid, [](int status, WiFiScanResponse * response) { Instance().OnScanWiFiNetworkDone(status, response); });
+
+    if (error != CHIP_NO_ERROR)
+    {
+        mScanCallback = nullptr;
+        callback->OnFinished(Status::kUnknownError, CharSpan(), nullptr);
+    }
+}
+
+void NrfWiFiDriver::OnScanWiFiNetworkDone(int status, WiFiScanResponse * response)
+{
+    if (response != nullptr)
+    {
+        StackLock lock;
+        VerifyOrReturn(mScanCallback != nullptr);
+        mScanResponseIterator.Add(*response);
+        return;
+    }
+
+    // Scan complete
+    DeviceLayer::SystemLayer().ScheduleLambda([this, status]() {
+        VerifyOrReturn(mScanCallback != nullptr);
+        mScanCallback->OnFinished(status == 0 ? Status::kSuccess : Status::kUnknownError, CharSpan(), &mScanResponseIterator);
+        mScanCallback = nullptr;
+    });
+}
 
 void NrfWiFiDriver::LoadFromStorage()
 {
