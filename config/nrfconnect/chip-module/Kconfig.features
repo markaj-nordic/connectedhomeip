@@ -37,6 +37,8 @@ config CHIP_WIFI
 	imply USE_DT_CODE_PARTITION # might be removed when the OTA is enabled
 	imply NET_IPV6_ND # enable Neighbor Discovery to handle Router Advertisements
 	imply NET_IPV6_NBR_CACHE
+	imply NET_STATISTICS_IPV6
+	imply NET_STATISTICS_USER_API
 
 config CHIP_QSPI_NOR
 	bool "Enable QSPI NOR feature set"
