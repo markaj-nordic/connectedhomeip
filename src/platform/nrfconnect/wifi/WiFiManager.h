@@ -17,7 +17,7 @@
 
 /**
  *    @file
- *          Provides the wrapper for Zephyr wpa_supplicant API
+ *          Provides the wrapper for nRF wpa_supplicant API
  */
 
 #pragma once
@@ -97,7 +97,6 @@ public:
     CHIP_ERROR Init();
     CHIP_ERROR Scan(const ByteSpan & ssid, ScanCallback callback);
     CHIP_ERROR Connect(const ByteSpan & ssid, const ByteSpan & credentials, const ConnectionHandling & handling);
-    CHIP_ERROR GetMACAddress(uint8_t * buf);
     StationStatus GetStationStatus();
     CHIP_ERROR ClearStationProvisioningData();
     CHIP_ERROR DisconnectStation();

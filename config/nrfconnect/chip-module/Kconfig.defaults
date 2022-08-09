@@ -243,6 +243,10 @@ config OPENTHREAD_XPANID
     string
     default "11:11:11:11:22:22:22:22"
 
+config IEEE802154_NRF5_RX_STACK_SIZE
+    int
+    default 1024
+
 endif
 
 if CHIP_WIFI

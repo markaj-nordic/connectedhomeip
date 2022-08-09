@@ -17,8 +17,8 @@
 
 #include "NrfWiFiDriver.h"
 
+#include "WiFiManager.h"
 #include <platform/KeyValueStoreManager.h>
-#include <platform/Zephyr/WiFiManager.h>
 
 #include <lib/support/CodeUtils.h>
 #include <lib/support/SafeInt.h>
@@ -80,6 +80,11 @@ CHIP_ERROR NrfWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChange
 
 void NrfWiFiDriver::OnNetworkStatusChanged(Status status)
 {
+    if (status == Status::kSuccess)
+    {
+        ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Enabled);
+    }
+
     if (mpNetworkStatusChangeCallback)
         mpNetworkStatusChangeCallback->OnNetworkingStatusChange(status, NullOptional, NullOptional);
 }

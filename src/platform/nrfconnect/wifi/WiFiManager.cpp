@@ -17,7 +17,7 @@
 
 /**
  *    @file
- *          Provides the wrapper for Zephyr WiFi API
+ *          Provides the wrapper for nRF WiFi API
  */
 
 #include "WiFiManager.h"
@@ -254,17 +254,6 @@ CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
     }
 
     return CHIP_ERROR_INTERNAL;
-}
-
-CHIP_ERROR WiFiManager::GetMACAddress(uint8_t * buf)
-{
-    const net_if * const iface = GetInterface();
-    VerifyOrReturnError(iface != nullptr && iface->if_dev != nullptr, CHIP_ERROR_INTERNAL);
-
-    const auto linkAddrStruct = iface->if_dev->link_addr;
-    memcpy(buf, linkAddrStruct.addr, linkAddrStruct.len);
-
-    return CHIP_NO_ERROR;
 }
 
 WiFiManager::StationStatus WiFiManager::GetStationStatus()
