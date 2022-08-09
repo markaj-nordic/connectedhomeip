@@ -33,6 +33,8 @@ static_library("nrfconnect") {
     "../Zephyr/SystemTimeSupport.cpp",
     "../Zephyr/ZephyrConfig.cpp",
     "../Zephyr/ZephyrConfig.h",
+    "DiagnosticDataProviderImplNrf.cpp",
+    "DiagnosticDataProviderImplNrf.h",
     "BLEManagerImpl.h",
     "BlePlatformConfig.h",
     "CHIPDevicePlatformConfig.h",

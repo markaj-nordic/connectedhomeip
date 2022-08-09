@@ -27,7 +27,10 @@
 #include <platform/DiagnosticDataProvider.h>
 #include <platform/Zephyr/DiagnosticDataProviderImpl.h>
 #include <platform/Zephyr/SysHeapMalloc.h>
+
+#ifdef CONFIG_WIFI_NRF700X
 #include <platform/Zephyr/WiFiManager.h>
+#endif
 
 #include <drivers/hwinfo.h>
 #include <sys/util.h>
@@ -110,7 +113,7 @@ DiagnosticDataProviderImpl & DiagnosticDataProviderImpl::GetDefaultInstance()
     return sInstance;
 }
 
-inline DiagnosticDataProviderImpl::DiagnosticDataProviderImpl() : mBootReason(DetermineBootReason())
+DiagnosticDataProviderImpl::DiagnosticDataProviderImpl() : mBootReason(DetermineBootReason())
 {
     ChipLogDetail(DeviceLayer, "Boot reason: %u", static_cast<uint16_t>(mBootReason));
 }
@@ -321,102 +324,6 @@ void DiagnosticDataProviderImpl::ReleaseNetworkInterfaces(NetworkInterface * net
         delete del;
     }
 }
-
-DiagnosticDataProvider & GetDiagnosticDataProviderImpl()
-{
-    return DiagnosticDataProviderImpl::GetDefaultInstance();
-}
-
-#ifdef CONFIG_CHIP_WIFI
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiBssId(ByteSpan & value)
-{
-    WiFiManager::WiFiInfo info;
-    CHIP_ERROR err = WiFiManager::Instance().GetWiFiInfo(info);
-    value          = info.mBssId;
-    return err;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiSecurityType(uint8_t & securityType)
-{
-    WiFiManager::WiFiInfo info;
-    CHIP_ERROR err = WiFiManager::Instance().GetWiFiInfo(info);
-    securityType   = info.mSecurityType;
-    return err;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiVersion(uint8_t & wiFiVersion)
-{
-    WiFiManager::WiFiInfo info;
-    CHIP_ERROR err = WiFiManager::Instance().GetWiFiInfo(info);
-    wiFiVersion    = info.mWiFiVersion;
-    return err;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiChannelNumber(uint16_t & channelNumber)
-{
-    WiFiManager::WiFiInfo info;
-    CHIP_ERROR err = WiFiManager::Instance().GetWiFiInfo(info);
-    channelNumber  = info.mChannel;
-    (void) err;
-    // above will return 0 until the wpa_supplicant driver API implementation is refined
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiRssi(int8_t & rssi)
-{
-    WiFiManager::WiFiInfo info;
-    CHIP_ERROR err = WiFiManager::Instance().GetWiFiInfo(info);
-    rssi           = info.mRssi;
-    (void) err;
-    // above will return -128 until the wpa_supplicant driver API implementation is refined
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-// below will be implemented when the WiFi driver exposes Zephyr NET_STATISTICS API
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiBeaconLostCount(uint32_t & beaconLostCount)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiBeaconRxCount(uint32_t & beaconRxCount)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiPacketMulticastRxCount(uint32_t & packetMulticastRxCount)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiPacketMulticastTxCount(uint32_t & packetMulticastTxCount)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiPacketUnicastRxCount(uint32_t & packetUnicastRxCount)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiPacketUnicastTxCount(uint32_t & packetUnicastTxCount)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiCurrentMaxRate(uint64_t & currentMaxRate)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::GetWiFiOverrunCount(uint64_t & overrunCount)
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-
-CHIP_ERROR DiagnosticDataProviderImpl::ResetWiFiNetworkDiagnosticsCounts()
-{
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
-}
-#endif
 
 } // namespace DeviceLayer
 } // namespace chip
