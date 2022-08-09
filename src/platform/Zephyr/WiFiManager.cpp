@@ -178,6 +178,11 @@ CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & crede
 
 CHIP_ERROR WiFiManager::Scan(const ByteSpan & ssid, ScanCallback callback)
 {
+    const StationStatus stationStatus = GetStationStatus();
+    VerifyOrReturnError(stationStatus != StationStatus::DISABLED && stationStatus != StationStatus::SCANNING &&
+                            stationStatus != StationStatus::CONNECTING,
+                        CHIP_ERROR_INCORRECT_STATE);
+
     net_if * const iface = GetInterface();
     VerifyOrReturnError(iface != nullptr, CHIP_ERROR_INTERNAL);
 
