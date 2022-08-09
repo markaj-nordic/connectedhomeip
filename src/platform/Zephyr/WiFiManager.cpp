@@ -32,6 +32,7 @@
 extern "C" {
 #include <wpa_supplicant/config.h>
 #include <wpa_supplicant/scan.h>
+#include <zephyr_fmac_main.h>
 }
 
 extern struct wpa_supplicant * wpa_s_0;
@@ -49,6 +50,29 @@ in6_addr ToZephyrAddr(const Inet::IPAddress & address)
     memcpy(zephyrAddr.s6_addr, address.Addr, sizeof(address.Addr));
 
     return zephyrAddr;
+}
+
+NetworkCommissioning::WiFiScanResponse ToScanResponse(wifi_scan_result * result)
+{
+    NetworkCommissioning::WiFiScanResponse response = {};
+
+    if (result != nullptr)
+    {
+        static_assert(sizeof(response.ssid) == sizeof(result->ssid), "SSID length mismatch");
+        static_assert(sizeof(response.bssid) == sizeof(result->mac), "BSSID length mismatch");
+
+        // TODO: Distinguish WPA versions
+        response.security.Set(result->security == WIFI_SECURITY_TYPE_PSK ? NetworkCommissioning::WiFiSecurity::kWpaPersonal
+                                                                         : NetworkCommissioning::WiFiSecurity::kUnencrypted);
+        response.channel = result->channel;
+        response.rssi    = result->rssi;
+        response.ssidLen = result->ssid_length;
+        memcpy(response.ssid, result->ssid, result->ssid_length);
+        // TODO: MAC/BSSID is not filled by the Wi-Fi driver
+        memcpy(response.bssid, result->mac, result->mac_length);
+    }
+
+    return response;
 }
 
 net_if * GetInterface(Inet::InterfaceId ifaceId = Inet::InterfaceId::Null())
@@ -150,6 +174,37 @@ CHIP_ERROR WiFiManager::AddNetwork(const ByteSpan & ssid, const ByteSpan & crede
     }
 
     return CHIP_ERROR_INTERNAL;
+}
+
+CHIP_ERROR WiFiManager::Scan(const ByteSpan & ssid, ScanCallback callback)
+{
+    const StationStatus stationStatus = GetStationStatus();
+    VerifyOrReturnError(stationStatus != StationStatus::DISABLED && stationStatus != StationStatus::SCANNING &&
+                            stationStatus != StationStatus::CONNECTING,
+                        CHIP_ERROR_INCORRECT_STATE);
+
+    net_if * const iface = GetInterface();
+    VerifyOrReturnError(iface != nullptr, CHIP_ERROR_INTERNAL);
+
+    const device * dev = net_if_get_device(iface);
+    VerifyOrReturnError(dev != nullptr, CHIP_ERROR_INTERNAL);
+
+    const wifi_nrf_dev_ops * ops = static_cast<const wifi_nrf_dev_ops *>(dev->api);
+    VerifyOrReturnError(ops != nullptr, CHIP_ERROR_INTERNAL);
+
+    mScanCallback = callback;
+
+    // TODO: Use saner API once such exists.
+    // TODO: Take 'ssid' into account.
+    VerifyOrReturnError(ops->off_api.disp_scan(dev,
+                                               [](net_if *, int status, wifi_scan_result * result) {
+                                                   VerifyOrReturn(Instance().mScanCallback != nullptr);
+                                                   NetworkCommissioning::WiFiScanResponse response = ToScanResponse(result);
+                                                   Instance().mScanCallback(status, result != nullptr ? &response : nullptr);
+                                               }) == 0,
+                        CHIP_ERROR_INTERNAL);
+
+    return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR WiFiManager::Connect(const ByteSpan & ssid, const ByteSpan & credentials, const ConnectionHandling & handling)

@@ -21,19 +21,23 @@
 namespace chip {
 namespace DeviceLayer {
 namespace NetworkCommissioning {
-namespace {
+
 constexpr uint8_t kMaxWiFiNetworks                  = 1;
 constexpr uint8_t kWiFiScanNetworksTimeOutSeconds   = 10;
 constexpr uint8_t kWiFiConnectNetworkTimeoutSeconds = 120;
-} // namespace
 
-class NrfScanResponseIterator : public Iterator<WiFiScanResponse>
+class NrfWiFiScanResponseIterator : public Iterator<WiFiScanResponse>
 {
 public:
-    virtual ~NrfScanResponseIterator() = default;
-    size_t Count() override { return 0; }
-    bool Next(WiFiScanResponse & item) override { return true; }
-    void Release() override {}
+    size_t Count() override { return mResultCount; }
+    bool Next(WiFiScanResponse & item) override;
+    void Release() override;
+    void Add(const WiFiScanResponse & result);
+
+private:
+    size_t mResultId            = 0;
+    size_t mResultCount         = 0;
+    WiFiScanResponse * mResults = nullptr;
 };
 
 class NrfWiFiDriver final : public WiFiDriver
@@ -101,6 +105,7 @@ public:
     void OnConnectWiFiNetwork();
     void OnConnectWiFiNetworkFailed();
     void OnNetworkStatusChanged(Status status);
+    void OnScanWiFiNetworkDone(int status, WiFiScanResponse * result);
 
 private:
     void LoadFromStorage();
@@ -108,6 +113,8 @@ private:
     ConnectCallback * mpConnectCallback{ nullptr };
     NetworkStatusChangeCallback * mpNetworkStatusChangeCallback{ nullptr };
     WiFiNetwork mStagingNetwork;
+    NrfWiFiScanResponseIterator mScanResponseIterator;
+    ScanCallback * mScanCallback{ nullptr };
 };
 
 } // namespace NetworkCommissioning
