@@ -41,9 +41,50 @@ using WpaNetwork = struct wpa_ssid;
 namespace chip {
 namespace DeviceLayer {
 
+// emulation of dictionary - might be moved to utils
+template <typename T1, typename T2, std::size_t N>
+class Map
+{
+    struct Pair
+    {
+        T1 key;
+        T2 value;
+    };
+
+public:
+    Map(const Pair (&list)[N])
+    {
+        int idx{ 0 };
+        for (const auto & pair : list)
+        {
+            mMap[idx++] = pair;
+        }
+    }
+
+    T2 operator[](const T1 & key) const
+    {
+        for (const auto & it : mMap)
+        {
+            if (key == it.key)
+                return it.value;
+        }
+
+        return T2{};
+    }
+
+    Map()            = delete;
+    Map(const Map &) = delete;
+    Map(Map &&)      = delete;
+    Map & operator=(const Map &) = delete;
+    Map & operator=(Map &&) = delete;
+    ~Map()                  = default;
+
+private:
+    Pair mMap[N];
+};
+
 class WiFiManager
 {
-
     using ConnectionCallback = void (*)();
 
 public:
@@ -57,26 +98,6 @@ public:
         CONNECTED,
         PROVISIONING,
         FULLY_PROVISIONED
-    };
-
-    class StatusMap
-    {
-    public:
-        static StatusMap & GetMap()
-        {
-            static StatusMap sInstance;
-            return sInstance;
-        }
-        StationStatus operator[](wpa_states wpaState);
-
-    private:
-        struct StatusPair
-        {
-            wpa_states mWpaStatus;
-            WiFiManager::StationStatus mStatus;
-        };
-
-        static const StatusPair sStatusMap[];
     };
 
     static WiFiManager & Instance()
@@ -94,28 +115,54 @@ public:
         System::Clock::Timeout mConnectionTimeoutMs{};
     };
 
+    struct WiFiInfo
+    {
+        ByteSpan mBssId{};
+        uint8_t mSecurityType{};
+        uint8_t mWiFiVersion{};
+        uint16_t mChannel{};
+        int8_t mRssi{};
+    };
+
+    struct NetworkStatistics
+    {
+        uint32_t mPacketMulticastRxCount{};
+        uint32_t mPacketMulticastTxCount{};
+        uint32_t mPacketUnicastRxCount{};
+        uint32_t mPacketUnicastTxCount{};
+        uint32_t mOverruns{};
+    };
+
     CHIP_ERROR Init();
     CHIP_ERROR Scan(const ByteSpan & ssid, ScanCallback callback);
     CHIP_ERROR Connect(const ByteSpan & ssid, const ByteSpan & credentials, const ConnectionHandling & handling);
-    StationStatus GetStationStatus();
+    StationStatus GetStationStatus() const;
     CHIP_ERROR ClearStationProvisioningData();
     CHIP_ERROR DisconnectStation();
+    CHIP_ERROR GetWiFiInfo(WiFiInfo & info) const;
+    CHIP_ERROR GetNetworkStatistics(NetworkStatistics & stats) const;
 
 private:
     CHIP_ERROR AddPsk(const ByteSpan & credentials);
-    StationStatus StatusFromWpaStatus(wpa_states status);
     CHIP_ERROR EnableStation(bool enable);
     CHIP_ERROR AddNetwork(const ByteSpan & ssid, const ByteSpan & credentials);
     void PollTimerCallback();
     void WaitForConnectionAsync();
     void OnConnectionSuccess();
     void OnConnectionFailed();
+    uint8_t GetSecurityType() const;
 
     WpaNetwork * mpWpaNetwork{ nullptr };
     ConnectionCallback mConnectionSuccessClbk;
     ConnectionCallback mConnectionFailedClbk;
     System::Clock::Timeout mConnectionTimeoutMs;
     ScanCallback mScanCallback{ nullptr };
+
+    static uint8_t FrequencyToChannel(uint16_t freq);
+    static StationStatus StatusFromWpaStatus(const wpa_states & status);
+
+    static const Map<wpa_states, StationStatus, 10> sStatusMap;
+    static const Map<uint16_t, uint8_t, 42> sFreqChannelMap;
 };
 
 } // namespace DeviceLayer

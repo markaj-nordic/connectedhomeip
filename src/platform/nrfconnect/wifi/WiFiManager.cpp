@@ -28,10 +28,13 @@
 #include <platform/CHIPDeviceLayer.h>
 #include <platform/Zephyr/InetUtils.h>
 
+#include <net/net_stats.h>
 #include <zephyr.h>
 
 extern "C" {
+#include <common/defs.h>
 #include <wpa_supplicant/config.h>
+#include <wpa_supplicant/driver_i.h>
 #include <wpa_supplicant/scan.h>
 #include <zephyr_fmac_main.h>
 }
@@ -69,30 +72,26 @@ NetworkCommissioning::WiFiScanResponse ToScanResponse(wifi_scan_result * result)
 } // namespace
 
 // These enums shall reflect the overall ordered disconnected->connected flow
-// NOTE: it's NOT a unique keyed map
-const WiFiManager::StatusMap::StatusPair WiFiManager::StatusMap::sStatusMap[] = {
-    { WPA_DISCONNECTED, WiFiManager::StationStatus::DISCONNECTED },
-    { WPA_INTERFACE_DISABLED, WiFiManager::StationStatus::DISABLED },
-    { WPA_INACTIVE, WiFiManager::StationStatus::DISABLED },
-    { WPA_SCANNING, WiFiManager::StationStatus::SCANNING },
-    { WPA_AUTHENTICATING, WiFiManager::StationStatus::CONNECTING },
-    { WPA_ASSOCIATING, WiFiManager::StationStatus::CONNECTING },
-    { WPA_ASSOCIATED, WiFiManager::StationStatus::CONNECTED },
-    { WPA_4WAY_HANDSHAKE, WiFiManager::StationStatus::PROVISIONING },
-    { WPA_GROUP_HANDSHAKE, WiFiManager::StationStatus::PROVISIONING },
-    { WPA_COMPLETED, WiFiManager::StationStatus::FULLY_PROVISIONED }
-};
+const Map<wpa_states, WiFiManager::StationStatus, 10>
+    WiFiManager::sStatusMap({ { WPA_DISCONNECTED, WiFiManager::StationStatus::DISCONNECTED },
+                              { WPA_INTERFACE_DISABLED, WiFiManager::StationStatus::DISABLED },
+                              { WPA_INACTIVE, WiFiManager::StationStatus::DISABLED },
+                              { WPA_SCANNING, WiFiManager::StationStatus::SCANNING },
+                              { WPA_AUTHENTICATING, WiFiManager::StationStatus::CONNECTING },
+                              { WPA_ASSOCIATING, WiFiManager::StationStatus::CONNECTING },
+                              { WPA_ASSOCIATED, WiFiManager::StationStatus::CONNECTED },
+                              { WPA_4WAY_HANDSHAKE, WiFiManager::StationStatus::PROVISIONING },
+                              { WPA_GROUP_HANDSHAKE, WiFiManager::StationStatus::PROVISIONING },
+                              { WPA_COMPLETED, WiFiManager::StationStatus::FULLY_PROVISIONED } });
 
-WiFiManager::StationStatus WiFiManager::StatusMap::operator[](wpa_states wpaState)
-{
-    for (const auto & it : sStatusMap)
-    {
-        if (wpaState == it.mWpaStatus)
-            return it.mStatus;
-    }
-
-    return WiFiManager::StationStatus::NONE;
-}
+// Map WiFi center frequency to the corresponding channel number
+const Map<uint16_t, uint8_t, 42> WiFiManager::sFreqChannelMap(
+    { { 4915, 183 }, { 4920, 184 }, { 4925, 185 }, { 4935, 187 }, { 4940, 188 }, { 4945, 189 }, { 4960, 192 },
+      { 4980, 196 }, { 5035, 7 },   { 5040, 8 },   { 5045, 9 },   { 5055, 11 },  { 5060, 12 },  { 5080, 16 },
+      { 5170, 34 },  { 5180, 36 },  { 5190, 38 },  { 5200, 40 },  { 5210, 42 },  { 5220, 44 },  { 5230, 46 },
+      { 5240, 48 },  { 5260, 52 },  { 5280, 56 },  { 5300, 60 },  { 5320, 64 },  { 5500, 100 }, { 5520, 104 },
+      { 5540, 108 }, { 5560, 112 }, { 5580, 116 }, { 5600, 120 }, { 5620, 124 }, { 5640, 128 }, { 5660, 132 },
+      { 5680, 136 }, { 5700, 140 }, { 5745, 149 }, { 5765, 153 }, { 5785, 157 }, { 5805, 161 }, { 5825, 165 } });
 
 CHIP_ERROR WiFiManager::Init()
 {
@@ -242,7 +241,7 @@ CHIP_ERROR WiFiManager::AddPsk(const ByteSpan & credentials)
     return CHIP_ERROR_INTERNAL;
 }
 
-WiFiManager::StationStatus WiFiManager::GetStationStatus()
+WiFiManager::StationStatus WiFiManager::GetStationStatus() const
 {
     if (wpa_s_0)
     {
@@ -255,10 +254,10 @@ WiFiManager::StationStatus WiFiManager::GetStationStatus()
     }
 }
 
-WiFiManager::StationStatus WiFiManager::StatusFromWpaStatus(wpa_states status)
+WiFiManager::StationStatus WiFiManager::StatusFromWpaStatus(const wpa_states & status)
 {
     ChipLogDetail(DeviceLayer, "WPA internal status: %d", static_cast<int>(status));
-    return WiFiManager::StatusMap::GetMap()[status];
+    return WiFiManager::sStatusMap[status];
 }
 
 CHIP_ERROR WiFiManager::EnableStation(bool enable)
@@ -328,6 +327,103 @@ void WiFiManager::PollTimerCallback()
             OnConnectionFailed();
         }
     }
+}
+
+CHIP_ERROR WiFiManager::GetWiFiInfo(WiFiInfo & info) const
+{
+    VerifyOrReturnError(nullptr != wpa_s_0, CHIP_ERROR_INTERNAL);
+
+    static uint8_t sBssid[ETH_ALEN];
+    if (WiFiManager::StationStatus::CONNECTED <= GetStationStatus())
+    {
+        memcpy(sBssid, wpa_s_0->bssid, ETH_ALEN);
+        info.mBssId        = ByteSpan(sBssid, ETH_ALEN);
+        info.mSecurityType = GetSecurityType();
+        // TODO: this should reflect the real connection compliance
+        // i.e. the AP might support WiFi 5 only even though the station
+        // is WiFi 6 ready (so the connection is WiFi 5 effectively).
+        // For now just return what the station supports.
+        info.mWiFiVersion = EMBER_ZCL_WI_FI_VERSION_TYPE_802__11AX;
+
+        wpa_signal_info signalInfo{};
+        if (0 == wpa_drv_signal_poll(wpa_s_0, &signalInfo))
+        {
+            info.mRssi    = signalInfo.current_signal; // dBm
+            info.mChannel = FrequencyToChannel(signalInfo.frequency);
+        }
+        else
+        {
+            // this values should be nullable according to the Matter spec
+            info.mRssi    = std::numeric_limits<decltype(info.mRssi)>::min();
+            info.mChannel = std::numeric_limits<decltype(info.mChannel)>::min();
+        }
+        return CHIP_NO_ERROR;
+    }
+
+    return CHIP_ERROR_INTERNAL;
+}
+
+uint8_t WiFiManager::GetSecurityType() const
+{
+    VerifyOrReturnValue(nullptr != mpWpaNetwork, EMBER_ZCL_SECURITY_TYPE_UNSPECIFIED);
+
+    if ((mpWpaNetwork->key_mgmt & WPA_KEY_MGMT_NONE) || !wpa_key_mgmt_wpa_any(mpWpaNetwork->key_mgmt))
+    {
+        return EMBER_ZCL_SECURITY_TYPE_NONE;
+    }
+    else if (wpa_key_mgmt_wpa_psk_no_sae(mpWpaNetwork->key_mgmt))
+    {
+        return (mpWpaNetwork->pairwise_cipher & (WPA_CIPHER_TKIP | WPA_CIPHER_CCMP)) ? EMBER_ZCL_SECURITY_TYPE_WPA2
+                                                                                     : EMBER_ZCL_SECURITY_TYPE_WPA3;
+    }
+    else if (wpa_key_mgmt_sae(mpWpaNetwork->key_mgmt))
+    {
+        return EMBER_ZCL_SECURITY_TYPE_WPA3;
+    }
+    else
+    {
+        return EMBER_ZCL_SECURITY_TYPE_WEP;
+    }
+
+    return EMBER_ZCL_SECURITY_TYPE_UNSPECIFIED;
+}
+
+uint8_t WiFiManager::FrequencyToChannel(uint16_t freq)
+{
+    static constexpr uint16_t k24MinFreq{ 2401 };
+    static constexpr uint16_t k24MaxFreq{ 2484 };
+    static constexpr uint8_t k24FreqConstDiff{ 5 };
+
+    if (freq >= k24MinFreq && freq < k24MaxFreq)
+    {
+        return static_cast<uint8_t>((freq - k24MinFreq) / k24FreqConstDiff + 1);
+    }
+    else if (freq == k24MaxFreq)
+    {
+        return 14;
+    }
+    else if (freq > k24MaxFreq)
+    {
+        // assume we are in 5GH band
+        return sFreqChannelMap[freq];
+    }
+    return 0;
+}
+
+CHIP_ERROR WiFiManager::GetNetworkStatistics(NetworkStatistics & stats) const
+{
+    // TODO: below will not work (result will be all zeros) until
+    // the get_stats handler is implemented in WiFi driver
+    net_stats_eth data{};
+    net_mgmt(NET_REQUEST_STATS_GET_ETHERNET, InetUtils::GetInterface(), &data, sizeof(data));
+
+    stats.mPacketMulticastRxCount = data.multicast.rx;
+    stats.mPacketMulticastTxCount = data.multicast.tx;
+    stats.mPacketUnicastRxCount   = data.pkts.rx - data.multicast.rx - data.broadcast.rx;
+    stats.mPacketUnicastTxCount   = data.pkts.tx - data.multicast.tx - data.broadcast.tx;
+    stats.mOverruns               = 0; // TODO: clarify if this can be queried from mgmt API (e.g. data.tx_dropped)
+
+    return CHIP_NO_ERROR;
 }
 
 } // namespace DeviceLayer

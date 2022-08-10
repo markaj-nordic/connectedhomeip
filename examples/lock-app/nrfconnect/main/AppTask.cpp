@@ -40,7 +40,7 @@
 #include <lib/support/ErrorStr.h>
 #include <system/SystemClock.h>
 
-#ifdef CONFIG_CHIP_WIFI
+#ifdef CONFIG_WIFI_NRF700X
 #include <app/clusters/network-commissioning/network-commissioning.h>
 #include <platform/nrfconnect/wifi/NrfWiFiDriver.h>
 #endif
@@ -90,7 +90,7 @@ chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
 
 } // namespace
 
-#ifdef CONFIG_CHIP_WIFI
+#ifdef CONFIG_WIFI_NRF700X
 app::Clusters::NetworkCommissioning::Instance sWiFiCommissioningInstance(0, &(NetworkCommissioning::NrfWiFiDriver::Instance()));
 #endif
 
@@ -133,7 +133,7 @@ CHIP_ERROR AppTask::Init()
         LOG_ERR("ConnectivityMgr().SetThreadDeviceType() failed");
         return err;
     }
-#elif defined(CONFIG_CHIP_WIFI)
+#elif defined(CONFIG_WIFI_NRF700X)
     sWiFiCommissioningInstance.Init();
 #else
     return CHIP_ERROR_INTERNAL;

@@ -98,7 +98,7 @@ CHIP_ERROR main()
         ChipLogError(AppServer, "ConnectivityMgr().SetThreadDeviceType() failed");
         return err;
     }
-#elif !defined(CONFIG_CHIP_WIFI)
+#elif !defined(CONFIG_WIFI_NRF700X)
     return CHIP_ERROR_INTERNAL;
 #endif
 
