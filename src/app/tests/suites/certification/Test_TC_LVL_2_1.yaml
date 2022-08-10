@@ -28,37 +28,6 @@ tests:
               - name: "nodeId"
                 value: nodeId
 
-    # Temporary - see #13551
-    - label: "Precondition: Reset level to 254"
-      PICS: PICS_SDK_CI_ONLY
-      command: "MoveToLevel"
-      arguments:
-          values:
-              - name: "level"
-                value: 254
-              - name: "transitionTime"
-                value: 0
-              - name: "optionMask"
-                value: 1
-              - name: "optionOverride"
-                value: 1
-
-    - label: "Wait 100ms"
-      PICS: PICS_SDK_CI_ONLY
-      cluster: "DelayCommands"
-      command: "WaitForMs"
-      arguments:
-          values:
-              - name: "ms"
-                value: 100
-
-    - label: "Precondition: Reads the CurrentLevel attribute"
-      PICS: LVL.S.A0000
-      command: "readAttribute"
-      attribute: "current level"
-      response:
-          value: 254
-
     - label: "Reads the CurrentLevel attribute"
       PICS: LVL.S.A0000
       command: "readAttribute"
@@ -66,7 +35,9 @@ tests:
       response:
           saveAs: CurrentLevelValue
           constraints:
-              type: uint8
+              type: int8u
+              minValue: 0
+              maxValue: 255
 
     - label: "Reads the RemainingTime attribute"
       PICS: LVL.S.A0001
@@ -74,7 +45,9 @@ tests:
       attribute: "remaining time"
       response:
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Reads the MinLevel attribute"
       PICS: LVL.S.A0002 && LVL.S.F01
@@ -84,18 +57,18 @@ tests:
           value: 1
           saveAs: MinLevelValue
           constraints:
-              type: uint8
+              type: int8u
 
     - label: "Reads the MinLevel attribute"
       PICS: LVL.S.A0002 && !LVL.S.F01
       command: "readAttribute"
       attribute: "min level"
       response:
-          saveAs: MinLevelValue1
+          saveAs: MinLevelFeatureMapNotSupportedValue
           constraints:
-              type: uint8
+              type: int8u
               minValue: 0
-              maxValue: 1
+              maxValue: 255
 
     - label: "Reads the MaxLevel attribute"
       PICS: LVL.S.A0003 && LVL.S.F01
@@ -105,7 +78,7 @@ tests:
           value: 254
           saveAs: MaxLevelValue
           constraints:
-              type: uint8
+              type: int8u
               minValue: MinLevelValue
 
     - label: "Reads the MaxLevel attribute"
@@ -113,10 +86,10 @@ tests:
       command: "readAttribute"
       attribute: "max level"
       response:
-          saveAs: MaxLevelValue1
+          saveAs: MaxLevelFeatureMapNotSupportedValue
           constraints:
-              type: uint8
-              minValue: MinLevelValue1
+              type: int8u
+              minValue: MinLevelFeatureMapNotSupportedValue
               maxValue: 254
 
     - label: "Step 4b & 4C Reads the CurrentLevel attribute"
@@ -125,7 +98,7 @@ tests:
       attribute: "current level"
       response:
           constraints:
-              type: uint8
+              type: int8u
               minValue: MinLevelValue
               maxValue: MaxLevelValue
 
@@ -135,9 +108,9 @@ tests:
       attribute: "current level"
       response:
           constraints:
-              type: uint8
-              minValue: MinLevelValue1
-              maxValue: MaxLevelValue1
+              type: int8u
+              minValue: MinLevelFeatureMapNotSupportedValue
+              maxValue: MaxLevelFeatureMapNotSupportedValue
 
     - label: "Reads the CurrentFrequency attribute"
       PICS: LVL.S.A0004
@@ -145,7 +118,9 @@ tests:
       attribute: "current frequency"
       response:
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Reads the MinFrequency attribute"
       PICS: LVL.S.A0005
@@ -154,7 +129,9 @@ tests:
       response:
           saveAs: MinFrequencyValue
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Reads the MaxFrequency attribute"
       PICS: LVL.S.A0006
@@ -163,7 +140,9 @@ tests:
       response:
           saveAs: MaxFrequencyValue
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Step 7b & 7C Reads the CurrentFrequency attribute"
       PICS: LVL.S.A0004 && LVL.S.A0005 && LVL.S.A0006
@@ -171,7 +150,7 @@ tests:
       attribute: "current frequency"
       response:
           constraints:
-              type: uint16
+              type: int16u
               minValue: MinFrequencyValue
               maxValue: MaxFrequencyValue
 
@@ -181,7 +160,9 @@ tests:
       attribute: "on off transition time"
       response:
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Reads the OnLevel attribute "
       PICS: LVL.S.F01 && LVL.S.A0011
@@ -189,7 +170,7 @@ tests:
       attribute: "on level"
       response:
           constraints:
-              type: uint8
+              type: int8u
               minValue: MinLevelValue
               maxValue: MaxLevelValue
 
@@ -199,9 +180,9 @@ tests:
       attribute: "on level"
       response:
           constraints:
-              type: uint8
-              minValue: MinLevelValue1
-              maxValue: MaxLevelValue1
+              type: int8u
+              minValue: MinLevelFeatureMapNotSupportedValue
+              maxValue: MaxLevelFeatureMapNotSupportedValue
 
     - label: "Reads the OnTransitionTime attribute "
       PICS: LVL.S.A0012
@@ -209,7 +190,9 @@ tests:
       attribute: "on transition time"
       response:
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Reads the OffTransitionTime attribute "
       PICS: LVL.S.A0013
@@ -217,7 +200,9 @@ tests:
       attribute: "off transition time"
       response:
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Reads the DefaultMoveRate attribute "
       PICS: LVL.S.A0014
@@ -225,7 +210,9 @@ tests:
       attribute: "default move rate"
       response:
           constraints:
-              type: uint8
+              type: int8u
+              minValue: 0
+              maxValue: 255
 
     - label: "Reads the Options attribute "
       PICS: LVL.S.A000f
@@ -234,7 +221,7 @@ tests:
       response:
           value: 0
           constraints:
-              type: map8
+              type: bitmap8
 
     - label: "Reads the StartUpCurrentLevel attribute "
       PICS: LVL.S.A4000
@@ -242,4 +229,6 @@ tests:
       attribute: "start up current level"
       response:
           constraints:
-              type: uint8
+              type: int8u
+              minValue: 0
+              maxValue: 255

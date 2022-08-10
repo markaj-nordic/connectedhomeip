@@ -61,7 +61,7 @@
 #define INET_IPV6_ADD_MEMBERSHIP IPV6_ADD_MEMBERSHIP
 #elif defined(IPV6_JOIN_GROUP)
 #define INET_IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
-#elif !__ZEPHYR__
+#elif !CHIP_SYSTEM_CONFIG_USE_PLATFORM_MULTICAST_API
 #error                                                                                                                             \
     "Neither IPV6_ADD_MEMBERSHIP nor IPV6_JOIN_GROUP are defined which are required for generalized IPv6 multicast group support."
 #endif // IPV6_ADD_MEMBERSHIP
@@ -70,7 +70,7 @@
 #define INET_IPV6_DROP_MEMBERSHIP IPV6_DROP_MEMBERSHIP
 #elif defined(IPV6_LEAVE_GROUP)
 #define INET_IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
-#elif !__ZEPHYR__
+#elif !CHIP_SYSTEM_CONFIG_USE_PLATFORM_MULTICAST_API
 #error                                                                                                                             \
     "Neither IPV6_DROP_MEMBERSHIP nor IPV6_LEAVE_GROUP are defined which are required for generalized IPv6 multicast group support."
 #endif // IPV6_DROP_MEMBERSHIP
@@ -205,22 +205,6 @@ CHIP_ERROR UDPEndPointImplSockets::BindImpl(IPAddressType addressType, const IPA
         }
     }
 
-#if CHIP_SYSTEM_CONFIG_USE_DISPATCH
-    dispatch_queue_t dispatchQueue = static_cast<System::LayerSocketsLoop *>(&GetSystemLayer())->GetDispatchQueue();
-    if (dispatchQueue != nullptr)
-    {
-        unsigned long fd = static_cast<unsigned long>(mSocket);
-
-        mReadableSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, fd, 0, dispatchQueue);
-        ReturnErrorCodeIf(mReadableSource == nullptr, CHIP_ERROR_NO_MEMORY);
-
-        dispatch_source_set_event_handler(mReadableSource, ^{
-            this->HandlePendingIO(System::SocketEventFlags::kRead);
-        });
-        dispatch_resume(mReadableSource);
-    }
-#endif // CHIP_SYSTEM_CONFIG_USE_DISPATCH
-
     return CHIP_NO_ERROR;
 }
 
@@ -345,6 +329,7 @@ CHIP_ERROR UDPEndPointImplSockets::SendMsgImpl(const IPPacketInfo * aPktInfo, Sy
         intf = mBoundIntfId;
     }
 
+#if INET_CONFIG_UDP_SOCKET_PKTINFO
     // If the packet should be sent over a specific interface, or with a specific source
     // address, construct an IP_PKTINFO/IPV6_PKTINFO "control message" to that effect
     // add add it to the message header.  If the local OS doesn't support IP_PKTINFO/IPV6_PKTINFO
@@ -409,6 +394,7 @@ CHIP_ERROR UDPEndPointImplSockets::SendMsgImpl(const IPPacketInfo * aPktInfo, Sy
         return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
 #endif // !(defined(IP_PKTINFO) && defined(IPV6_PKTINFO))
     }
+#endif // INET_CONFIG_UDP_SOCKET_PKTINFO
 
     // Send IP packet.
     const ssize_t lenSent = sendmsg(mSocket, &msgHeader, 0);
@@ -431,14 +417,6 @@ void UDPEndPointImplSockets::CloseImpl()
         close(mSocket);
         mSocket = kInvalidSocketFd;
     }
-
-#if CHIP_SYSTEM_CONFIG_USE_DISPATCH
-    if (mReadableSource)
-    {
-        dispatch_source_cancel(mReadableSource);
-        dispatch_release(mReadableSource);
-    }
-#endif // CHIP_SYSTEM_CONFIG_USE_DISPATCH
 }
 
 void UDPEndPointImplSockets::Free()
@@ -581,7 +559,8 @@ void UDPEndPointImplSockets::HandlePendingIO(System::SocketEvents events)
     System::PacketBufferHandle lBuffer;
 
     lPacketInfo.Clear();
-    lPacketInfo.DestPort = mBoundPort;
+    lPacketInfo.DestPort  = mBoundPort;
+    lPacketInfo.Interface = mBoundIntfId;
 
     lBuffer = System::PacketBufferHandle::New(System::PacketBuffer::kMaxSizeWithoutReserve, 0);
 

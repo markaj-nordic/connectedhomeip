@@ -35,6 +35,7 @@
 #endif
 
 using chip::Optional;
+using chip::app::Clusters::DoorLock::DlAlarmCode;
 using chip::app::Clusters::DoorLock::DlCredentialRule;
 using chip::app::Clusters::DoorLock::DlCredentialType;
 using chip::app::Clusters::DoorLock::DlDataOperationType;
@@ -117,6 +118,8 @@ public:
     bool GetNumberOfCredentialsSupportedPerUser(chip::EndpointId endpointId, uint8_t & numberOfCredentialsSupportedPerUser);
     bool GetNumberOfHolidaySchedulesSupported(chip::EndpointId endpointId, uint8_t & numberOfHolidaySchedules);
 
+    bool SendLockAlarmEvent(chip::EndpointId endpointId, DlAlarmCode alarmCode);
+
     chip::BitFlags<DoorLockFeature> GetFeatures(chip::EndpointId endpointId);
 
     inline bool SupportsPIN(chip::EndpointId endpointId) { return GetFeatures(endpointId).Has(DoorLockFeature::kPINCredentials); }
@@ -193,7 +196,7 @@ private:
                                    uint16_t & userIndex);
 
     bool findUserIndexByCredential(chip::EndpointId endpointId, DlCredentialType credentialType, chip::ByteSpan credentialData,
-                                   uint16_t & userIndex, uint16_t & credentialIndex);
+                                   uint16_t & userIndex, uint16_t & credentialIndex, EmberAfPluginDoorLockUserInfo & userInfo);
 
     EmberAfStatus createUser(chip::EndpointId endpointId, chip::FabricIndex creatorFabricIdx, chip::NodeId sourceNodeId,
                              uint16_t userIndex, const Nullable<chip::CharSpan> & userName, const Nullable<uint32_t> & userUniqueId,
@@ -289,6 +292,8 @@ private:
 
     DlLockDataType credentialTypeToLockDataType(DlCredentialType credentialType);
 
+    bool isUserScheduleRestricted(chip::EndpointId endpointId, const EmberAfPluginDoorLockUserInfo & user);
+
     void setUserCommandHandler(chip::app::CommandHandler * commandObj, const chip::app::ConcreteCommandPath & commandPath,
                                const chip::app::Clusters::DoorLock::Commands::SetUser::DecodableType & commandData);
 
@@ -342,6 +347,9 @@ private:
                                             const chip::app::ConcreteCommandPath & commandPath, uint8_t holidayIndex);
 
     bool RemoteOperationEnabled(chip::EndpointId endpointId) const;
+
+    static CHIP_ERROR sendClusterResponse(chip::app::CommandHandler * commandObj,
+                                          const chip::app::ConcreteCommandPath & commandPath, EmberAfStatus status);
 
     /**
      * @brief Common handler for LockDoor, UnlockDoor, UnlockWithTimeout commands

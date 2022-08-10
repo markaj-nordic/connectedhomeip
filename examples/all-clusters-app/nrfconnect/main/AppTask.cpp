@@ -36,6 +36,11 @@
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 
+#ifdef CONFIG_WIFI_NRF700X
+#include <app/clusters/network-commissioning/network-commissioning.h>
+#include <platform/nrfconnect/wifi/NrfWiFiDriver.h>
+#endif
+
 #if CONFIG_CHIP_OTA_REQUESTOR
 #include "OTAUtil.h"
 #endif
@@ -123,6 +128,10 @@ constexpr uint32_t kOff_ms{ 950 };
 } // namespace StatusLed
 } // namespace LedConsts
 
+#ifdef CONFIG_WIFI_NRF700X
+app::Clusters::NetworkCommissioning::Instance sWiFiCommissioningInstance(0, &(NetworkCommissioning::NrfWiFiDriver::Instance()));
+#endif
+
 CHIP_ERROR AppTask::Init()
 {
     // Initialize CHIP stack
@@ -142,6 +151,7 @@ CHIP_ERROR AppTask::Init()
         return err;
     }
 
+#if defined(CONFIG_NET_L2_OPENTHREAD)
     err = ThreadStackMgr().InitThreadStack();
     if (err != CHIP_NO_ERROR)
     {
@@ -159,6 +169,9 @@ CHIP_ERROR AppTask::Init()
         LOG_ERR("ConnectivityMgr().SetThreadDeviceType() failed");
         return err;
     }
+#elif defined(CONFIG_WIFI_NRF700X)
+    sWiFiCommissioningInstance.Init();
+#endif
 
     // Initialize LEDs
     LEDWidget::InitGpio();

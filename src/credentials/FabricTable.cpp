@@ -85,7 +85,7 @@ CHIP_ERROR FabricInfo::Init(const FabricInfo::InitParams & initParams)
     mFabricIndex        = initParams.fabricIndex;
     mCompressedFabricId = initParams.compressedFabricId;
     mRootPublicKey      = initParams.rootPublicKey;
-    mVendorId           = initParams.vendorId;
+    mVendorId           = static_cast<VendorId>(initParams.vendorId);
 
     // Deal with externally injected keys
     if (initParams.operationalKeypair != nullptr)
@@ -554,6 +554,24 @@ CHIP_ERROR FabricTable::FetchRootCert(FabricIndex fabricIndex, MutableByteSpan &
     return mOpCertStore->GetCertificate(fabricIndex, CertChainElement::kRcac, outCert);
 }
 
+CHIP_ERROR FabricTable::FetchPendingNonFabricAssociatedRootCert(MutableByteSpan & outCert) const
+{
+    VerifyOrReturnError(mOpCertStore != nullptr, CHIP_ERROR_INCORRECT_STATE);
+    if (!mStateFlags.Has(StateFlags::kIsTrustedRootPending))
+    {
+        return CHIP_ERROR_NOT_FOUND;
+    }
+
+    if (mStateFlags.Has(StateFlags::kIsAddPending))
+    {
+        // The root certificate is already associated with a pending fabric, so
+        // does not exist for purposes of this API.
+        return CHIP_ERROR_NOT_FOUND;
+    }
+
+    return FetchRootCert(mFabricIndexWithPendingState, outCert);
+}
+
 CHIP_ERROR FabricTable::FetchICACert(FabricIndex fabricIndex, MutableByteSpan & outCert) const
 {
     VerifyOrReturnError(mOpCertStore != nullptr, CHIP_ERROR_INCORRECT_STATE);
@@ -646,7 +664,8 @@ CHIP_ERROR FabricTable::LoadFromStorage(FabricInfo * fabric, FabricIndex newFabr
                     "Fabric index 0x%x was retrieved from storage. Compressed FabricId 0x" ChipLogFormatX64
                     ", FabricId 0x" ChipLogFormatX64 ", NodeId 0x" ChipLogFormatX64 ", VendorId 0x%04X",
                     static_cast<unsigned>(fabric->GetFabricIndex()), ChipLogValueX64(fabric->GetCompressedFabricId()),
-                    ChipLogValueX64(fabric->GetFabricId()), ChipLogValueX64(fabric->GetNodeId()), fabric->GetVendorId());
+                    ChipLogValueX64(fabric->GetFabricId()), ChipLogValueX64(fabric->GetNodeId()),
+                    to_underlying(fabric->GetVendorId()));
 
     return CHIP_NO_ERROR;
 }
@@ -770,7 +789,7 @@ FabricTable::AddOrUpdateInner(FabricIndex fabricIndex, bool isAddition, Crypto::
 
         VerifyOrReturnError(fabricEntry != nullptr, CHIP_ERROR_NO_MEMORY);
 
-        newFabricInfo.vendorId    = vendorId;
+        newFabricInfo.vendorId    = static_cast<VendorId>(vendorId);
         newFabricInfo.fabricIndex = fabricIndex;
     }
     else
@@ -888,6 +907,18 @@ CHIP_ERROR FabricTable::Delete(FabricIndex fabricIndex)
 {
     VerifyOrReturnError(mStorage != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(IsValidFabricIndex(fabricIndex), CHIP_ERROR_INVALID_ARGUMENT);
+
+    {
+        FabricTable::Delegate * delegate = mDelegateListRoot;
+        while (delegate)
+        {
+            // It is possible that delegate will remove itself from the list in FabricWillBeRemoved,
+            // so we grab the next delegate in the list now.
+            FabricTable::Delegate * nextDelegate = delegate->next;
+            delegate->FabricWillBeRemoved(*this, fabricIndex);
+            delegate = nextDelegate;
+        }
+    }
 
     FabricInfo * fabricInfo = GetMutableFabricByIndex(fabricIndex);
     if (fabricInfo == &mPendingFabric)

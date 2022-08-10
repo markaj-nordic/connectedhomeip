@@ -19,22 +19,22 @@ config:
     cluster: "Level Control"
     endpoint: 1
     OnOffTransitionTimeConfigValue:
-        type: INT16U
+        type: int16u
         defaultValue: 10
     OnLevelConfigValue:
-        type: INT8U
+        type: int8u
         defaultValue: 5
     OnTransitionTimeConfigValue:
-        type: INT16U
+        type: int16u
         defaultValue: 5
     OffTransitionTimeConfigValue:
-        type: INT16U
+        type: int16u
         defaultValue: 10
     DefaultMoveRateConfigValue:
-        type: INT8U
+        type: int8u
         defaultValue: 111
     StartUpCurrentLevelConfigValue:
-        type: INT8U
+        type: int8u
         defaultValue: 5
 
 tests:
@@ -53,7 +53,9 @@ tests:
       response:
           saveAs: OnOffTransitionTimeValue
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "writes the OnOffTransitionTime attribute on the DUT"
       PICS: LVL.S.A0010
@@ -69,7 +71,7 @@ tests:
       response:
           value: OnOffTransitionTimeConfigValue
           constraints:
-              type: uint16
+              type: int16u
               notValue: OnOffTransitionTimeValue
 
     - label: "Reads the OnLevel attribute from the DUT"
@@ -79,7 +81,9 @@ tests:
       response:
           saveAs: OnLevelValue
           constraints:
-              type: uint8
+              type: int8u
+              minValue: 0
+              maxValue: 255
 
     - label: "writes the OnLevel attribute on the DUT"
       PICS: LVL.S.A0011
@@ -95,7 +99,7 @@ tests:
       response:
           value: OnLevelConfigValue
           constraints:
-              type: uint8
+              type: int8u
               notValue: OnLevelValue
 
     - label: "Reads the OnTransitionTime attribute from the DUT"
@@ -105,7 +109,9 @@ tests:
       response:
           saveAs: OnTransitionTimeValue
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Writes the OnTransitionTime attribute on the DUT"
       PICS: LVL.S.A0012
@@ -121,7 +127,7 @@ tests:
       response:
           value: OnTransitionTimeConfigValue
           constraints:
-              type: uint16
+              type: int16u
               notValue: OnTransitionTimeValue
 
     - label: "Reads the OffTransitionTime attribute from the DUT"
@@ -131,7 +137,9 @@ tests:
       response:
           saveAs: OffTransitionTimeValue
           constraints:
-              type: uint16
+              type: int16u
+              minValue: 0
+              maxValue: 65535
 
     - label: "Writes the OffTransitionTime attribute on the DUT"
       PICS: LVL.S.A0013
@@ -147,7 +155,7 @@ tests:
       response:
           value: OffTransitionTimeConfigValue
           constraints:
-              type: uint16
+              type: int16u
               notValue: OffTransitionTimeValue
 
     - label: "Reads the DefaultMoveRate attribute from the DUT"
@@ -157,7 +165,9 @@ tests:
       response:
           saveAs: DefaultMoveRatevalue
           constraints:
-              type: uint8
+              type: int8u
+              minValue: 0
+              maxValue: 255
 
     - label: "Writes the DefaultMoveRate attribute on the DUT"
       PICS: LVL.S.A0014
@@ -173,7 +183,7 @@ tests:
       response:
           value: DefaultMoveRateConfigValue
           constraints:
-              type: uint8
+              type: int8u
               notValue: DefaultMoveRatevalue
 
     - label: "Reads the StartUpCurrentLevel attribute from the DUT"
@@ -183,7 +193,9 @@ tests:
       response:
           saveAs: StartUpCurrentLevelValue
           constraints:
-              type: uint8
+              type: int8u
+              minValue: 0
+              maxValue: 255
 
     - label: "writes the StartUpCurrentLevel attribute on the DUT"
       PICS: LVL.S.A4000
@@ -199,9 +211,10 @@ tests:
       response:
           value: StartUpCurrentLevelConfigValue
           constraints:
-              type: uint8
+              type: int8u
               notValue: StartUpCurrentLevelValue
 
+    #This is a reset step that is needed to reset the value of the attribute to the default values so as to not effect other test cases.
     - label: "writes back default value of OnOffTransitionTime attribute"
       PICS: LVL.S.A0010
       command: "writeAttribute"
