@@ -396,7 +396,7 @@ uint8_t WiFiManager::FrequencyToChannel(uint16_t freq)
 
     if (freq >= k24MinFreq && freq < k24MaxFreq)
     {
-        static_cast<uint8_t>((freq - k24MinFreq) / k24FreqConstDiff + 1);
+        return static_cast<uint8_t>((freq - k24MinFreq) / k24FreqConstDiff + 1);
     }
     else if (freq == k24MaxFreq)
     {

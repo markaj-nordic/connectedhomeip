@@ -77,7 +77,7 @@ public:
     Map(Map &&)      = delete;
     Map & operator=(const Map &) = delete;
     Map & operator=(Map &&) = delete;
-    virtual ~Map()          = default;
+    ~Map()                  = default;
 
 private:
     Pair mMap[N];

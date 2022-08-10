@@ -28,10 +28,6 @@
 #include <platform/Zephyr/DiagnosticDataProviderImpl.h>
 #include <platform/Zephyr/SysHeapMalloc.h>
 
-#ifdef CONFIG_WIFI_NRF700X
-#include <platform/nrfconnect/wifi/WiFiManager.h>
-#endif
-
 #include <drivers/hwinfo.h>
 #include <sys/util.h>
 
