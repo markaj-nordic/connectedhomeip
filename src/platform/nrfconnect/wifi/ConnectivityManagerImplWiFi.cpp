@@ -27,7 +27,7 @@
 #include <platform/internal/BLEManager.h>
 
 #include "ConnectivityManagerImplWiFi.h"
-#include <platform/Zephyr/WiFiManager.h>
+#include "WiFiManager.h"
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 
