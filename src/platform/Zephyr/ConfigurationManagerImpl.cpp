@@ -30,7 +30,7 @@
 
 #include <platform/Zephyr/ZephyrConfig.h>
 
-#include <inet/InetInterface.h>
+#include "InetUtils.h"
 
 #include <lib/support/CodeUtils.h>
 #include <lib/support/logging/CHIPLogging.h>
@@ -186,10 +186,7 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
 CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
 {
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
-    auto getInterface = [](Inet::InterfaceId ifaceId = Inet::InterfaceId::Null()) {
-        return ifaceId.IsPresent() ? net_if_get_by_index(ifaceId.GetPlatformInterface()) : net_if_get_default();
-    };
-    const net_if * const iface = getInterface();
+    const net_if * const iface = InetUtils::GetInterface();
     VerifyOrReturnError(iface != nullptr && iface->if_dev != nullptr, CHIP_ERROR_INTERNAL);
 
     const auto linkAddrStruct = iface->if_dev->link_addr;

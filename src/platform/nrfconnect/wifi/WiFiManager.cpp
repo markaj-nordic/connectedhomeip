@@ -26,6 +26,7 @@
 #include <inet/UDPEndPointImplSockets.h>
 #include <lib/support/logging/CHIPLogging.h>
 #include <platform/CHIPDeviceLayer.h>
+#include <platform/Zephyr/InetUtils.h>
 
 #include <zephyr.h>
 
@@ -41,16 +42,6 @@ namespace chip {
 namespace DeviceLayer {
 
 namespace {
-
-in6_addr ToZephyrAddr(const Inet::IPAddress & address)
-{
-    in6_addr zephyrAddr;
-
-    static_assert(sizeof(zephyrAddr.s6_addr) == sizeof(address.Addr), "Unexpected address size");
-    memcpy(zephyrAddr.s6_addr, address.Addr, sizeof(address.Addr));
-
-    return zephyrAddr;
-}
 
 NetworkCommissioning::WiFiScanResponse ToScanResponse(wifi_scan_result * result)
 {
@@ -73,11 +64,6 @@ NetworkCommissioning::WiFiScanResponse ToScanResponse(wifi_scan_result * result)
     }
 
     return response;
-}
-
-net_if * GetInterface(Inet::InterfaceId ifaceId = Inet::InterfaceId::Null())
-{
-    return ifaceId.IsPresent() ? net_if_get_by_index(ifaceId.GetPlatformInterface()) : net_if_get_default();
 }
 
 } // namespace
@@ -120,8 +106,8 @@ CHIP_ERROR WiFiManager::Init()
 
     // TODO: consider moving these to ConnectivityManagerImpl to be prepared for handling multiple interfaces on a single device.
     Inet::UDPEndPointImplSockets::SetJoinMulticastGroupHandler([](Inet::InterfaceId interfaceId, const Inet::IPAddress & address) {
-        const in6_addr addr = ToZephyrAddr(address);
-        net_if * iface      = GetInterface(interfaceId);
+        const in6_addr addr = InetUtils::ToZephyrAddr(address);
+        net_if * iface      = InetUtils::GetInterface(interfaceId);
         VerifyOrReturnError(iface != nullptr, INET_ERROR_UNKNOWN_INTERFACE);
 
         net_if_mcast_addr * maddr = net_if_ipv6_maddr_add(iface, &addr);
@@ -135,8 +121,8 @@ CHIP_ERROR WiFiManager::Init()
     });
 
     Inet::UDPEndPointImplSockets::SetLeaveMulticastGroupHandler([](Inet::InterfaceId interfaceId, const Inet::IPAddress & address) {
-        const in6_addr addr = ToZephyrAddr(address);
-        net_if * iface      = GetInterface(interfaceId);
+        const in6_addr addr = InetUtils::ToZephyrAddr(address);
+        net_if * iface      = InetUtils::GetInterface(interfaceId);
         VerifyOrReturnError(iface != nullptr, INET_ERROR_UNKNOWN_INTERFACE);
 
         if (!net_ipv6_is_addr_mcast_link_all_nodes(&addr) && !net_if_ipv6_maddr_rm(iface, &addr))
@@ -183,7 +169,7 @@ CHIP_ERROR WiFiManager::Scan(const ByteSpan & ssid, ScanCallback callback)
                             stationStatus != StationStatus::CONNECTING,
                         CHIP_ERROR_INCORRECT_STATE);
 
-    net_if * const iface = GetInterface();
+    net_if * const iface = InetUtils::GetInterface();
     VerifyOrReturnError(iface != nullptr, CHIP_ERROR_INTERNAL);
 
     const device * dev = net_if_get_device(iface);
