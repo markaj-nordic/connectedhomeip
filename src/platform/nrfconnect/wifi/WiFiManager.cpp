@@ -365,26 +365,27 @@ CHIP_ERROR WiFiManager::GetWiFiInfo(WiFiInfo & info) const
 
 uint8_t WiFiManager::GetSecurityType() const
 {
-    VerifyOrReturnValue(nullptr != mpWpaNetwork, 0);
+    VerifyOrReturnValue(nullptr != mpWpaNetwork, EMBER_ZCL_SECURITY_TYPE_UNSPECIFIED);
 
     if ((mpWpaNetwork->key_mgmt & WPA_KEY_MGMT_NONE) || !wpa_key_mgmt_wpa_any(mpWpaNetwork->key_mgmt))
     {
-        return 1; // NONE
+        return EMBER_ZCL_SECURITY_TYPE_NONE;
     }
     else if (wpa_key_mgmt_wpa_psk_no_sae(mpWpaNetwork->key_mgmt))
     {
-        return (mpWpaNetwork->pairwise_cipher & (WPA_CIPHER_TKIP | WPA_CIPHER_CCMP)) ? 4 : 3; // 4-WPA2, 3-WPA
+        return (mpWpaNetwork->pairwise_cipher & (WPA_CIPHER_TKIP | WPA_CIPHER_CCMP)) ? EMBER_ZCL_SECURITY_TYPE_WPA2
+                                                                                     : EMBER_ZCL_SECURITY_TYPE_WPA3;
     }
     else if (wpa_key_mgmt_sae(mpWpaNetwork->key_mgmt))
     {
-        return 5; // WPA3
+        return EMBER_ZCL_SECURITY_TYPE_WPA3;
     }
     else
     {
-        return 2; // WEP
+        return EMBER_ZCL_SECURITY_TYPE_WEP;
     }
 
-    return 0; // Unspecified
+    return EMBER_ZCL_SECURITY_TYPE_UNSPECIFIED;
 }
 
 uint8_t WiFiManager::FrequencyToChannel(uint16_t freq)
@@ -414,7 +415,7 @@ CHIP_ERROR WiFiManager::GetNetworkStatistics(NetworkStatistics & stats) const
     // TODO: below will not work (result will be all zeros) until
     // the get_stats handler is implemented in WiFi driver
     net_stats_eth data{};
-    net_mgmt(NET_REQUEST_STATS_GET_ETHERNET, GetInterface(), &data, sizeof(data));
+    net_mgmt(NET_REQUEST_STATS_GET_ETHERNET, InetUtils::GetInterface(), &data, sizeof(data));
 
     stats.mPacketMulticastRxCount = data.multicast.rx;
     stats.mPacketMulticastTxCount = data.multicast.tx;
