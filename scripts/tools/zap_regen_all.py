@@ -46,7 +46,7 @@ class ZAPGenerateTarget:
     def build_cmd(self):
         """Builds the command line we would run to generate this target.
         """
-        cmd = [self.script, self.zap_config]
+        cmd = [self.script, '--no-bootstrap', self.zap_config]
 
         if self.template:
             cmd.append('-t')
@@ -224,12 +224,16 @@ def getTargets(type, test_target):
     return targets
 
 
+def runBootstrap():
+    subprocess.check_call(os.path.join(CHIP_ROOT_DIR, "scripts/tools/zap/zap_bootstrap.sh"), shell=True)
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s %(name)s %(levelname)-7s %(message)s'
     )
     checkPythonVersion()
+    runBootstrap()
     os.chdir(CHIP_ROOT_DIR)
     args = setupArgumentsParser()
 

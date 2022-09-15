@@ -90,6 +90,8 @@ def runArgumentsParser():
                         help='Path to the zcl templates records to use for generating artifacts (default: autodetect read from zap file)')
     parser.add_argument('-o', '--output-dir', default=None,
                         help='Output directory for the generated files (default: automatically selected)')
+    parser.add_argument('--no-bootstrap', default=None, action='store_true',
+                        help='Prevent automatic ZAP bootstrap. By default the bootstrap is triggered')
     args = parser.parse_args()
 
     # By default, this script assumes that the global CHIP template is used with
@@ -113,7 +115,7 @@ def runArgumentsParser():
     templates_file = getFilePath(args.templates)
     output_dir = getDirPath(output_dir)
 
-    return (zap_file, zcl_file, templates_file, output_dir)
+    return (zap_file, zcl_file, templates_file, output_dir, args.no_bootstrap)
 
 
 def extractGeneratedIdl(output_dir, zap_config_path):
@@ -208,13 +210,16 @@ def runJavaPrettifier(templates_file, output_dir):
     except Exception as err:
         print('google-java-format error:', err)
 
+def runBootstrap():
+    subprocess.check_call(getFilePath("scripts/tools/zap/zap_bootstrap.sh"), shell=True)
 
 def main():
     checkPythonVersion()
-
-    # The maximum meory usage is over 4GB (#15620)
+    zap_file, zcl_file, templates_file, output_dir, no_bootstrap = runArgumentsParser()
+    if not no_bootstrap:
+        runBootstrap()
+    # The maximum memory usage is over 4GB (#15620)
     os.environ["NODE_OPTIONS"] = "--max-old-space-size=8192"
-    zap_file, zcl_file, templates_file, output_dir = runArgumentsParser()
     runGeneration(zap_file, zcl_file, templates_file, output_dir)
 
     prettifiers = [
