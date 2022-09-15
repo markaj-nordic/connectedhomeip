@@ -33,7 +33,7 @@ CHIP_ROOT="${SCRIPT_PATH%/scripts/tools/zap/run_zaptool.sh}"
 
 (
 
-    ${CHIP_ROOT}/scripts/tools/zap/zap_bootstrap.sh
+    "$CHIP_ROOT"/scripts/tools/zap/zap_bootstrap.sh
 
     cd "$CHIP_ROOT/third_party/zap/repo"
 
