@@ -210,8 +210,10 @@ def runJavaPrettifier(templates_file, output_dir):
     except Exception as err:
         print('google-java-format error:', err)
 
+
 def runBootstrap():
     subprocess.check_call(getFilePath("scripts/tools/zap/zap_bootstrap.sh"), shell=True)
+
 
 def main():
     checkPythonVersion()

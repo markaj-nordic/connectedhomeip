@@ -61,7 +61,7 @@ def runArgumentsParser():
         description='Convert .zap files to the current zap version')
     parser.add_argument('zap', help='Path to the application .zap file')
     parser.add_argument('--no-bootstrap', default=None, action='store_true',
-        help='Prevent automatic ZAP bootstrap. By default the bootstrap is triggered')
+                        help='Prevent automatic ZAP bootstrap. By default the bootstrap is triggered')
     args = parser.parse_args()
 
     zap_file = getFilePath(args.zap)
@@ -97,8 +97,10 @@ def runConversion(zap_file):
     subprocess.check_call(['node', './src-script/zap-convert.js',
                           '-z', zcl_file, '-g', templates_file, '-o', zap_file, zap_file])
 
+
 def runBootstrap():
     subprocess.check_call(getFilePath("scripts/tools/zap/zap_bootstrap.sh"), shell=True)
+
 
 def main():
     checkPythonVersion()

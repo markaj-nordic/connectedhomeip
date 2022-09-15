@@ -227,6 +227,7 @@ def getTargets(type, test_target):
 def runBootstrap():
     subprocess.check_call(os.path.join(CHIP_ROOT_DIR, "scripts/tools/zap/zap_bootstrap.sh"), shell=True)
 
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
