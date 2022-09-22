@@ -53,13 +53,18 @@ def getTargets():
     return targets
 
 
+def runBootstrap():
+    subprocess.check_call(os.path.join(CHIP_ROOT_DIR, "scripts/tools/zap/zap_bootstrap.sh"), shell=True)
+
+
 def main():
     checkPythonVersion()
+    runBootstrap()
     os.chdir(CHIP_ROOT_DIR)
 
     targets = getTargets()
     for target in targets:
-        subprocess.check_call(['./scripts/tools/zap/convert.py'] + target)
+        subprocess.check_call(['./scripts/tools/zap/convert.py'] + ['--no-bootstrap'] + target)
 
 
 if __name__ == '__main__':

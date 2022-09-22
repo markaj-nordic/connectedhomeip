@@ -46,7 +46,7 @@ class ZAPGenerateTarget:
     def build_cmd(self):
         """Builds the command line we would run to generate this target.
         """
-        cmd = [self.script, self.zap_config]
+        cmd = [self.script, '--no-bootstrap', self.zap_config]
 
         if self.template:
             cmd.append('-t')
@@ -93,7 +93,7 @@ def setupArgumentsParser():
     parser.add_argument('--tests', default='all', choices=['all', 'chip-tool', 'darwin-framework-tool', 'app1', 'app2'],
                         help='When generating tests only target, Choose which tests to generate (default: all)')
     parser.add_argument('--dry-run', default=False, action='store_true',
-                        help="Don't do any generationl just log what targets would be generated (default: False)")
+                        help="Don't do any generation, just log what targets would be generated (default: False)")
     return parser.parse_args()
 
 
@@ -224,6 +224,10 @@ def getTargets(type, test_target):
     return targets
 
 
+def runBootstrap():
+    subprocess.check_call(os.path.join(CHIP_ROOT_DIR, "scripts/tools/zap/zap_bootstrap.sh"), shell=True)
+
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
@@ -236,6 +240,7 @@ def main():
     targets = getTargets(args.type, args.tests)
 
     if (not args.dry_run):
+        runBootstrap()
         for target in targets:
             target.generate()
 
