@@ -55,7 +55,7 @@ jobs:
                   npm rebuild canvas --update-binary
                   npm run build-spa
             - name: Generate all
-              run: scripts/tools/zap_regen_all.py
+              run: scripts/tools/zap_regen_all.py --no-bootstrap
             - name: Check for uncommited changes
               run: |
                   git add .
