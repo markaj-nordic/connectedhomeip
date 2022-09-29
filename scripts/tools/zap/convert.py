@@ -105,7 +105,7 @@ def runBootstrap():
 def main():
     checkPythonVersion()
     zap_file, run_bootstrap = runArgumentsParser()
-    if  run_bootstrap:
+    if run_bootstrap:
         runBootstrap()
     os.chdir(CHIP_ROOT_DIR)
 
