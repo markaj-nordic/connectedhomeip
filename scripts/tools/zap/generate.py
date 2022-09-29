@@ -90,8 +90,8 @@ def runArgumentsParser():
                         help='Path to the zcl templates records to use for generating artifacts (default: autodetect read from zap file)')
     parser.add_argument('-o', '--output-dir', default=None,
                         help='Output directory for the generated files (default: automatically selected)')
-    parser.add_argument('--no-bootstrap', default=None, action='store_true',
-                        help='Prevent automatic ZAP bootstrap. By default the bootstrap is triggered')
+    parser.add_argument('--run-bootstrap', default=None, action='store_true',
+                        help='Automatically run ZAP bootstrap. By default the bootstrap is not triggered')
     args = parser.parse_args()
 
     # By default, this script assumes that the global CHIP template is used with
@@ -115,7 +115,7 @@ def runArgumentsParser():
     templates_file = getFilePath(args.templates)
     output_dir = getDirPath(output_dir)
 
-    return (zap_file, zcl_file, templates_file, output_dir, args.no_bootstrap)
+    return (zap_file, zcl_file, templates_file, output_dir, args.run_bootstrap)
 
 
 def extractGeneratedIdl(output_dir, zap_config_path):
@@ -217,8 +217,8 @@ def runBootstrap():
 
 def main():
     checkPythonVersion()
-    zap_file, zcl_file, templates_file, output_dir, no_bootstrap = runArgumentsParser()
-    if not no_bootstrap:
+    zap_file, zcl_file, templates_file, output_dir, run_bootstrap = runArgumentsParser()
+    if run_bootstrap:
         runBootstrap()
     # The maximum memory usage is over 4GB (#15620)
     os.environ["NODE_OPTIONS"] = "--max-old-space-size=8192"

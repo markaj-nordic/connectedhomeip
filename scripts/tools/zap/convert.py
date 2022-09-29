@@ -60,13 +60,13 @@ def runArgumentsParser():
     parser = argparse.ArgumentParser(
         description='Convert .zap files to the current zap version')
     parser.add_argument('zap', help='Path to the application .zap file')
-    parser.add_argument('--no-bootstrap', default=None, action='store_true',
-                        help='Prevent automatic ZAP bootstrap. By default the bootstrap is triggered')
+    parser.add_argument('--run-bootstrap', default=None, action='store_true',
+                        help='Automatically run ZAP bootstrap. By default the bootstrap is not triggered')
     args = parser.parse_args()
 
     zap_file = getFilePath(args.zap)
 
-    return zap_file, args.no_bootstrap
+    return zap_file, args.run_bootstrap
 
 
 def detectZclFile(zapFile):
@@ -104,8 +104,8 @@ def runBootstrap():
 
 def main():
     checkPythonVersion()
-    zap_file, no_bootstrap = runArgumentsParser()
-    if not no_bootstrap:
+    zap_file, run_bootstrap = runArgumentsParser()
+    if  run_bootstrap:
         runBootstrap()
     os.chdir(CHIP_ROOT_DIR)
 

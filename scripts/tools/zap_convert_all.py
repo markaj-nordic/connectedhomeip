@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import sys
 import subprocess
+import argparse
 
 CHIP_ROOT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '../..'))
@@ -53,18 +54,28 @@ def getTargets():
     return targets
 
 
+def runArgumentsParser():
+    parser = argparse.ArgumentParser(
+        description='Convert all .zap files to the current zap version')
+    parser.add_argument('--run-bootstrap', default=None, action='store_true',
+                        help='Automatically run ZAP bootstrap. By default the bootstrap is not triggered')
+    return parser.parse_args()
+
+
 def runBootstrap():
     subprocess.check_call(os.path.join(CHIP_ROOT_DIR, "scripts/tools/zap/zap_bootstrap.sh"), shell=True)
 
 
 def main():
+    args = runArgumentsParser()
     checkPythonVersion()
-    runBootstrap()
+    if args.run_bootstrap:
+        runBootstrap()
     os.chdir(CHIP_ROOT_DIR)
 
     targets = getTargets()
     for target in targets:
-        subprocess.check_call(['./scripts/tools/zap/convert.py'] + ['--no-bootstrap'] + target)
+        subprocess.check_call(['./scripts/tools/zap/convert.py'] + target)
 
 
 if __name__ == '__main__':
