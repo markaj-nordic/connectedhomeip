@@ -20,14 +20,14 @@ function _get_fullpath() {
     cd "$(dirname "$1")" && echo "$PWD/$(basename "$1")"
 }
 
-function _usage {
-    cat << EOF
+function _usage() {
+    cat <<EOF
 Invalid arguments passed.
 Usage:
     zap_bootstrap.sh -> install and update required packages
     zap_bootstrap.sh -c -> run a clean bootstrap, install packages from scratch
 EOF
-   exit 1
+    exit 1
 }
 
 set -e
