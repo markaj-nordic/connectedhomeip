@@ -90,8 +90,8 @@ private:
     OperationSource mActuatorOperationSource = OperationSource::kButton;
     k_timer mActuatorTimer                   = {};
 
-    UserData mUserData[CONFIG_LOCK_NUM_USERS];
-    EmberAfPluginDoorLockUserInfo mUsers[CONFIG_LOCK_NUM_USERS] = {};
+    UserData mUserData[CONFIG_LOCK_MAX_NUM_USERS];
+    EmberAfPluginDoorLockUserInfo mUsers[CONFIG_LOCK_MAX_NUM_USERS] = {};
 
     CredentialData mCredentialData[CONFIG_LOCK_NUM_CREDENTIALS];
     EmberAfPluginDoorLockCredentialInfo mCredentials[CONFIG_LOCK_NUM_CREDENTIALS] = {};

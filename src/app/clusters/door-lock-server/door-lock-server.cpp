@@ -2391,6 +2391,8 @@ bool DoorLockServer::credentialTypeSupported(chip::EndpointId endpointId, Creden
         return SupportsPIN(endpointId);
     case CredentialTypeEnum::kRfid:
         return SupportsRFID(endpointId);
+    case CredentialTypeEnum::kFingerprint:
+        return SupportsFP(endpointId);
     default:
         return false;
     }
