@@ -42,15 +42,31 @@ public:
         kUnlockingCompleted,
     };
 
+    // This represents the database of credentials without actual secret data
+    struct Credentials
+    {
+        CredentialStruct mPin[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER];
+        CredentialStruct mRfid[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER];
+        CredentialStruct mFingerPrint[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER];
+    };
+
     struct UserData
     {
         char mName[DOOR_LOCK_USER_NAME_BUFFER_SIZE];
-        CredentialStruct mCredentials[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER];
+        Credentials mCredentials;
+        CredentialStruct mOccupiedCredentials[CONFIG_LOCK_TOTAL_NUM_CREDENTIALS_PER_USER];
     };
 
     struct CredentialData
     {
         chip::Platform::ScopedMemoryBuffer<uint8_t> mSecret;
+    };
+
+    struct CredentialsSecrets
+    {
+        CredentialData mPinData[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER];
+        CredentialData mRfidData[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER];
+        CredentialData mFingerPrintData[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER];
     };
 
     using OperationSource     = chip::app::Clusters::DoorLock::OperationSourceEnum;
@@ -80,6 +96,9 @@ public:
 
 private:
     void SetState(State state, OperationSource source);
+    EmberAfPluginDoorLockCredentialInfo * GetCredentialsOfType(CredentialTypeEnum type, uint16_t credentialIndex) const;
+    CredentialData * GetCredentialsDataOfType(CredentialTypeEnum type, uint16_t credentialIndex) const;
+    void InitializeCredentials(CredentialTypeEnum type);
 
     static void ActuatorTimerEventHandler(k_timer * timer);
     static void ActuatorAppEventHandler(const AppEvent & aEvent);
@@ -93,8 +112,10 @@ private:
     UserData mUserData[CONFIG_LOCK_MAX_NUM_USERS];
     EmberAfPluginDoorLockUserInfo mUsers[CONFIG_LOCK_MAX_NUM_USERS] = {};
 
-    CredentialData mCredentialData[CONFIG_LOCK_NUM_CREDENTIALS];
-    EmberAfPluginDoorLockCredentialInfo mCredentials[CONFIG_LOCK_NUM_CREDENTIALS] = {};
+    EmberAfPluginDoorLockCredentialInfo mCredentialsPIN[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER]    = {};
+    EmberAfPluginDoorLockCredentialInfo mCredentialsRFID[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER]   = {};
+    EmberAfPluginDoorLockCredentialInfo mCredentialsFinger[CONFIG_LOCK_NUM_CREDENTIALS_PER_USER] = {};
+    CredentialsSecrets mSecrets;
 
     static BoltLockManager sLock;
 };

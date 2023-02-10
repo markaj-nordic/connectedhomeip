@@ -15,29 +15,25 @@
 #
 mainmenu "Matter nRF Connect Lock Example Application"
 
-config LOCK_PIN_NUM_USERS
-	int "Maximum number of PIN users supported by lock"
-	default 5
-
-config LOCK_RFID_NUM_USERS
-	int "Maximum number of RFID users supported by lock"
-	default 5
-
-config LOCK_FP_NUM_USERS
-	int "Maximum number of finger print users supported by lock"
-	default 5
-
 config LOCK_MAX_NUM_USERS
 	int "Maximum number of users supported by lock"
-	default 15
+	default 5
 
 config LOCK_NUM_CREDENTIALS
 	int "Maximum number of credentials supported by lock"
 	default 60
 
 config LOCK_NUM_CREDENTIALS_PER_USER
-	int "Maximum number of credentials per user supported by lock"
-	default 4
+	int "Maximum number of credentials of given type per one user supported by lock"
+	default 2
+
+config LOCK_NUM_CREDENTIALS_TYPE
+	int "Maximum number of credentials of given type"
+	default 2
+
+config LOCK_TOTAL_NUM_CREDENTIALS_PER_USER
+	int "Maximum number of credentials per one user supported by lock"
+	default 6
 
 config STATE_LEDS
 	bool "Use LEDs to indicate the device state"

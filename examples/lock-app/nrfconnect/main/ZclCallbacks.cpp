@@ -114,10 +114,13 @@ void emberAfDoorLockClusterInitCallback(EndpointId endpoint)
 
     logOnFailure(DoorLock::Attributes::LockType::Set(endpoint, DlLockType::kDeadBolt), "type");
     logOnFailure(DoorLock::Attributes::NumberOfTotalUsersSupported::Set(endpoint, CONFIG_LOCK_MAX_NUM_USERS), "number of users");
-    logOnFailure(DoorLock::Attributes::NumberOfPINUsersSupported::Set(endpoint, CONFIG_LOCK_PIN_NUM_USERS), "number of PIN users");
-    logOnFailure(DoorLock::Attributes::NumberOfRFIDUsersSupported::Set(endpoint, CONFIG_LOCK_RFID_NUM_USERS), "number of RFID users");
-    logOnFailure(DoorLock::Attributes::NumberOfCredentialsSupportedPerUser::Set(endpoint, CONFIG_LOCK_NUM_CREDENTIALS_PER_USER),
-                 "number of credentials per user");
+    logOnFailure(DoorLock::Attributes::NumberOfPINUsersSupported::Set(endpoint, CONFIG_LOCK_NUM_CREDENTIALS_TYPE),
+                 "number of PIN users");
+    logOnFailure(DoorLock::Attributes::NumberOfRFIDUsersSupported::Set(endpoint, CONFIG_LOCK_NUM_CREDENTIALS_TYPE),
+                 "number of RFID users");
+    logOnFailure(
+        DoorLock::Attributes::NumberOfCredentialsSupportedPerUser::Set(endpoint, CONFIG_LOCK_TOTAL_NUM_CREDENTIALS_PER_USER),
+        "number of credentials per user");
 
     // Set FeatureMap to (kUser|kCredentialsOverTheAirAccess|kFingerCredentials|kRfidCredential|kPinCredential|)
     logOnFailure(DoorLock::Attributes::FeatureMap::Set(endpoint, 0x187), "feature map");

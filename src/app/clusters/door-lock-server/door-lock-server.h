@@ -136,7 +136,7 @@ public:
 
     inline bool SupportsRFID(chip::EndpointId endpointId) { return GetFeatures(endpointId).Has(DoorLockFeature::kRfidCredential); }
 
-    inline bool SupportsFP(chip::EndpointId endpointId) { return GetFeatures(endpointId).Has(DoorLockFeature::kFingerCredentials); }
+    inline bool SupportsFingerCredentials(chip::EndpointId endpointId) { return GetFeatures(endpointId).Has(DoorLockFeature::kFingerCredentials); }
 
     inline bool SupportsFingers(chip::EndpointId endpointId)
     {

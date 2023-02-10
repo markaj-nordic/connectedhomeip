@@ -1456,6 +1456,11 @@ DlStatus DoorLockServer::credentialLengthWithinRange(chip::EndpointId endpointId
     case CredentialTypeEnum::kRfid:
         statusMin = GetAttribute(endpointId, Attributes::MinRFIDCodeLength::Id, Attributes::MinRFIDCodeLength::Get, minLen);
         statusMax = GetAttribute(endpointId, Attributes::MaxRFIDCodeLength::Id, Attributes::MaxRFIDCodeLength::Get, maxLen);
+    case CredentialTypeEnum::kFingerprint:
+    case CredentialTypeEnum::kFingerVein:
+        // use the same as for RFID
+        statusMin = GetAttribute(endpointId, Attributes::MinRFIDCodeLength::Id, Attributes::MinRFIDCodeLength::Get, minLen);
+        statusMax = GetAttribute(endpointId, Attributes::MaxRFIDCodeLength::Id, Attributes::MaxRFIDCodeLength::Get, maxLen);
         break;
     default:
         return DlStatus::kFailure;
@@ -1494,6 +1499,11 @@ bool DoorLockServer::getMaxNumberOfCredentials(chip::EndpointId endpointId, Cred
         status = GetNumberOfPINCredentialsSupported(endpointId, maxNumberOfCredentials);
         break;
     case CredentialTypeEnum::kRfid:
+        status = GetNumberOfRFIDCredentialsSupported(endpointId, maxNumberOfCredentials);
+        break;
+    case CredentialTypeEnum::kFingerprint:
+    case CredentialTypeEnum::kFingerVein:
+        // use the same as for RFID
         status = GetNumberOfRFIDCredentialsSupported(endpointId, maxNumberOfCredentials);
         break;
     default:
@@ -2392,7 +2402,8 @@ bool DoorLockServer::credentialTypeSupported(chip::EndpointId endpointId, Creden
     case CredentialTypeEnum::kRfid:
         return SupportsRFID(endpointId);
     case CredentialTypeEnum::kFingerprint:
-        return SupportsFP(endpointId);
+    case CredentialTypeEnum::kFingerVein:
+        return SupportsFingerCredentials(endpointId);
     default:
         return false;
     }
