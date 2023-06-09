@@ -26,7 +26,7 @@
             "description": "Current version of the factory data set",
             "type": "integer",
             "minimum": 0,
-            "maximum": 255
+            "maximum": 65535
         },
         "sn": {
             "description": "Serial number of device",
@@ -74,7 +74,7 @@
             "description": "Manufacturing date according to ISO 8601 in notation YYYY-MM-DD",
             "type": "string",
             "format": "date",
-            "minLength": 10,
+            "minLength": 8,
             "maxLength": 10,
             "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
         },
@@ -82,7 +82,7 @@
             "description": "Hardware version - integer",
             "type": "integer",
             "minimum": 0,
-            "maximum": 65536
+            "maximum": 65535
         },
         "hw_ver_str": {
             "description": "A string representation of hardware version",
