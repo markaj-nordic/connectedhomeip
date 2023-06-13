@@ -42,8 +42,8 @@ requestor using the command below.
 ./out/debug/chip-tool otasoftwareupdaterequestor read default-otaproviders <REQUESTOR NODE ID> 0
 ```
 
-If the list does not have your provider, write into default-otaproviders list
-of requestor using the command below.
+If the list does not have your provider, write into default-otaproviders list of
+requestor using the command below.
 
 ```
 ./out/debug/chip-tool otasoftwareupdaterequestor write default-otaproviders '[{"fabricIndex": 1, "providerNodeID": <PROVIDER_NODE_ID_1>, "endpoint": 0}, {"fabricIndex": 1, "providerNodeID": <PROVIDER_NODE_ID_2>, "endpoint": 0}]' <REQUESTOR_NODE_ID> 0
